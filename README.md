@@ -82,6 +82,14 @@ npx tsc --noEmit -p tsconfig.app.json
 npm run lint
 ```
 
+## Como contribuir
+
+1. Crie uma branch a partir da `main` (`git switch -c minha-tarefa`).
+2. Antes de abrir o pull request, rode os comandos do CI (seção Publicação) localmente.
+3. Abra o pull request: o GitHub Actions roda testes, tipos e lint, e o Cloudflare Pages comenta
+   um link de prévia.
+4. Outra pessoa do time revisa e aprova; só então o pull request entra na `main`.
+
 ## Decisões e plano
 
 - [docs/decisoes.md](docs/decisoes.md): o que foi decidido sobre produto, plataforma, comunidade e fases.
