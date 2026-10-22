@@ -479,11 +479,16 @@ function theoryQuestion(topic: string, ctx: Ctx): Question {
     }
     const fmt = (ns: Note[]) => ns.map(nm).join(' – ');
     const ans = fmt(notes);
+    // Para cada nota (menos a fundamental), tenta as duas direções de acidente; em acordes com
+    // acidentes extremos (ex.: b5 soletrado como dobrado-bemol) só uma direção é válida, então
+    // sortear a direção ao acaso às vezes não achava nenhuma em 20 tentativas (teste instável).
     const wrongs = new Set<string>();
-    for (let k = 0; k < 20 && wrongs.size < 3; k++) {
-      const i = randInt(1, notes.length - 1);
-      const alt = notes.map((n, j) => (j === i ? { ...n, acc: n.acc + pick([1, -1]) } : n));
-      if (alt.every(n => Math.abs(n.acc) <= 1)) wrongs.add(fmt(alt));
+    for (const i of shuffle([...notes.keys()].slice(1))) {
+      if (wrongs.size >= 3) break;
+      for (const d of shuffle([1, -1])) {
+        const alt = notes.map((n, j) => (j === i ? { ...n, acc: n.acc + d } : n));
+        if (alt.every(n => Math.abs(n.acc) <= 1)) { wrongs.add(fmt(alt)); break; }
+      }
     }
     return text(`Quais notas formam ${chordSymbol(root, type)}?`, shuffle([ans, ...wrongs]), ans, ans, true);
   }
