@@ -1,0 +1,77 @@
+import { useState } from 'react';
+import { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } from '../data/areas';
+import { resetAll, setState, updateProfile, useStore } from '../state/store';
+import { Art, Btn, Chip, PageHead, SecTitle } from '../components/ui';
+
+const LEVELS = ['Nunca estudei', 'Básico', 'Intermediário', 'Avançado'];
+
+export default function Perfil() {
+  const profile = useStore(s => s.profile);
+  const naming = useStore(s => s.naming);
+  const sound = useStore(s => s.sound);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const toggleGoal = (id: (typeof GOALS)[number]['id']) => updateProfile({ goals: profile.goals.includes(id) ? profile.goals.filter(g => g !== id) : [...profile.goals, id] });
+
+  return (
+    <div>
+      <PageHead tag="Perfil" title={profile.name || 'Seu perfil'} sub="O Clave usa estas respostas para montar suas sessões. Tudo fica salvo só neste navegador." aside={<Art name="clave-sentado" style={{ width: 120 }} />} />
+
+      <div style={{ display: 'grid', gap: 36 }}>
+        <section>
+          <SecTitle>Sobre você</SecTitle>
+          <div className="panel" style={{ display: 'grid', gap: 16 }}>
+            <label style={{ display: 'grid', gap: 6, maxWidth: 360 }}>
+              <span className="eyebrow">Como o Clave te chama</span>
+              <input id="nome" value={profile.name} onChange={e => updateProfile({ name: e.target.value })} placeholder="Seu nome"
+                style={{ background: 'var(--bk-3)', border: 0, color: 'var(--cream)', padding: '10px 12px', font: 'inherit', fontSize: 17 }} />
+            </label>
+            <div className="row"><span className="eyebrow">Instrumento</span>{INSTRUMENTS.map(i => <Chip key={i.id} on={profile.instrument === i.id} onClick={() => updateProfile({ instrument: i.id })}>{i.name}</Chip>)}</div>
+            <div className="row"><span className="eyebrow">Perfil</span>{PROFILE_KINDS.map(k => <Chip key={k.id} on={profile.kind === k.id} onClick={() => updateProfile({ kind: k.id })}>{k.name}</Chip>)}</div>
+          </div>
+        </section>
+
+        <section>
+          <SecTitle>Objetivos</SecTitle>
+          <div className="row">{GOALS.map(g => <Chip key={g.id} on={profile.goals.includes(g.id)} onClick={() => toggleGoal(g.id)}>{g.name}</Chip>)}</div>
+        </section>
+
+        <section>
+          <SecTitle>Onde você está em cada área</SecTitle>
+          <div className="panel" style={{ display: 'grid', gap: 12 }}>
+            {AREAS.map(a => (
+              <div key={a.id} className="row">
+                <span style={{ width: 120, fontWeight: 600 }}>{a.name}</span>
+                {LEVELS.map((l, i) => <Chip key={i} on={profile.levels[a.id] === i} onClick={() => updateProfile({ levels: { ...profile.levels, [a.id]: i } })}>{l}</Chip>)}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <SecTitle>Preferências</SecTitle>
+          <div className="panel" style={{ display: 'grid', gap: 14 }}>
+            <div className="row"><span className="eyebrow">Nome das notas</span>
+              <Chip on={naming === 'pt'} onClick={() => setState(s => ({ ...s, naming: 'pt' }))}>Dó Ré Mi</Chip>
+              <Chip on={naming === 'en'} onClick={() => setState(s => ({ ...s, naming: 'en' }))}>C D E</Chip>
+            </div>
+            <label className="switch"><input type="checkbox" id="som" checked={sound} onChange={e => setState(s => ({ ...s, sound: e.target.checked }))} />Som nos exercícios</label>
+          </div>
+        </section>
+
+        <section>
+          <SecTitle>Dados</SecTitle>
+          <div className="row">
+            <Btn tone="ghost" small to="/comecar">Refazer as perguntas iniciais</Btn>
+            {!confirmReset ? <Btn tone="ghost" small onClick={() => setConfirmReset(true)}>Apagar meu progresso</Btn> : (
+              <div className="row panel" style={{ padding: 12, background: 'var(--ve)' }}>
+                <span>Isso apaga histórico, acertos e medalhas deste navegador. Não dá para desfazer.</span>
+                <Btn small tone="ghost" onClick={() => { resetAll(); setConfirmReset(false); }}>Apagar tudo</Btn>
+                <Btn small tone="mu" onClick={() => setConfirmReset(false)}>Cancelar</Btn>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

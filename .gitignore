@@ -1,0 +1,58 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Variáveis de ambiente (segredos nunca entram no git)
+.env
+.env.*
+!.env.example
+
+# Claude Code: preferências locais de cada pessoa
+.claude/settings.local.json
+
+# Cloudflare
+.wrangler
+
+# Capacitor · iOS (quando existir)
+ios/App/Pods
+ios/App/build
+ios/App/App/public
+ios/DerivedData
+ios/capacitor-cordova-ios-plugins
+xcuserdata
+*.xcuserstate
+
+# Capacitor · Android (quando existir)
+android/.gradle
+android/build
+android/app/build
+android/app/src/main/assets/public
+android/capacitor-cordova-android-plugins
+android/local.properties
+android/.idea
+*.keystore
+*.jks
+
+# Testes
+coverage
