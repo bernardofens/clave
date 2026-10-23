@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react';
 import type { AreaId, GoalId, Instrument, ProfileKind } from '../data/areas';
 import type { Naming } from '../theory/core';
 import type { SettingValue } from '../exercises/types';
+import type { AgeGroup } from './age';
 
 export interface Profile {
   name: string;
@@ -33,6 +34,11 @@ export interface TonalityPlan {
   done: string[];
   startedAt: number;
 }
+/** Sessão da conta (Supabase). Null = sem conta, só localStorage. */
+export interface Account {
+  userId: string;
+  email: string | null;
+}
 export interface State {
   v: 1;
   profile: Profile;
@@ -44,6 +50,10 @@ export interface State {
   badges: Record<string, number>;
   settings: Record<string, Record<string, SettingValue>>;
   plan: TonalityPlan | null;
+  account: Account | null;
+  // Guardado para não perguntar a data de nascimento de novo; a data em si nunca fica aqui
+  // (fica só no servidor, e só para quem tem conta — ver src/state/age.ts).
+  ageGroup: AgeGroup | null;
 }
 
 const KEY = 'clave:v1';
@@ -65,6 +75,8 @@ export const DEFAULT_STATE: State = {
   badges: {},
   settings: {},
   plan: null,
+  account: null,
+  ageGroup: null,
 };
 
 function load(): State {
@@ -136,6 +148,12 @@ export function saveSettings(id: string, values: Record<string, SettingValue>) {
 }
 export function setPlan(plan: TonalityPlan | null) {
   setState(s => ({ ...s, plan }));
+}
+export function setAccount(account: Account | null) {
+  setState(s => ({ ...s, account }));
+}
+export function setAgeGroup(ageGroup: AgeGroup | null) {
+  setState(s => ({ ...s, ageGroup }));
 }
 
 // ---------------- derivados ----------------

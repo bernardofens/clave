@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } from '../data/areas';
 import { resetAll, setState, updateProfile, useStore } from '../state/store';
 import { Art, Btn, Chip, PageHead, SecTitle } from '../components/ui';
+import AccountPanel from '../components/AccountPanel';
 
 const LEVELS = ['Nunca estudei', 'Básico', 'Intermediário', 'Avançado'];
 
@@ -57,6 +58,8 @@ export default function Perfil() {
             <label className="switch"><input type="checkbox" id="som" checked={sound} onChange={e => setState(s => ({ ...s, sound: e.target.checked }))} />Som nos exercícios</label>
           </div>
         </section>
+
+        <AccountPanel />
 
         <section>
           <SecTitle>Dados</SecTitle>
