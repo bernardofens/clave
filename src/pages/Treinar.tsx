@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { AREAS, areaById, type AreaId } from '../data/areas';
 import { MODULES } from '../data/content';
@@ -15,11 +15,15 @@ import Tecnica from '../tools/Tecnica';
 import { Art, Chip, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
 
+// A leitura rítmica traz a VexFlow; só baixa quando a ferramenta abre.
+const Ritmo = lazy(() => import('../tools/Ritmo'));
+
 export const TOOL_COMPONENTS: Record<string, () => React.ReactElement> = {
   metronomo: () => <Metronome />,
   ambiente: () => <Ambiente />,
   backing: () => <Backing />,
   leitura: () => <Leitura />,
+  ritmo: () => <Suspense fallback={<p className="muted">Carregando a partitura…</p>}><Ritmo /></Suspense>,
   tecnica: () => <Tecnica />,
 };
 

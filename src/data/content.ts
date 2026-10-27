@@ -39,7 +39,7 @@ export const MODULES: Module[] = [
       'Contratempo é tocar na segunda metade do tempo, depois de uma pausa de colcheia.',
       'Conte em voz alta: "1 e 2 e 3 e 4 e". Para semicolcheias: "1 e a e".',
     ],
-    exercises: ['ritmo-ouvido'], tools: ['leitura', 'metronomo'],
+    exercises: ['ritmo-ouvido'], tools: ['ritmo', 'leitura', 'metronomo'],
   },
   {
     id: 'mapear-braco', area: 'mapeamento', title: 'Mapear o braço',

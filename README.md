@@ -23,7 +23,8 @@ O progresso fica salvo no navegador (localStorage, chave `clave:v1`). Ainda não
   todos personalizáveis e com link para compartilhar as configurações.
 - **Ferramentas**: metrônomo, "solfejar e tocar" (drone + metrônomo + cronômetro com meta),
   backing track com análise de graus e sugestão de escalas, gerador de leitura (notas ou ritmo,
-  em loop de 4 compassos) e rotinas de técnica com metrônomo progressivo.
+  em loop de 4 compassos), leitura rítmica (compassos gerados em 2/4, 3/4, 4/4 e 6/8, cinco níveis,
+  para ler em silêncio ou ouvir com metrônomo) e rotinas de técnica com metrônomo progressivo.
 - **Estudar**: aulas no formato por quê / como encaixar / passo a passo / pratique,
   trilhas (Fundamentos grátis; Jazz e Erudito como Clave+) e gêneros como discos.
 - **Progresso**: nível por área (XP de acertos e tempo), medalhas, histórico e o plano
@@ -45,6 +46,15 @@ src/
   pages/        telas
 design/         gerador das ilustrações (estilo Noturno) e o kit visual de referência
 ```
+
+### Acrescentar uma célula rítmica
+
+A leitura rítmica monta os compassos a partir do catálogo em `src/theory/rhythm-cells.ts`. Cada célula
+é uma linha com o padrão escrito em texto (`'8 16 16'`, `'r8 8'`, `'q. 8'`, `'8 8~ 8 8'`, `'3:2(8 8 8)'`),
+o nível e, se precisar, onde pode começar (`align`) e em que compassos vale (`meters`). Figuras, pausas,
+pontos, síncopes, ligaduras e quiálteras são deduzidos do padrão, e é isso que os filtros da tela usam.
+O teste `rhythm-gen.test.ts` gera exercícios em todas as fórmulas e níveis e confere a soma de cada compasso.
+A notação usa a VexFlow, carregada só quando a ferramenta abre.
 
 ### Criar um exercício novo
 
