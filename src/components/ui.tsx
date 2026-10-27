@@ -10,15 +10,15 @@ export function Art({ name, alt = '', className, style }: { name: string; alt?: 
 export function Tag({ children, tone }: { children: ReactNode; tone?: 'co' | 've' | 'dark' }) {
   return <span className={`tag ${tone ?? ''}`}><span>{children}</span></span>;
 }
-export function Btn({ children, to, onClick, tone, small, disabled, type = 'button', id }: {
-  children: ReactNode; to?: string; onClick?: () => void; tone?: 'ghost' | 'mu' | 'co'; small?: boolean; disabled?: boolean; type?: 'button' | 'submit'; id?: string;
+export function Btn({ children, to, onClick, tone, small, disabled, type = 'button', id, label }: {
+  children: ReactNode; to?: string; onClick?: () => void; tone?: 'ghost' | 'mu' | 'co'; small?: boolean; disabled?: boolean; type?: 'button' | 'submit'; id?: string; label?: string;
 }) {
   const cls = `btn ${tone ?? ''} ${small ? 'small' : ''}`;
-  if (to) return <Link className={cls} to={to} id={id}><span>{children}</span></Link>;
-  return <button className={cls} type={type} onClick={onClick} disabled={disabled} id={id}><span>{children}</span></button>;
+  if (to) return <Link className={cls} to={to} id={id} aria-label={label}><span>{children}</span></Link>;
+  return <button className={cls} type={type} onClick={onClick} disabled={disabled} id={id} aria-label={label} title={label}><span>{children}</span></button>;
 }
-export function Chip({ on, onClick, children }: { on?: boolean; onClick?: () => void; children: ReactNode }) {
-  return <button type="button" className={`chip ${on ? 'on' : ''}`} onClick={onClick} aria-pressed={on}><span>{children}</span></button>;
+export function Chip({ on, onClick, children, disabled, title }: { on?: boolean; onClick?: () => void; children: ReactNode; disabled?: boolean; title?: string }) {
+  return <button type="button" className={`chip ${on ? 'on' : ''}`} onClick={onClick} aria-pressed={on} disabled={disabled} title={title}><span>{children}</span></button>;
 }
 export function SecTitle({ children, link }: { children: ReactNode; link?: { to: string; label: string } }) {
   return <div className="sec-title"><h2>{children}</h2>{link && <Link to={link.to}>{link.label} →</Link>}</div>;

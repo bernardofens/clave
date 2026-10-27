@@ -204,3 +204,37 @@ select.sel { background: var(--bk-3); color: var(--cream); border: 0; padding: 7
   .score b { font-size: 30px; }
   .letters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* ---------- leitura rítmica ---------- */
+.ritmo { display: grid; gap: 14px; min-width: 0; }
+.ritmo-quick { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); gap: 10px; }
+.ritmo-field { display: grid; gap: 4px; min-width: 0; }
+.ritmo-field > span { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.ritmo-field .sel { min-height: 44px; font-size: 16px; width: 100%; min-width: 0; text-overflow: ellipsis; }
+.ritmo-stage { background: var(--co); padding: 12px 14px 16px; display: grid; gap: 6px; min-width: 0; }
+.ritmo-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream); opacity: 0.85; }
+.ritmo-count { font-family: var(--display); font-size: 30px; line-height: 1; color: var(--mu); }
+.rhythm-score { color: var(--cream); min-height: 96px; }
+.rhythm-score svg { display: block; width: 100%; height: auto; overflow: visible; }
+.rhythm-score .rs-line { scroll-margin: 90px 0 120px; }
+.rhythm-score .is-active path, .rhythm-score .is-active rect { fill: var(--mu); stroke: var(--mu); }
+.rs-error { padding: 20px 0; color: var(--cream); }
+.ritmo-warn { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--bk); padding: 10px 12px; font-size: 15px; }
+.ritmo-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ritmo-play { display: grid; gap: 10px; padding: 14px 16px; }
+.ritmo-tempo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ritmo-tempo .num { font-family: var(--display); font-weight: 900; font-size: 26px; min-width: 4.4ch; }
+.ritmo-tempo .range { flex: 1 1 160px; width: auto; }
+.ritmo-more { justify-self: start; background: none; border: 0; padding: 8px 0; min-height: 44px; cursor: pointer; font-weight: 600; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mu); }
+.ritmo-adv .chip { min-height: 40px; }
+.chip:disabled { opacity: 0.35; cursor: not-allowed; }
+.ritmo-hint { max-width: 62ch; font-size: 14px; }
+@media (max-width: 760px) {
+  .ritmo-quick { gap: 6px; }
+  .ritmo-field > span { letter-spacing: 0.06em; }
+  .ritmo-field .sel { padding-inline: 6px; }
+  .ritmo-actions .btn { flex: 1 1 auto; text-align: center; padding-inline: 16px; }
+  .ritmo-actions .btn.ghost:first-child { flex: 0 0 auto; }
+  .ritmo-wide { display: none; }
+  .ritmo-stage { margin-inline: calc(-1 * var(--pad) + 6px); padding-inline: 10px; }
+}
