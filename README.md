@@ -13,7 +13,8 @@ npm run build      # build de produção em dist/
 npm run art        # regera as ilustrações em public/art a partir de design/art.mjs
 ```
 
-O progresso fica salvo no navegador (localStorage, chave `clave:v1`). Ainda não há login nem servidor.
+O progresso fica salvo no navegador (localStorage, chave `clave:v1`). Conta é opcional — ver
+[Contas (Supabase)](#contas-supabase) — e sem ela o app funciona 100% local.
 
 ## O que existe
 
@@ -91,6 +92,25 @@ npm test
 npx tsc --noEmit -p tsconfig.app.json
 npm run lint
 ```
+
+## Contas (Supabase)
+
+Conta é opcional: sem ela, tudo fica só no navegador (localStorage). Com conta, dá para entrar
+por e-mail (link mágico), Google ou Apple; menores de 13 anos nunca chegam a criar conta.
+
+Para rodar localmente com conta, copie `.env.example` para `.env.local` e preencha com os dados
+do projeto Supabase (painel do projeto → Project Settings → API):
+
+```bash
+cp .env.example .env.local
+```
+
+O passo a passo completo — criar o projeto, rodar o schema, configurar o login por e-mail,
+Google e Apple — está em [docs/supabase-setup.md](docs/supabase-setup.md).
+
+A sincronização do progresso local com a conta (migrar o que já tinha, resolver conflitos) é uma
+etapa separada (B2) e ainda não existe; por enquanto, logar só salva nome/instrumento e, se maior
+de 13 anos, data de nascimento e faixa etária.
 
 ## Como contribuir
 
