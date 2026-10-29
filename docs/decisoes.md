@@ -311,6 +311,13 @@ Repositório privado no GitHub, com testes automáticos no GitHub Actions e muda
 request. Site e PWA no Cloudflare Pages, com link de prévia por pull request. Supabase no plano
 gratuito. Build de iOS no Mac com Xcode e de Android no Android Studio.
 
+**Linha de trabalho · definida em 29/10:** `main` é a linha estável e `dev` é onde o trabalho se
+integra. Os pull requests vão para `dev`; `dev` entra em `main` quando a release fecha. As duas
+branches são protegidas e só recebem mudança por pull request.
+
+**Atenção:** em 29/10 constatamos que o repositório estava **público** e que a `main` **não tinha
+proteção nenhuma**, ao contrário do que esta decisão e o F1-00 afirmavam. Ver pendências.
+
 ### 26. Gerador de partituras · *novo em 29/10*
 
 O gerador é **infraestrutura**, não uma ferramenta entre outras: ele alimenta leitura melódica,
@@ -425,6 +432,9 @@ Dependem do beta, não de decisão agora:
 
 ## Pendências fora do código
 
+- **Tornar o repositório privado.** Em 29/10 ele estava público, contra a decisão 25.
+- **Decidir qual branch o Cloudflare Pages publica como produção** (`main` ou `dev`). É
+  configuração no painel do Cloudflare, não no repositório.
 - Busca oficial da marca "Clave" no INPI e conferir no USPTO o status de "Clave Al Ingles, LLC"
   (software educacional), antes de pagar as contas de desenvolvedor.
 - Contas de desenvolvedor Apple (US$ 99/ano) e Google Play (US$ 25, uma vez) — só na Fase 1.5.

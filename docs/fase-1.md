@@ -38,11 +38,19 @@ As tarefas marcadas com 👤 são do time, fora do código.
 
 ---
 
-## F1-00 · Fundação ✅ concluída
+## F1-00 · Fundação — parcialmente concluída
 
-Git iniciado, repositório privado no GitHub com os três e branch principal protegida; GitHub
-Actions rodando `npm test`, `tsc` e `npm run lint` em cada pull request; Cloudflare Pages
-publicando a branch principal com link de prévia por pull request.
+**Feito:** git iniciado; repositório no GitHub com os três; GitHub Actions rodando `npm test`,
+`tsc` e `npm run lint` em cada pull request; Cloudflare Pages com link de prévia por pull request.
+
+**Linha de trabalho (29/10):** `main` é a linha estável, `dev` é onde o trabalho se integra.
+Os pull requests vão para `dev`; `dev` entra em `main` quando a release fecha.
+
+**Ainda falta:**
+
+- [ ] Proteger `main` e `dev` — em 29/10 a `main` não tinha nenhuma proteção.
+- [ ] Tornar o repositório privado, como manda a decisão 25 — em 29/10 ele estava público.
+- [ ] Decidir qual branch o Cloudflare Pages publica como produção.
 
 ---
 
