@@ -72,7 +72,7 @@ e o teste de traduções passa.
 
 - Substituir as seis áreas atuais pelos módulos `theory`, `technique`, `perception.melodic`,
   `perception.harmonic`, `perception.rhythmic`. `routines` é organizador, não módulo de habilidade.
-- Reclassificar os 23 exercícios e as aulas; notação e símbolos vão para Teoria.
+- Reclassificar os 20 exercícios e as aulas; notação e símbolos vão para Teoria.
 - Cada exercício ganha `exercise_id` estável, `primary_module`, `skill_tags` e `content_tags`.
   As etiquetas são controladas e versionadas — nada de texto livre.
 - Rotas e rótulos nos dois idiomas.
