@@ -10,7 +10,7 @@
 // Depois, em blocos de quatro compassos, às vezes o 3º repete o 1º (frase A B A C), e nos níveis
 // com síncope algumas colcheias do fim do compasso são ligadas ao tempo 1 do seguinte (antecipação).
 import {
-  cellsFor, METERS, TPQ, VALUE_TICKS, LEVELS,
+  cellsFor, METERS, TPQ, VALUE_TICKS,
   type Cell, type Figure, type Level, type Meter, type MeterId, type NoteValue, type RestKind, type Trait,
 } from './rhythm-cells';
 
@@ -309,7 +309,3 @@ export function timeline(ex: Exercise): { entries: TimelineEntry[]; total: numbe
   return { entries, total: ex.bars.length * m.barTicks };
 }
 
-export function describeSettings(s: RhythmSettings): string {
-  const lv = LEVELS.find(l => l.level === s.level)!;
-  return `Nível ${s.level} · ${lv.name} · ${s.meter} · ${s.bars} compassos`;
-}

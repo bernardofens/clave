@@ -11,20 +11,21 @@ import Fretboard, { TUNINGS } from '../components/music/Fretboard';
 import Keyboard from '../components/music/Keyboard';
 import { Btn, Chip } from '../components/ui';
 import { useToolLog } from './common';
+import { useT, type MessageKey } from '../i18n';
 
 interface Item { deg: number; type?: ChordId; flat?: boolean }
 type Style = 'rock' | 'balada' | 'bossa' | 'samba' | 'swing' | 'shuffle' | 'baiao' | 'nenhum';
-interface Preset { id: string; name: string; mode: 'maior' | 'menor'; items: Item[]; style: Style; bpm: number; tetrads: boolean }
+interface Preset { id: string; name: MessageKey; mode: 'maior' | 'menor'; items: Item[]; style: Style; bpm: number; tetrads: boolean }
 
 const P = (deg: number, type?: ChordId, flat?: boolean): Item => ({ deg, type, flat });
 export const PRESETS: Preset[] = [
-  { id: 'pop', name: 'Pop · I–V–vi–IV', mode: 'maior', items: [P(1), P(5), P(6), P(4)], style: 'rock', bpm: 96, tetrads: false },
-  { id: 'ii-v-i', name: 'Jazz · ii–V–I', mode: 'maior', items: [P(2), P(5), P(1), P(1)], style: 'swing', bpm: 132, tetrads: true },
-  { id: 'blues', name: 'Blues de 12 compassos', mode: 'maior', items: [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5].map(d => P(d, '7')), style: 'shuffle', bpm: 88, tetrads: true },
-  { id: 'bossa', name: 'Bossa · I7M–VI7–ii7–V7', mode: 'maior', items: [P(1), P(6, '7'), P(2), P(5)], style: 'bossa', bpm: 128, tetrads: true },
-  { id: 'samba', name: 'Samba · I–VI7–ii–V7', mode: 'maior', items: [P(1), P(6, '7'), P(2), P(5, '7')], style: 'samba', bpm: 98, tetrads: false },
-  { id: 'andaluz', name: 'Andaluz · i–♭VII–♭VI–V', mode: 'menor', items: [P(1), P(7), P(6), P(5, 'maior')], style: 'balada', bpm: 80, tetrads: false },
-  { id: 'baiao', name: 'Baião · I7–♭VII', mode: 'maior', items: [P(1, '7'), P(1, '7'), P(7, 'maior', true), P(1, '7')], style: 'baiao', bpm: 104, tetrads: false },
+  { id: 'pop', name: 'backing.presetPop', mode: 'maior', items: [P(1), P(5), P(6), P(4)], style: 'rock', bpm: 96, tetrads: false },
+  { id: 'ii-v-i', name: 'backing.presetIiVI', mode: 'maior', items: [P(2), P(5), P(1), P(1)], style: 'swing', bpm: 132, tetrads: true },
+  { id: 'blues', name: 'backing.presetBlues', mode: 'maior', items: [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5].map(d => P(d, '7')), style: 'shuffle', bpm: 88, tetrads: true },
+  { id: 'bossa', name: 'backing.presetBossa', mode: 'maior', items: [P(1), P(6, '7'), P(2), P(5)], style: 'bossa', bpm: 128, tetrads: true },
+  { id: 'samba', name: 'backing.presetSamba', mode: 'maior', items: [P(1), P(6, '7'), P(2), P(5, '7')], style: 'samba', bpm: 98, tetrads: false },
+  { id: 'andaluz', name: 'backing.presetAndalusian', mode: 'menor', items: [P(1), P(7), P(6), P(5, 'maior')], style: 'balada', bpm: 80, tetrads: false },
+  { id: 'baiao', name: 'backing.presetBaiao', mode: 'maior', items: [P(1, '7'), P(1, '7'), P(7, 'maior', true), P(1, '7')], style: 'baiao', bpm: 104, tetrads: false },
 ];
 
 // ---------------- levadas ----------------
@@ -40,10 +41,14 @@ const GROOVES: Record<Style, Groove> = {
   shuffle: { grid: 12, kick: [0, 6], snare: [3, 9], hat: [0, 2, 3, 5, 6, 8, 9, 11], bass: [[0, 0, 2], [2, 0, 1], [3, 4, 2], [5, 4, 1], [6, 7, 2], [8, 7, 1], [9, 9, 2], [11, 7, 1]], comp: [[2, 1], [5, 1], [8, 1], [11, 1]] },
   nenhum: { grid: 16, kick: [], snare: [], hat: [], bass: [[0, 0, 16]], comp: [[0, 16]] },
 };
-const STYLE_NAMES: Record<Style, string> = { rock: 'Rock/pop', balada: 'Balada', bossa: 'Bossa nova', samba: 'Samba', baiao: 'Baião', swing: 'Swing', shuffle: 'Shuffle', nenhum: 'Só acordes' };
+const STYLE_NAMES: Record<Style, MessageKey> = {
+  rock: 'backing.styleRock', balada: 'backing.styleBallad', bossa: 'backing.styleBossa', samba: 'backing.styleSamba',
+  baiao: 'backing.styleBaiao', swing: 'backing.styleSwing', shuffle: 'backing.styleShuffle', nenhum: 'backing.styleNone',
+};
+const VOICES: [Voice, MessageKey][] = [['piano', 'backing.voicePiano'], ['pad', 'backing.voicePad'], ['violao', 'backing.voiceGuitar'], ['orgao', 'backing.voiceOrgan']];
 
 // ---------------- harmonia ----------------
-interface Resolved { root: Note; type: ChordId; symbol: string; roman: string; scales: { id: ScaleId; root: Note; label: string }[] }
+interface Resolved { root: Note; type: ChordId; symbol: string; roman: string; scales: { id: ScaleId; root: Note; why: MessageKey }[] }
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 function romanFor(deg: number, type: ChordId, flat: boolean) {
   const minor = ['menor', 'm7', 'dim', 'm7b5', 'dim7'].includes(type);
@@ -60,19 +65,19 @@ function resolve(item: Item, tonic: Note, mode: 'maior' | 'menor', tetrads: bool
   return { root, type, symbol: chordSymbol(root, type), roman, scales: suggestScales(root, type, item.deg, mode, !!item.type || !!item.flat) };
 }
 function suggestScales(root: Note, type: ChordId, deg: number, mode: 'maior' | 'menor', borrowed: boolean): Resolved['scales'] {
-  const s = (id: ScaleId, why: string) => ({ id, root, label: `${SCALES[id].name} (${why})` });
-  if (type === '7') return [s('mixolidio', 'acorde dominante'), s('blues', 'som de blues')];
-  if (type === 'm7b5' || type === 'dim' || type === 'dim7') return [s('locrio', 'meio-diminuto')];
+  const s = (id: ScaleId, why: MessageKey) => ({ id, root, why });
+  if (type === '7') return [s('mixolidio', 'backing.whyDominant'), s('blues', 'backing.whyBlues')];
+  if (type === 'm7b5' || type === 'dim' || type === 'dim7') return [s('locrio', 'backing.whyHalfDim')];
   if (type === '7M' || type === 'maior') {
-    if (!borrowed && mode === 'maior' && deg === 4) return [s('lidio', 'IV do campo maior'), s('penta-maior', 'segura')];
-    return [s('maior', 'acorde maior'), s('penta-maior', 'segura')];
+    if (!borrowed && mode === 'maior' && deg === 4) return [s('lidio', 'backing.whyIvMajor'), s('penta-maior', 'backing.whySafe')];
+    return [s('maior', 'backing.whyMajorChord'), s('penta-maior', 'backing.whySafe')];
   }
   if (!borrowed && mode === 'maior') {
-    if (deg === 2) return [s('dorico', 'ii do campo maior'), s('penta-menor', 'segura')];
-    if (deg === 3) return [s('frigio', 'iii do campo maior'), s('penta-menor', 'segura')];
+    if (deg === 2) return [s('dorico', 'backing.whyIiMajor'), s('penta-menor', 'backing.whySafe')];
+    if (deg === 3) return [s('frigio', 'backing.whyIiiMajor'), s('penta-menor', 'backing.whySafe')];
   }
-  if (!borrowed && mode === 'menor' && deg === 4) return [s('dorico', 'iv do campo menor'), s('penta-menor', 'segura')];
-  return [s('menor', 'acorde menor'), s('penta-menor', 'segura')];
+  if (!borrowed && mode === 'menor' && deg === 4) return [s('dorico', 'backing.whyIvMinor'), s('penta-menor', 'backing.whySafe')];
+  return [s('menor', 'backing.whyMinorChord'), s('penta-menor', 'backing.whySafe')];
 }
 const voice = (root: Note, type: ChordId) => {
   const r = pc(root);
@@ -82,6 +87,7 @@ const voice = (root: Note, type: ChordId) => {
 export default function Backing({ presetId }: { presetId?: string }) {
   const [params] = useSearchParams();
   const naming = useStore(s => s.naming);
+  const t = useT();
   const instrument = useStore(s => s.profile.instrument);
   const initial = PRESETS.find(p => p.id === (presetId ?? params.get('p'))) ?? PRESETS[0];
   const [fifths, setFifths] = useState(0);
@@ -161,15 +167,15 @@ export default function Backing({ presetId }: { presetId?: string }) {
   return (
     <div style={{ display: 'grid', gap: 18 }}>
       <section className="panel" style={{ display: 'grid', gap: 14 }}>
-        <div className="row"><span className="eyebrow">Progressões prontas</span>{PRESETS.map(p => <Chip key={p.id} onClick={() => loadPreset(p)}>{p.name}</Chip>)}</div>
+        <div className="row"><span className="eyebrow">{t('backing.readyMade')}</span>{PRESETS.map(p => <Chip key={p.id} onClick={() => loadPreset(p)}>{t(p.name)}</Chip>)}</div>
         <div className="row">
-          <span className="eyebrow">Tom</span>
-          <select className="sel" value={fifths} onChange={e => setFifths(Number(e.target.value))} aria-label="Tonalidade" id="bk-tom">
+          <span className="eyebrow">{t('backing.key')}</span>
+          <select className="sel" value={fifths} onChange={e => setFifths(Number(e.target.value))} aria-label={t('backing.tonality')} id="bk-tom">
             {Array.from({ length: 13 }, (_, i) => i - 6).map(f => <option key={f} value={f}>{noteName(mode === 'maior' ? majorTonic(f) : transpose(majorTonic(f), { num: 6, semis: 9 }), naming)}</option>)}
           </select>
-          <Chip on={mode === 'maior'} onClick={() => setMode('maior')}>Maior</Chip>
-          <Chip on={mode === 'menor'} onClick={() => setMode('menor')}>Menor</Chip>
-          <Chip on={tetrads} onClick={() => setTetrads(v => !v)}>Tétrades</Chip>
+          <Chip on={mode === 'maior'} onClick={() => setMode('maior')}>{t('backing.major')}</Chip>
+          <Chip on={mode === 'menor'} onClick={() => setMode('menor')}>{t('backing.minor')}</Chip>
+          <Chip on={tetrads} onClick={() => setTetrads(v => !v)}>{t('backing.tetrads')}</Chip>
         </div>
       </section>
 
@@ -186,26 +192,26 @@ export default function Backing({ presetId }: { presetId?: string }) {
           ))}
         </div>
         <div className="row">
-          <Btn onClick={start} tone={running ? 'mu' : undefined}>{running ? 'Parar' : '▶ Tocar'}</Btn>
+          <Btn onClick={start} tone={running ? 'mu' : undefined}>{t(running ? 'common.stop' : 'common.playPlay')}</Btn>
           <span className="num" style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 30 }}>♩ = {bpm}</span>
-          <input className="range" style={{ maxWidth: 220 }} type="range" min={50} max={220} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label="Andamento" id="bk-bpm" />
+          <input className="range" style={{ maxWidth: 220 }} type="range" min={50} max={220} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label={t('common.tempo')} id="bk-bpm" />
         </div>
-        <div className="row"><span className="eyebrow" style={{ color: 'var(--cream)' }}>Levada</span>{(Object.keys(STYLE_NAMES) as Style[]).map(s => <Chip key={s} on={style === s} onClick={() => changeStyle(s)}>{STYLE_NAMES[s]}</Chip>)}</div>
+        <div className="row"><span className="eyebrow" style={{ color: 'var(--cream)' }}>{t('backing.groove')}</span>{(Object.keys(STYLE_NAMES) as Style[]).map(s => <Chip key={s} on={style === s} onClick={() => changeStyle(s)}>{t(STYLE_NAMES[s])}</Chip>)}</div>
         <div className="row">
-          <span className="eyebrow" style={{ color: 'var(--cream)' }}>Som dos acordes</span>
-          {([['piano', 'Piano'], ['pad', 'Synth pad'], ['violao', 'Violão'], ['orgao', 'Órgão']] as [Voice, string][]).map(([v, l]) => <Chip key={v} on={compVoice === v} onClick={() => setCompVoice(v)}>{l}</Chip>)}
-          <Chip on={bassOn} onClick={() => setBassOn(v => !v)}>Baixo</Chip>
+          <span className="eyebrow" style={{ color: 'var(--cream)' }}>{t('backing.chordSound')}</span>
+          {VOICES.map(([v, l]) => <Chip key={v} on={compVoice === v} onClick={() => setCompVoice(v)}>{t(l)}</Chip>)}
+          <Chip on={bassOn} onClick={() => setBassOn(v => !v)}>{t('backing.bass')}</Chip>
         </div>
       </section>
 
       <section className="panel" style={{ display: 'grid', gap: 10 }}>
-        <div className="eyebrow">Monte a sua: toque nos graus do campo harmônico de {noteName(tonic, naming)} {mode}</div>
+        <div className="eyebrow">{t(mode === 'maior' ? 'backing.buildYoursMajor' : 'backing.buildYoursMinor', { tonic: noteName(tonic, naming) })}</div>
         <div className="row">
           {field.map(d => <Chip key={d.degree} onClick={() => setItems(v => [...v, { deg: d.degree }])}><b>{d.roman}</b> · {d.symbol}</Chip>)}
         </div>
         <div className="row">
-          <Btn small tone="ghost" onClick={() => setItems(v => v.slice(0, -1))} disabled={!items.length}>Apagar último</Btn>
-          <Btn small tone="ghost" onClick={() => { setItems([]); setBar(0); }}>Limpar</Btn>
+          <Btn small tone="ghost" onClick={() => setItems(v => v.slice(0, -1))} disabled={!items.length}>{t('backing.deleteLast')}</Btn>
+          <Btn small tone="ghost" onClick={() => { setItems([]); setBar(0); }}>{t('backing.clear')}</Btn>
         </div>
       </section>
 
@@ -213,18 +219,18 @@ export default function Backing({ presetId }: { presetId?: string }) {
         <section className="panel" style={{ display: 'grid', gap: 14 }}>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <div>
-              <div className="eyebrow">Sobre {cur.symbol} ({cur.roman}), experimente</div>
+              <div className="eyebrow">{t('backing.overChord', { chord: cur.symbol, roman: cur.roman })}</div>
               <div className="row" style={{ marginTop: 8 }}>
-                {cur.scales.map((s, i) => <Chip key={s.id} on={i === Math.min(scaleIdx, cur.scales.length - 1)} onClick={() => setScaleIdx(i)}>{noteName(s.root, naming)} {s.label}</Chip>)}
+                {cur.scales.map((s, i) => <Chip key={s.id} on={i === Math.min(scaleIdx, cur.scales.length - 1)} onClick={() => setScaleIdx(i)}>{noteName(s.root, naming)} {SCALES[s.id].name} ({t(s.why)})</Chip>)}
               </div>
             </div>
             <div className="row">
-              <Chip on={view === 'teclado'} onClick={() => setView('teclado')}>Teclado</Chip>
-              <Chip on={view === 'braco'} onClick={() => setView('braco')}>Braço</Chip>
+              <Chip on={view === 'teclado'} onClick={() => setView('teclado')}>{t('backing.keyboard')}</Chip>
+              <Chip on={view === 'braco'} onClick={() => setView('braco')}>{t('backing.neck')}</Chip>
             </div>
           </div>
           <div className="muted" style={{ fontSize: 14 }}>
-            Notas: {scaleNotes.map(n => noteName(n, naming)).join(' · ')}. <span style={{ color: 'var(--ve)' }}>■</span> notas do acorde · <span style={{ color: 'var(--mu)' }}>■</span> resto da escala
+            {t('backing.notesLine', { notes: scaleNotes.map(n => noteName(n, naming)).join(' · ') })} <span style={{ color: 'var(--ve)' }}>■</span> {t('backing.chordNotes')} · <span style={{ color: 'var(--mu)' }}>■</span> {t('backing.restOfScale')}
           </div>
           {view === 'teclado'
             ? <Keyboard lo={48} hi={83} marks={kMarks} naming={naming} />

@@ -6,6 +6,7 @@ import { toolById } from '../exercises/tools';
 import { useStore } from '../state/store';
 import { Art, Btn, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
+import { useT } from '../i18n';
 
 export function moduleProgress(id: string, stats: Record<string, { correct: number }>) {
   const m = moduleById[id];
@@ -15,12 +16,13 @@ export function moduleProgress(id: string, stats: Record<string, { correct: numb
 
 export default function Estudar() {
   const stats = useStore(s => s.stats);
+  const t = useT();
   return (
     <div>
-      <PageHead tag="Estudar" title="Aulas e trilhas" sub="Cada aula explica por que aquilo importa, como encaixar nos seus estudos e leva direto para os exercícios. Os gêneros são discos: cada faixa é uma aula ou um treino." />
+      <PageHead tag={t('study.tag')} title={t('study.title')} sub={t('study.sub')} />
 
       <section className="sec" style={{ marginTop: 20 }}>
-        <SecTitle>Trilhas</SecTitle>
+        <SecTitle>{t('study.roadmaps')}</SecTitle>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
           {ROADMAPS.map(r => {
             const p = r.steps.reduce((a, s) => a + moduleProgress(s.module, stats), 0) / r.steps.length;
@@ -29,8 +31,7 @@ export default function Estudar() {
                 <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
                   <Art name={r.art} style={{ width: 84, height: 84, objectFit: 'cover' }} />
                   <div>
-                    <div className="row">{r.premium ? <Tag tone="ve">Clave+</Tag> : <Tag>Grátis</Tag>}</div>
-                    <h3 style={{ fontSize: 34, marginTop: 6 }}>{r.title}</h3>
+                    <h3 style={{ fontSize: 34 }}>{r.title}</h3>
                     <span className="script" style={{ color: 'var(--mu)', fontSize: 20 }}>{r.sub}</span>
                   </div>
                 </div>
@@ -45,12 +46,12 @@ export default function Estudar() {
       </section>
 
       <section className="sec">
-        <SecTitle>Gêneros</SecTitle>
+        <SecTitle>{t('study.genres')}</SecTitle>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
           {GENRES.map(g => (
             <Link key={g.id} to={`/estudar/genero/${g.id}`} className="cover-card">
-              <Art name={g.art} alt={`Capa de ${g.name}`} />
-              <div className="lbl"><h3 style={{ color: g.color }}>{g.name}</h3><span className="sub">{g.sub}</span><small>{g.cat} · {g.sides.reduce((a, s) => a + s.tracks.length, 0)} faixas</small></div>
+              <Art name={g.art} alt={t('study.cover', { name: g.name })} />
+              <div className="lbl"><h3 style={{ color: g.color }}>{g.name}</h3><span className="sub">{g.sub}</span><small>{g.cat} · {t('study.tracks', { count: g.sides.reduce((a, s) => a + s.tracks.length, 0) })}</small></div>
             </Link>
           ))}
         </div>
@@ -67,8 +68,7 @@ export default function Estudar() {
                 <Link key={m.id} to={`/estudar/${m.id}`} className="ex-card">
                   <span className="acc" style={{ background: a.color }} />
                   <div style={{ minWidth: 0 }}>
-                    <div className="row">{m.premium && <Tag tone="ve">Clave+</Tag>}</div>
-                    <h3 style={{ marginTop: m.premium ? 6 : 0 }}>{m.title}</h3>
+                    <h3>{m.title}</h3>
                     <p>{m.why}</p>
                     <div className="progressbar" style={{ marginTop: 10 }}><i style={{ width: `${moduleProgress(m.id, stats) * 100}%` }} /></div>
                   </div>
@@ -84,22 +84,23 @@ export default function Estudar() {
 
 export function ModulePage() {
   const { id = '' } = useParams();
+  const t = useT();
   const m = moduleById[id];
   if (!m) return <NotFound />;
   const a = areaById[m.area];
   return (
     <div style={{ display: 'grid', gap: 28 }}>
-      <Link to="/estudar" className="eyebrow" style={{ textDecoration: 'none' }}>← Estudar</Link>
+      <Link to="/estudar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('study.back')}</Link>
       <header className="page-head" style={{ marginBottom: 0 }}>
-        <div><div className="row"><Tag>{a.name}</Tag>{m.premium && <Tag tone="ve">Clave+ · prévia</Tag>}</div><h1>{m.title}</h1></div>
+        <div><Tag>{a.name}</Tag><h1>{m.title}</h1></div>
         <Art name={a.art} style={{ width: 120 }} />
       </header>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-        <div className="panel" style={{ background: 'var(--co)' }}><div className="eyebrow" style={{ color: 'var(--cream)' }}>Por que importa</div><p style={{ fontSize: 18, marginTop: 8 }}>{m.why}</p></div>
-        <div className="panel"><div className="eyebrow">Como encaixar nos estudos</div><p style={{ fontSize: 18, marginTop: 8 }}>{m.how}</p></div>
+        <div className="panel" style={{ background: 'var(--co)' }}><div className="eyebrow" style={{ color: 'var(--cream)' }}>{t('study.why')}</div><p style={{ fontSize: 18, marginTop: 8 }}>{m.why}</p></div>
+        <div className="panel"><div className="eyebrow">{t('study.how')}</div><p style={{ fontSize: 18, marginTop: 8 }}>{m.how}</p></div>
       </div>
       <section>
-        <SecTitle>Passo a passo</SecTitle>
+        <SecTitle>{t('study.steps')}</SecTitle>
         <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 10 }}>
           {m.steps.map((s, i) => (
             <li key={i} style={{ display: 'flex', gap: 16, alignItems: 'baseline', background: 'var(--bk-2)', padding: '14px 18px' }}>
@@ -110,13 +111,13 @@ export function ModulePage() {
         </ol>
       </section>
       <section>
-        <SecTitle>Pratique</SecTitle>
+        <SecTitle>{t('study.practice')}</SecTitle>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
           {m.exercises.map(e => exerciseById[e] && (
             <Link key={e} to={`/treinar/${e}`} className="ex-card"><span className="acc" style={{ background: areaById[exerciseById[e].area].color }} /><div><h3>{exerciseById[e].title}</h3><p>{exerciseById[e].desc}</p></div></Link>
           ))}
-          {m.tools.map(t => toolById[t] && (
-            <Link key={t} to={toolById[t].path} className="ex-card"><span className="acc" style={{ background: 'var(--co)' }} /><Art name={toolById[t].art} style={{ width: 48, flex: 'none' }} /><div><h3>{toolById[t].title}</h3><p>{toolById[t].desc}</p></div></Link>
+          {m.tools.map(id => toolById[id] && (
+            <Link key={id} to={toolById[id].path} className="ex-card"><span className="acc" style={{ background: 'var(--co)' }} /><Art name={toolById[id].art} style={{ width: 48, flex: 'none' }} /><div><h3>{toolById[id].title}</h3><p>{toolById[id].desc}</p></div></Link>
           ))}
         </div>
       </section>
@@ -126,15 +127,16 @@ export function ModulePage() {
 
 export function GenrePage() {
   const { id = '' } = useParams();
+  const t = useT();
   const g = genreById[id];
   if (!g) return <NotFound />;
   return (
     <div style={{ display: 'grid', gap: 24 }}>
-      <Link to="/estudar" className="eyebrow" style={{ textDecoration: 'none' }}>← Estudar</Link>
+      <Link to="/estudar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('study.back')}</Link>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', alignItems: 'start', gap: 32 }}>
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'absolute', inset: '16px -16px -16px 16px', background: 'var(--co)' }} />
-          <Art name={g.art} alt={`Capa de ${g.name}`} style={{ position: 'relative', width: '100%' }} />
+          <Art name={g.art} alt={t('study.cover', { name: g.name })} style={{ position: 'relative', width: '100%' }} />
         </div>
         <div style={{ display: 'grid', gap: 16 }}>
           <span className="eyebrow">{g.cat}</span>
@@ -145,18 +147,18 @@ export function GenrePage() {
             <div key={side.side}>
               <div className="eyebrow" style={{ borderBottom: '1px solid var(--line)', paddingBottom: 6, marginBottom: 8 }}>{side.side}</div>
               <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
-                {side.tracks.map((t, i) => (
-                  <li key={t.title} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                {side.tracks.map((track, i) => (
+                  <li key={track.title} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
                     <span style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 20, color: 'var(--mu)', width: 18 }}>{i + 1}</span>
-                    {t.to ? <Link to={t.to} style={{ fontWeight: 600 }}>{t.title}</Link> : <span style={{ fontWeight: 600 }}>{t.title} <span className="muted" style={{ fontWeight: 400 }}>(em breve)</span></span>}
+                    {track.to ? <Link to={track.to} style={{ fontWeight: 600 }}>{track.title}</Link> : <span style={{ fontWeight: 600 }}>{track.title} <span className="muted" style={{ fontWeight: 400 }}>{t('study.soon')}</span></span>}
                     <span style={{ flex: 1, borderBottom: '1px dotted #5a534a', transform: 'translateY(-4px)' }} />
-                    <span className="num muted">{t.min}:00</span>
+                    <span className="num muted">{track.min}:00</span>
                   </li>
                 ))}
               </ol>
             </div>
           ))}
-          <div><Btn to={g.sides[0].tracks.find(t => t.to)?.to ?? '/treinar'}>▶ Tocar a primeira faixa</Btn></div>
+          <div><Btn to={g.sides[0].tracks.find(track => track.to)?.to ?? '/treinar'}>{t('study.playFirst')}</Btn></div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
-// Mentor: prévia do recurso pago. Nesta versão as respostas são geradas por regras
-// a partir do progresso salvo; a versão com IA entra no plano Clave+.
+// Mentor: prévia por regras. As respostas são geradas a partir do progresso salvo, e as
+// palavras que disparam cada uma vêm do idioma (mentor.kw* em src/i18n).
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AREAS, areaById, type AreaId } from '../data/areas';
@@ -7,7 +7,10 @@ import { MODULES } from '../data/content';
 import { areaXP, levelOf } from '../data/session';
 import { EXERCISES, exerciseById } from '../exercises/catalog';
 import { getState, streakDays, useStore } from '../state/store';
-import { Art, Chip, PageHead, Tag } from '../components/ui';
+import { Art, Chip, PageHead } from '../components/ui';
+import { useT, type MessageKey, type Vars } from '../i18n';
+
+type T = (key: MessageKey, vars?: Vars) => string;
 
 interface Msg { from: 'eu' | 'clave'; text: string; links?: { to: string; label: string }[] }
 
@@ -22,47 +25,51 @@ function weakest(): { area: AreaId; ex?: string; acc?: number } {
   return { area: (Object.keys(xp) as AreaId[]).sort((a, b) => xp[a] - xp[b])[0] };
 }
 
-function answer(q: string): Msg {
+function answer(q: string, t: T): Msg {
   const s = getState();
-  const t = q.toLowerCase();
-  if (t.includes('fraco') || t.includes('melhorar') || t.includes('dificuldade')) {
+  const lower = q.toLowerCase();
+  const has = (key: MessageKey) => t(key).split('|').some(w => lower.includes(w));
+  if (has('mentor.kwWeak')) {
     const w = weakest();
     if (w.ex) {
-      return { from: 'clave', text: `Seu ponto mais frágil agora é "${exerciseById[w.ex].title}", com ${Math.round((w.acc ?? 0) * 100)}% de acerto. Faça 10 minutos por dia, com menos opções nas configurações, e só aumente quando passar de 85%.`, links: [{ to: `/treinar/${w.ex}`, label: `Treinar ${exerciseById[w.ex].title}` }] };
+      const title = exerciseById[w.ex].title;
+      return { from: 'clave', text: t('mentor.weakExercise', { title, pct: Math.round((w.acc ?? 0) * 100) }), links: [{ to: `/treinar/${w.ex}`, label: t('mentor.trainExercise', { title }) }] };
     }
-    return { from: 'clave', text: `Ainda tenho poucos dados. A área que você menos treinou é ${areaById[w.area].name}. Comece por ela.`, links: [{ to: '/treinar', label: 'Abrir Treinar' }] };
+    return { from: 'clave', text: t('mentor.weakArea', { area: areaById[w.area].name }), links: [{ to: '/treinar', label: t('mentor.openTrain') }] };
   }
-  if (t.includes('hoje') || t.includes('treino') || t.includes('fazer')) {
+  if (has('mentor.kwToday')) {
     const w = weakest();
     const mod = MODULES.find(m => m.area === w.area && !m.premium);
-    return { from: 'clave', text: `Sugiro uma sessão de 10 minutos puxada para ${areaById[w.area].name}. ${mod ? `Se ainda não leu, a aula "${mod.title}" explica o porquê em 2 minutos.` : ''}`, links: [{ to: '/', label: 'Montar a sessão' }, ...(mod ? [{ to: `/estudar/${mod.id}`, label: mod.title }] : [])] };
+    const area = areaById[w.area].name;
+    return { from: 'clave', text: mod ? t('mentor.todayLesson', { area, title: mod.title }) : t('mentor.today', { area }), links: [{ to: '/', label: t('mentor.buildSession') }, ...(mod ? [{ to: `/estudar/${mod.id}`, label: mod.title }] : [])] };
   }
-  if (t.includes('modo')) {
-    return { from: 'clave', text: 'Modos são a escala maior começando de outro grau. Dórico é o menor com 6ª maior; mixolídio é o maior com 7ª menor. Toque cada um sobre um drone e escute a nota que muda.', links: [{ to: '/estudar/modos-gregos', label: 'Aula de modos' }, { to: '/ferramentas/ambiente', label: 'Drone' }] };
+  if (has('mentor.kwModes')) {
+    return { from: 'clave', text: t('mentor.modes'), links: [{ to: '/estudar/modos-gregos', label: t('mentor.modesLesson') }, { to: '/ferramentas/ambiente', label: t('mentor.drone') }] };
   }
-  if (t.includes('semana') || t.includes('plano')) {
+  if (has('mentor.kwWeek')) {
     const goals = s.profile.goals.length ? s.profile.goals : ['improvisar'];
-    return { from: 'clave', text: `Para a semana: segunda e quarta, ouvido (10 min sem instrumento); terça e quinta, mapeamento e técnica com o instrumento; sexta, backing track para juntar tudo; no fim de semana, o plano de tonalidade. Ajustei para ${goals.length} objetivo(s) seu(s).`, links: [{ to: '/progresso#tonalidade', label: 'Plano de tonalidade' }] };
+    return { from: 'clave', text: t('mentor.week', { count: goals.length }), links: [{ to: '/progresso#tonalidade', label: t('mentor.tonalityPlan') }] };
   }
-  if (t.includes('progresso') || t.includes('nível') || t.includes('nivel')) {
+  if (has('mentor.kwProgress')) {
     const xp = areaXP(s.stats, s.history);
     const best = AREAS.map(a => ({ a, lv: levelOf(xp[a.id]).level })).sort((x, y) => y.lv - x.lv)[0];
-    return { from: 'clave', text: `Você está há ${streakDays(s.history)} dia(s) seguidos estudando. Sua área mais forte é ${best.a.name} (nível ${best.lv}).`, links: [{ to: '/progresso', label: 'Ver progresso' }] };
+    return { from: 'clave', text: t('mentor.progress', { count: streakDays(s.history), area: best.a.name, level: best.lv }), links: [{ to: '/progresso', label: t('common.seeProgress') }] };
   }
-  return { from: 'clave', text: 'Ainda estou aprendendo a conversar. Pergunte sobre o que treinar hoje, onde você está mais fraco, modos gregos ou um plano para a semana.' };
+  return { from: 'clave', text: t('mentor.fallback') };
 }
 
-const PROMPTS = ['O que treino hoje?', 'Onde estou mais fraco?', 'Me explica os modos gregos', 'Monte um plano para a semana', 'Como está meu progresso?'];
+const PROMPTS: MessageKey[] = ['mentor.prompt1', 'mentor.prompt2', 'mentor.prompt3', 'mentor.prompt4', 'mentor.prompt5'];
 
 export default function Mentor() {
   const name = useStore(s => s.profile.name);
-  const [msgs, setMsgs] = useState<Msg[]>([{ from: 'clave', text: `Oi${name ? `, ${name}` : ''}! Sou o Clave. Olho o seu progresso e sugiro o próximo passo.` }]);
+  const t = useT();
+  const [msgs, setMsgs] = useState<Msg[]>(() => [{ from: 'clave', text: name ? t('mentor.helloNamed', { name }) : t('mentor.hello') }]);
   const [text, setText] = useState('');
-  const ask = (q: string) => { if (!q.trim()) return; setMsgs(m => [...m, { from: 'eu', text: q }, answer(q)]); setText(''); };
+  const ask = (q: string) => { if (!q.trim()) return; setMsgs(m => [...m, { from: 'eu', text: q }, answer(q, t)]); setText(''); };
 
   return (
     <div>
-      <PageHead tag="Mentor · prévia" title="Clave mentor" sub="Nesta prévia, o Clave responde com regras simples a partir do seu progresso salvo. O mentor com IA, que conversa de verdade, faz parte do plano Clave+." aside={<Art name="clave-mentor" style={{ width: 150 }} />} />
+      <PageHead tag={t('mentor.tag')} title={t('mentor.title')} sub={t('mentor.sub')} aside={<Art name="clave-mentor" style={{ width: 150 }} />} />
       <div className="panel" style={{ display: 'grid', gap: 14, maxWidth: 820 }}>
         <div style={{ display: 'grid', gap: 10 }} aria-live="polite">
           {msgs.map((m, i) => (
@@ -72,13 +79,12 @@ export default function Mentor() {
             </div>
           ))}
         </div>
-        <div className="row">{PROMPTS.map(p => <Chip key={p} onClick={() => ask(p)}>{p}</Chip>)}</div>
+        <div className="row">{PROMPTS.map(p => <Chip key={p} onClick={() => ask(t(p))}>{t(p)}</Chip>)}</div>
         <form className="row" onSubmit={e => { e.preventDefault(); ask(text); }}>
-          <input id="mentor-q" value={text} onChange={e => setText(e.target.value)} placeholder="Pergunte ao Clave" aria-label="Pergunta"
+          <input id="mentor-q" value={text} onChange={e => setText(e.target.value)} placeholder={t('mentor.placeholder')} aria-label={t('mentor.question')}
             style={{ flex: 1, minWidth: 200, background: 'var(--bk-3)', border: 0, color: 'var(--cream)', padding: '10px 12px', font: 'inherit' }} />
-          <button className="btn small" type="submit"><span>Enviar</span></button>
+          <button className="btn small" type="submit"><span>{t('mentor.send')}</span></button>
         </form>
-        <Tag tone="ve">Clave+ em breve</Tag>
       </div>
     </div>
   );

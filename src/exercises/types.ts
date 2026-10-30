@@ -53,9 +53,6 @@ export interface Ctx {
 }
 
 export type GroupId = 'pauta' | 'teclado' | 'braco' | 'ouvido' | 'teoria' | 'ritmo';
-export const GROUPS: Record<GroupId, string> = {
-  pauta: 'Pauta', teclado: 'Teclado', braco: 'Braço', ouvido: 'Ouvido', teoria: 'Teoria', ritmo: 'Ritmo',
-};
 
 export interface ExerciseDef {
   id: string;

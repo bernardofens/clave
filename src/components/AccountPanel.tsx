@@ -5,11 +5,13 @@ import { useState } from 'react';
 import { checkBirthdate, deleteAccount, isSupabaseConfigured, rememberBirthdateForSignIn, signInWithEmail, signInWithProvider, signOut } from '../state/account';
 import { useStore } from '../state/store';
 import { Btn, SecTitle } from './ui';
+import { useT } from '../i18n';
 
 type Step = 'idade' | 'bloqueado' | 'entrar' | 'enviado';
 
 export default function AccountPanel() {
   const account = useStore(s => s.account);
+  const t = useT();
   const ageGroup = useStore(s => s.ageGroup);
   const [step, setStep] = useState<Step>(ageGroup ? 'entrar' : 'idade');
   const [birthdate, setBirthdate] = useState('');
@@ -23,18 +25,18 @@ export default function AccountPanel() {
   if (account) {
     return (
       <section>
-        <SecTitle>Conta</SecTitle>
+        <SecTitle>{t('account.title')}</SecTitle>
         <div className="panel" style={{ display: 'grid', gap: 12 }}>
-          <span>Conectado como <strong>{account.email ?? account.userId}</strong>. O progresso deste navegador continua aqui; a sincronização chega numa próxima etapa.</span>
+          <span>{t('account.connectedAs')} <strong>{account.email ?? account.userId}</strong>. {t('account.connectedNote')}</span>
           <div className="row">
-            <Btn small tone="ghost" onClick={() => signOut()}>Sair</Btn>
+            <Btn small tone="ghost" onClick={() => signOut()}>{t('account.signOut')}</Btn>
             {!confirmDelete ? (
-              <Btn small tone="ghost" onClick={() => setConfirmDelete(true)}>Apagar minha conta</Btn>
+              <Btn small tone="ghost" onClick={() => setConfirmDelete(true)}>{t('account.delete')}</Btn>
             ) : (
               <div className="row panel" style={{ padding: 12, background: 'var(--ve)' }}>
-                <span>Isso apaga a conta e todos os seus dados no servidor. Não dá para desfazer.</span>
-                <Btn small tone="ghost" onClick={() => deleteAccount().catch(e => setError(String(e.message ?? e)))}>Apagar tudo</Btn>
-                <Btn small tone="mu" onClick={() => setConfirmDelete(false)}>Cancelar</Btn>
+                <span>{t('account.deleteWarn')}</span>
+                <Btn small tone="ghost" onClick={() => deleteAccount().catch(e => setError(String(e.message ?? e)))}>{t('common.deleteAll')}</Btn>
+                <Btn small tone="mu" onClick={() => setConfirmDelete(false)}>{t('common.cancel')}</Btn>
               </div>
             )}
           </div>
@@ -79,39 +81,39 @@ export default function AccountPanel() {
 
   return (
     <section>
-      <SecTitle>Conta</SecTitle>
+      <SecTitle>{t('account.title')}</SecTitle>
       <div className="panel" style={{ display: 'grid', gap: 14, maxWidth: 420 }}>
-        <span>Com conta, seu progresso fica salvo além deste navegador. Continua funcionando sem conta também.</span>
+        <span>{t('account.intro')}</span>
 
         {step === 'idade' && (
           <label style={{ display: 'grid', gap: 6 }}>
-            <span className="eyebrow">Data de nascimento</span>
+            <span className="eyebrow">{t('account.birthdate')}</span>
             <input type="date" value={birthdate} onChange={e => setBirthdate(e.target.value)}
               style={{ background: 'var(--bk-3)', border: 0, color: 'var(--cream)', padding: '10px 12px', font: 'inherit', fontSize: 17 }} />
-            <Btn small onClick={checkAge} disabled={!birthdate}>Continuar</Btn>
+            <Btn small onClick={checkAge} disabled={!birthdate}>{t('common.continue')}</Btn>
           </label>
         )}
 
         {step === 'bloqueado' && (
-          <span>Contas são só para 13 anos ou mais. Seu progresso continua salvo neste navegador normalmente.</span>
+          <span>{t('account.blocked')}</span>
         )}
 
         {step === 'entrar' && (
           <>
             <div className="row">
-              <Btn small onClick={() => withProvider('google')} disabled={busy}>Entrar com Google</Btn>
-              <Btn small onClick={() => withProvider('apple')} disabled={busy}>Entrar com Apple</Btn>
+              <Btn small onClick={() => withProvider('google')} disabled={busy}>{t('account.google')}</Btn>
+              <Btn small onClick={() => withProvider('apple')} disabled={busy}>{t('account.apple')}</Btn>
             </div>
             <label style={{ display: 'grid', gap: 6 }}>
-              <span className="eyebrow">Ou por e-mail (link mágico)</span>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@email.com"
+              <span className="eyebrow">{t('account.emailLabel')}</span>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('account.emailPlaceholder')}
                 style={{ background: 'var(--bk-3)', border: 0, color: 'var(--cream)', padding: '10px 12px', font: 'inherit', fontSize: 17 }} />
-              <Btn small onClick={sendMagicLink} disabled={busy || !email}>Enviar link</Btn>
+              <Btn small onClick={sendMagicLink} disabled={busy || !email}>{t('account.sendLink')}</Btn>
             </label>
           </>
         )}
 
-        {step === 'enviado' && <span>Link enviado para {email}. Abra o e-mail e clique para entrar.</span>}
+        {step === 'enviado' && <span>{t('account.sent', { email })}</span>}
 
         {error && <span style={{ color: 'var(--ve)' }}>{error}</span>}
       </div>

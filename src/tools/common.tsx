@@ -4,6 +4,7 @@ import { atTime, Clock, drum } from '../audio/engine';
 import type { AreaId } from '../data/areas';
 import { logActivity } from '../state/store';
 import { Btn, Chip } from '../components/ui';
+import { useT } from '../i18n';
 
 /** Soma o tempo em que a ferramenta ficou ativa e registra no histórico ao sair. */
 export function useToolLog(id: string, title: string, area: AreaId, active: boolean) {
@@ -20,6 +21,7 @@ export function useToolLog(id: string, title: string, area: AreaId, active: bool
 }
 
 export function Metronome({ compact = false, onRunning }: { compact?: boolean; onRunning?: (r: boolean) => void }) {
+  const t = useT();
   const [bpm, setBpm] = useState(80);
   const [beats, setBeats] = useState(4);
   const [sub, setSub] = useState(1);
@@ -63,23 +65,23 @@ export function Metronome({ compact = false, onRunning }: { compact?: boolean; o
         <span style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: compact ? 44 : 72, lineHeight: 0.9 }} className="num">♩ = {bpm}</span>
         <span className="eyebrow" style={{ color: 'var(--cream)', marginLeft: 'auto' }}>{tempoName(bpm)}</span>
       </div>
-      <input className="range" type="range" min={30} max={240} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label="Andamento" id={compact ? 'bpm-c' : 'bpm'} />
+      <input className="range" type="range" min={30} max={240} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label={t('common.tempo')} id={compact ? 'bpm-c' : 'bpm'} />
       <div style={{ display: 'flex', gap: 10 }} aria-hidden="true">
         {Array.from({ length: beats }, (_, i) => (
           <div key={i} style={{ flex: 1, height: compact ? 10 : 16, transform: 'skewX(-12deg)', background: beat === i ? (i === 0 ? 'var(--mu)' : 'var(--cream)') : 'rgba(0,0,0,.28)', transition: 'background .05s' }} />
         ))}
       </div>
       <div className="row">
-        <Btn onClick={toggle} tone={running ? 'mu' : undefined} small={compact}>{running ? 'Parar' : 'Tocar'}</Btn>
-        <Btn onClick={tap} tone="ghost" small>Tap</Btn>
+        <Btn onClick={toggle} tone={running ? 'mu' : undefined} small={compact}>{t(running ? 'common.stop' : 'common.play')}</Btn>
+        <Btn onClick={tap} tone="ghost" small>{t('metronome.tap')}</Btn>
         <Btn onClick={() => setBpm(b => Math.max(30, b - 4))} tone="ghost" small>−4</Btn>
         <Btn onClick={() => setBpm(b => Math.min(240, b + 4))} tone="ghost" small>+4</Btn>
       </div>
       {!compact && (
         <div className="row">
-          <span className="eyebrow" style={{ color: 'var(--cream)' }}>Compasso</span>
+          <span className="eyebrow" style={{ color: 'var(--cream)' }}>{t('metronome.meter')}</span>
           {[2, 3, 4, 5, 6].map(n => <Chip key={n} on={beats === n} onClick={() => setBeats(n)}>{n}/4</Chip>)}
-          <span className="eyebrow" style={{ color: 'var(--cream)', marginLeft: 12 }}>Subdivisão</span>
+          <span className="eyebrow" style={{ color: 'var(--cream)', marginLeft: 12 }}>{t('metronome.subdivision')}</span>
           {[[1, '♩'], [2, '♫'], [3, '3'], [4, '♬']].map(([n, l]) => <Chip key={n} on={sub === n} onClick={() => setSub(Number(n))}>{l}</Chip>)}
         </div>
       )}

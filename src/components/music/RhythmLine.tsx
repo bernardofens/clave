@@ -1,5 +1,6 @@
 // Notação rítmica numa linha só (sem alturas), para leitura rítmica e treino de ouvido rítmico.
 import { CELLS, type CellId } from '../../theory/rhythm';
+import { useT } from '../../i18n';
 
 const BEAT = 64;
 const LINE = 56;
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function RhythmLine({ bars, cursor = null, label }: Props) {
+  const t = useT();
   const beatsPerBar = 4;
   const lead = 18;
   const barW = BEAT * beatsPerBar + 12;
@@ -83,7 +85,7 @@ export default function RhythmLine({ bars, cursor = null, label }: Props) {
   })();
 
   return (
-    <svg className="rhythm-svg" viewBox={`0 0 ${width} 92`} role="img" aria-label={label ?? 'Ritmo'}>
+    <svg className="rhythm-svg" viewBox={`0 0 ${width} 92`} role="img" aria-label={label ?? t('music.rhythm')}>
       <path d={`M0,${LINE} H${width}`} stroke={C} strokeWidth="1.2" />
       <path d={`M6,${LINE - 10} V${LINE + 10} M11,${LINE - 10} V${LINE + 10}`} stroke={C} strokeWidth="3" />
       {cursorX !== null && <rect x={cursorX} y="8" width="3" height="78" fill="var(--mu)" />}

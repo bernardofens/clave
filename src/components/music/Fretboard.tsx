@@ -1,5 +1,6 @@
 // Braço do violão ou do baixo em SVG. A corda mais aguda fica em cima, como na tablatura.
 import { mod, pcName, type Naming } from '../../theory/core';
+import { useT } from '../../i18n';
 
 export const TUNINGS = {
   violao: [40, 45, 50, 55, 59, 64], // Mi Lá Ré Sol Si Mi
@@ -33,6 +34,7 @@ const FW = 52;
 const GAP = 22;
 
 export default function Fretboard({ tuning, from = 0, to = 12, marks = [], muted = [], onPick, onlyString, showNames = false, naming = 'pt', label }: Props) {
+  const t = useT();
   const n = tuning.length;
   const left = 34;
   const top = 18;
@@ -46,7 +48,7 @@ export default function Fretboard({ tuning, from = 0, to = 12, marks = [], muted
   if (onPick) for (let s = 0; s < n; s++) for (let f = from === 0 ? 0 : from + 1; f <= to; f++) if (onlyString === undefined || onlyString === s) cells.push({ s, f });
 
   return (
-    <svg className="fret-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label ?? 'Braço do instrumento'}>
+    <svg className="fret-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label ?? t('music.neck')}>
       <rect x={left} y={top - 8} width={frets * FW} height={(n - 1) * GAP + 16} fill="#3b2418" />
       {inlays.map(f => <circle key={f} cx={left + (f - from - 0.5) * FW} cy={top + ((n - 1) * GAP) / 2} r="5" fill="var(--cream)" opacity="0.35" />)}
       {12 > from && 12 <= to && [0.3, 0.7].map(k => <circle key={k} cx={left + (12 - from - 0.5) * FW} cy={top + (n - 1) * GAP * k} r="5" fill="var(--cream)" opacity="0.35" />)}

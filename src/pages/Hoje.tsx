@@ -6,17 +6,18 @@ import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
 import { minutesByArea, streakDays, toggleArsenal, useStore } from '../state/store';
 import { Art, Btn, Chip, fmtMin, SecTitle, Tag } from '../components/ui';
+import { useT, type MessageKey } from '../i18n';
 
 export const PLAN_KEY = 'clave:plano-sessao';
 
-function sceneForNow() {
+function sceneForNow(): { art: string; hello: MessageKey } {
   const h = new Date().getHours();
-  if (h < 9) return { art: 'cena-cafe', hello: 'Bom dia' };
-  if (h < 12) return { art: 'cena-metro', hello: 'Bom dia' };
-  if (h < 18) return { art: 'cena-escritorio', hello: 'Boa tarde' };
-  if (h < 20) return { art: 'cena-onibus', hello: 'Boa noite' };
-  if (h < 22) return { art: 'cena-rua', hello: 'Boa noite' };
-  return { art: 'cena-quarto', hello: 'Boa noite' };
+  if (h < 9) return { art: 'cena-cafe', hello: 'home.helloMorning' };
+  if (h < 12) return { art: 'cena-metro', hello: 'home.helloMorning' };
+  if (h < 18) return { art: 'cena-escritorio', hello: 'home.helloAfternoon' };
+  if (h < 20) return { art: 'cena-onibus', hello: 'home.helloEvening' };
+  if (h < 22) return { art: 'cena-rua', hello: 'home.helloEvening' };
+  return { art: 'cena-quarto', hello: 'home.helloEvening' };
 }
 
 export default function Hoje() {
@@ -28,6 +29,7 @@ export default function Hoje() {
   const [withInst, setWithInst] = useState(false);
   const [seed, setSeed] = useState(0);
   const nav = useNavigate();
+  const t = useT();
   const scene = sceneForNow();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const plan = useMemo(() => suggestSession(minutes, withInst, profile, history), [minutes, withInst, profile, seed]);
@@ -47,10 +49,10 @@ export default function Hoje() {
         <div className="panel" style={{ display: 'flex', gap: 18, alignItems: 'center', marginBottom: 24, background: 'var(--mu)', color: 'var(--bk)', flexWrap: 'wrap' }}>
           <Art name="clave-espiando" style={{ width: 110 }} />
           <div style={{ flex: 1, minWidth: 220 }}>
-            <h2 style={{ fontSize: 34 }}>Primeira vez aqui?</h2>
-            <p>Conte em 2 minutos o que você toca e o que quer aprender. O Clave usa isso para montar suas sessões.</p>
+            <h2 style={{ fontSize: 34 }}>{t('home.firstTime')}</h2>
+            <p>{t('home.firstTimeText')}</p>
           </div>
-          <Btn to="/comecar" tone="co">Começar</Btn>
+          <Btn to="/comecar" tone="co">{t('common.start')}</Btn>
         </div>
       )}
 
@@ -59,25 +61,25 @@ export default function Hoje() {
           <Art name={scene.art} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <div className="panel" style={{ display: 'grid', gap: 16, alignContent: 'start', padding: 28 }}>
-          <div><Tag>Hoje</Tag></div>
-          <h1 style={{ fontSize: 'clamp(44px, 6vw, 84px)' }}>{scene.hello}{profile.name ? `, ${profile.name}` : ''}</h1>
-          <p style={{ fontSize: 18 }}>Quanto tempo você tem agora?</p>
-          <div className="row" role="group" aria-label="Tempo disponível">
-            {[5, 10, 20, 30, 45].map(m => <Chip key={m} on={minutes === m} onClick={() => setMinutes(m)}>{m} min</Chip>)}
+          <div><Tag>{t('nav.today')}</Tag></div>
+          <h1 style={{ fontSize: 'clamp(44px, 6vw, 84px)' }}>{t(scene.hello)}{profile.name ? `, ${profile.name}` : ''}</h1>
+          <p style={{ fontSize: 18 }}>{t('home.howMuchTime')}</p>
+          <div className="row" role="group" aria-label={t('home.timeAvailable')}>
+            {[5, 10, 20, 30, 45].map(m => <Chip key={m} on={minutes === m} onClick={() => setMinutes(m)}>{t('common.minutes', { n: m })}</Chip>)}
           </div>
-          <div className="row" role="group" aria-label="Instrumento">
-            <Chip on={!withInst} onClick={() => setWithInst(false)}>Sem instrumento</Chip>
-            <Chip on={withInst} onClick={() => setWithInst(true)}>Com o instrumento</Chip>
+          <div className="row" role="group" aria-label={t('common.instrument')}>
+            <Chip on={!withInst} onClick={() => setWithInst(false)}>{t('home.noInstrument')}</Chip>
+            <Chip on={withInst} onClick={() => setWithInst(true)}>{t('home.withInstrument')}</Chip>
           </div>
         </div>
       </section>
 
       <section style={{ background: 'var(--co)', padding: 22, display: 'grid', gap: 14 }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <h2 style={{ fontSize: 36 }}>Sua sessão · {total} min</h2>
+          <h2 style={{ fontSize: 36 }}>{t('home.yourSession', { min: total })}</h2>
           <div className="row">
-            <Btn small tone="ghost" onClick={() => setSeed(s => s + 1)}>Sortear outra</Btn>
-            <Btn onClick={start} tone="mu">▶ Começar</Btn>
+            <Btn small tone="ghost" onClick={() => setSeed(s => s + 1)}>{t('home.shuffle')}</Btn>
+            <Btn onClick={start} tone="mu">{t('common.startPlay')}</Btn>
           </div>
         </div>
         <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
@@ -86,44 +88,44 @@ export default function Hoje() {
               <span style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 26, width: 24, color: 'var(--mu)' }}>{i + 1}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600 }}>{b.title}</div>
-                <div style={{ fontSize: 13, opacity: 0.85 }}>{areaById[b.area].name} · {b.kind === 'exercise' ? `${b.target} perguntas` : 'ferramenta'}</div>
+                <div style={{ fontSize: 13, opacity: 0.85 }}>{areaById[b.area].name} · {b.kind === 'exercise' ? t('home.questions', { count: b.target ?? 0 }) : t('home.tool')}</div>
               </div>
-              <span className="num" style={{ fontWeight: 600 }}>{b.minutes} min</span>
+              <span className="num" style={{ fontWeight: 600 }}>{t('common.minutes', { n: b.minutes })}</span>
             </li>
           ))}
         </ol>
-        <p style={{ fontSize: 14, opacity: 0.9 }}>A sessão pesa seus objetivos e as áreas que você treinou menos nos últimos dias.</p>
+        <p style={{ fontSize: 14, opacity: 0.9 }}>{t('home.sessionNote')}</p>
       </section>
 
       <section className="sec">
-        <SecTitle link={{ to: '/treinar', label: 'Ver todos' }}>Meu arsenal</SecTitle>
+        <SecTitle link={{ to: '/treinar', label: t('home.seeAll') }}>{t('home.arsenal')}</SecTitle>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
           {arsenal.map(id => {
             const e = exerciseById[id];
-            const t = toolById[id];
-            const item = e ?? t;
+            const tool = toolById[id];
+            const item = e ?? tool;
             if (!item) return null;
             const st = stats[id];
             return (
               <div key={id} style={{ position: 'relative' }}>
-                <Link to={e ? `/treinar/${id}` : t.path} className="ex-card">
+                <Link to={e ? `/treinar/${id}` : tool.path} className="ex-card">
                   <span className="acc" style={{ background: areaById[item.area].color }} />
                   <div style={{ minWidth: 0 }}>
                     <h3>{item.title}</h3>
-                    <p>{areaById[item.area].name}{st ? ` · ${Math.round((st.correct / st.attempts) * 100)}% de acerto` : ''}</p>
+                    <p>{areaById[item.area].name}{st ? ` · ${t('home.accuracy', { pct: Math.round((st.correct / st.attempts) * 100) })}` : ''}</p>
                   </div>
                 </Link>
-                <button type="button" onClick={() => toggleArsenal(id)} aria-label={`Tirar ${item.title} do arsenal`} style={{ position: 'absolute', right: 8, top: 8, border: 0, background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18 }}>×</button>
+                <button type="button" onClick={() => toggleArsenal(id)} aria-label={t('home.removeFromArsenal', { title: item.title })} style={{ position: 'absolute', right: 8, top: 8, border: 0, background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18 }}>×</button>
               </div>
             );
           })}
-          <Link to="/treinar" className="ex-card" style={{ justifyContent: 'center', alignItems: 'center', color: 'var(--muted)' }}>+ Adicionar exercício</Link>
+          <Link to="/treinar" className="ex-card" style={{ justifyContent: 'center', alignItems: 'center', color: 'var(--muted)' }}>{t('home.addExercise')}</Link>
         </div>
       </section>
 
       <section className="sec grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
         <div>
-          <SecTitle link={{ to: '/progresso', label: 'Histórico' }}>Últimos 30 dias</SecTitle>
+          <SecTitle link={{ to: '/progresso', label: t('home.history') }}>{t('home.last30')}</SecTitle>
           <div className="panel" style={{ display: 'grid', gap: 10 }}>
             {AREAS.map(a => (
               <div key={a.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 56px', gap: 10, alignItems: 'center' }}>
@@ -135,12 +137,12 @@ export default function Hoje() {
           </div>
         </div>
         <div>
-          <SecTitle>Sequência</SecTitle>
+          <SecTitle>{t('home.streak')}</SecTitle>
           <div className="panel" style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
             <Art name={streak >= 7 ? 'medalha-sequencia' : 'clave-sentado'} style={{ width: 110 }} />
             <div>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 72, lineHeight: 0.9, color: 'var(--mu)' }} className="num">{streak}</div>
-              <p>{streak === 0 ? 'Nenhum dia seguido ainda. Cinco minutos hoje já contam.' : streak === 1 ? 'dia estudando. Volte amanhã para manter.' : 'dias seguidos estudando.'}</p>
+              <p>{t(streak === 0 ? 'home.streakNone' : streak === 1 ? 'home.streakOne' : 'home.streakMany')}</p>
             </div>
           </div>
         </div>

@@ -43,6 +43,11 @@ export function translate(locale: Locale, key: MessageKey, vars: Vars = {}): str
   return text.replace(/\{(\w+)\}/g, (all, name: string) => (name in vars ? String(vars[name]) : all));
 }
 
+/** Etiqueta BCP 47 para datas e números (toLocaleString) e para <html lang>. */
+export function localeTag(locale: Locale) {
+  return locale === 'pt' ? 'pt-BR' : 'en';
+}
+
 export function useLocale(): Locale {
   return resolveLocale(useStore(s => s.locale));
 }

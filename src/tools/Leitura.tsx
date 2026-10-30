@@ -10,18 +10,19 @@ import RhythmLine from '../components/music/RhythmLine';
 import Staff from '../components/music/Staff';
 import { Btn, Chip } from '../components/ui';
 import { useToolLog } from './common';
+import { useT, type MessageKey } from '../i18n';
 
-interface NotePreset { id: string; name: string; clef: Clef; fifths: number; steps: number[] }
+interface NotePreset { id: string; name: MessageKey; clef: Clef; fifths: number; steps: number[] }
 const S4 = 28; // Dó4
 const F2 = 17; // Fá2... índice diatônico (2*7+3)
 export const NOTE_PRESETS: NotePreset[] = [
-  { id: 'tres', name: '3 notas: Dó Ré Mi', clef: 'sol', fifths: 0, steps: [S4, S4 + 1, S4 + 2] },
-  { id: 'cinco', name: '5 notas: Dó a Sol', clef: 'sol', fifths: 0, steps: [0, 1, 2, 3, 4].map(i => S4 + i) },
-  { id: 'oitava', name: 'Uma oitava: Dó4 a Dó5', clef: 'sol', fifths: 0, steps: Array.from({ length: 8 }, (_, i) => S4 + i) },
-  { id: 'pauta', name: 'Pauta toda: Mi4 a Fá5', clef: 'sol', fifths: 0, steps: Array.from({ length: 9 }, (_, i) => clefBottom('sol') + i) },
-  { id: 'sol-maior', name: 'Sol maior (Fá♯)', clef: 'sol', fifths: 1, steps: Array.from({ length: 8 }, (_, i) => S4 + 4 + i) },
-  { id: 'fa-cinco', name: 'Clave de fá: Fá2 a Dó3', clef: 'fa', fifths: 0, steps: [0, 1, 2, 3, 4].map(i => F2 + i) },
-  { id: 'fa-pauta', name: 'Clave de fá: pauta toda', clef: 'fa', fifths: 0, steps: Array.from({ length: 9 }, (_, i) => clefBottom('fa') + i) },
+  { id: 'tres', name: 'reading.presetThree', clef: 'sol', fifths: 0, steps: [S4, S4 + 1, S4 + 2] },
+  { id: 'cinco', name: 'reading.presetFive', clef: 'sol', fifths: 0, steps: [0, 1, 2, 3, 4].map(i => S4 + i) },
+  { id: 'oitava', name: 'reading.presetOctave', clef: 'sol', fifths: 0, steps: Array.from({ length: 8 }, (_, i) => S4 + i) },
+  { id: 'pauta', name: 'reading.presetStaff', clef: 'sol', fifths: 0, steps: Array.from({ length: 9 }, (_, i) => clefBottom('sol') + i) },
+  { id: 'sol-maior', name: 'reading.presetGMajor', clef: 'sol', fifths: 1, steps: Array.from({ length: 8 }, (_, i) => S4 + 4 + i) },
+  { id: 'fa-cinco', name: 'reading.presetBassFive', clef: 'fa', fifths: 0, steps: [0, 1, 2, 3, 4].map(i => F2 + i) },
+  { id: 'fa-pauta', name: 'reading.presetBassStaff', clef: 'fa', fifths: 0, steps: Array.from({ length: 9 }, (_, i) => clefBottom('fa') + i) },
 ];
 
 function melody(steps: number[], n = 16): number[] {
@@ -37,6 +38,7 @@ function melody(steps: number[], n = 16): number[] {
 
 export default function Leitura() {
   const naming = useStore(s => s.naming);
+  const t = useT();
   const [mode, setMode] = useState<'notas' | 'ritmo'>('notas');
   const [preset, setPreset] = useState(NOTE_PRESETS[0]);
   const [rPreset, setRPreset] = useState(RHYTHM_PRESETS[0]);
@@ -99,19 +101,19 @@ export default function Leitura() {
   return (
     <div style={{ display: 'grid', gap: 18 }}>
       <div className="row">
-        <Chip on={mode === 'notas'} onClick={() => setMode('notas')}>Notas</Chip>
-        <Chip on={mode === 'ritmo'} onClick={() => setMode('ritmo')}>Ritmo</Chip>
+        <Chip on={mode === 'notas'} onClick={() => setMode('notas')}>{t('reading.notes')}</Chip>
+        <Chip on={mode === 'ritmo'} onClick={() => setMode('ritmo')}>{t('reading.rhythm')}</Chip>
       </div>
       <div className="panel" style={{ display: 'grid', gap: 12 }}>
         {mode === 'notas'
-          ? <div className="row"><span className="eyebrow">Notas</span>{NOTE_PRESETS.map(p => <Chip key={p.id} on={p.id === preset.id} onClick={() => setPreset(p)}>{p.name}</Chip>)}</div>
-          : <div className="row"><span className="eyebrow">Figuras</span>{RHYTHM_PRESETS.map(p => <Chip key={p.id} on={p.id === rPreset.id} onClick={() => setRPreset(p)}>{p.name}</Chip>)}</div>}
+          ? <div className="row"><span className="eyebrow">{t('reading.notes')}</span>{NOTE_PRESETS.map(p => <Chip key={p.id} on={p.id === preset.id} onClick={() => setPreset(p)}>{t(p.name)}</Chip>)}</div>
+          : <div className="row"><span className="eyebrow">{t('reading.figures')}</span>{RHYTHM_PRESETS.map(p => <Chip key={p.id} on={p.id === rPreset.id} onClick={() => setRPreset(p)}>{p.name}</Chip>)}</div>}
         <div className="row">
-          <span className="eyebrow">Andamento</span>
+          <span className="eyebrow">{t('common.tempo')}</span>
           <span className="num" style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 26 }}>♩ = {bpm}</span>
-          <input className="range" style={{ maxWidth: 220 }} type="range" min={40} max={160} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label="Andamento" id="lt-bpm" />
-          <label className="switch"><input type="checkbox" id="lt-hear" checked={hear} onChange={e => setHear(e.target.checked)} />{mode === 'notas' ? 'Tocar a melodia' : 'Tocar o ritmo'}</label>
-          {mode === 'notas' && <label className="switch"><input type="checkbox" id="lt-names" checked={names} onChange={e => setNames(e.target.checked)} />Mostrar nomes</label>}
+          <input className="range" style={{ maxWidth: 220 }} type="range" min={40} max={160} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label={t('common.tempo')} id="lt-bpm" />
+          <label className="switch"><input type="checkbox" id="lt-hear" checked={hear} onChange={e => setHear(e.target.checked)} />{t(mode === 'notas' ? 'reading.playMelody' : 'reading.playRhythm')}</label>
+          {mode === 'notas' && <label className="switch"><input type="checkbox" id="lt-names" checked={names} onChange={e => setNames(e.target.checked)} />{t('reading.showNames')}</label>}
         </div>
       </div>
 
@@ -122,26 +124,24 @@ export default function Leitura() {
               <>
                 <Staff clef={preset.clef} fifths={preset.fifths} timeSig={row === 0 ? [4, 4] : undefined} colWidth={40}
                   cursor={cursorNote !== null && Math.floor(cursorNote / 8) === row ? cursorNote % 8 : null}
-                  columns={notes.slice(row * 8, row * 8 + 8).map((n, i) => ({ notes: [{ note: n }], kind: 'quarter' as const, barAfter: i % 4 === 3 }))} label={`Compassos ${row * 2 + 1} e ${row * 2 + 2}`} />
+                  columns={notes.slice(row * 8, row * 8 + 8).map((n, i) => ({ notes: [{ note: n }], kind: 'quarter' as const, barAfter: i % 4 === 3 }))} label={t('common.bars', { a: row * 2 + 1, b: row * 2 + 2 })} />
                 {names && <div className="muted" style={{ color: 'var(--cream)', fontSize: 14, paddingLeft: 90, letterSpacing: '.04em' }}>{notes.slice(row * 8, row * 8 + 8).map(n => noteName(n, naming)).join('  ·  ')}</div>}
               </>
             ) : (
-              <RhythmLine bars={bars.slice(row * 2, row * 2 + 2)} cursor={pos !== null && Math.floor(pos / 8) === row ? pos % 8 : null} label={`Compassos ${row * 2 + 1} e ${row * 2 + 2}`} />
+              <RhythmLine bars={bars.slice(row * 2, row * 2 + 2)} cursor={pos !== null && Math.floor(pos / 8) === row ? pos % 8 : null} label={t('common.bars', { a: row * 2 + 1, b: row * 2 + 2 })} />
             )}
           </div>
         ))}
       </div>
 
       <div className="row">
-        <Btn onClick={() => (running ? stop() : play())} tone={running ? 'mu' : undefined}>{running ? 'Parar' : '▶ Tocar em loop'}</Btn>
-        <Btn tone="ghost" onClick={() => setSeed(s => s + 1)}>Gerar outra</Btn>
-        <span className="eyebrow" style={{ marginLeft: 8 }}>Começar do compasso</span>
+        <Btn onClick={() => (running ? stop() : play())} tone={running ? 'mu' : undefined}>{running ? t('common.stop') : t('reading.loop')}</Btn>
+        <Btn tone="ghost" onClick={() => setSeed(s => s + 1)}>{t('reading.another')}</Btn>
+        <span className="eyebrow" style={{ marginLeft: 8 }}>{t('reading.startBar')}</span>
         {[0, 1, 2, 3].map(b => <Chip key={b} on={startBar === b} onClick={() => play(b)}>{b + 1}</Chip>)}
       </div>
       <p className="muted" style={{ maxWidth: '62ch' }}>
-        {mode === 'notas'
-          ? 'Um compasso de contagem e depois o loop. Leia em voz alta ou toque junto. Quando estiver lendo sem parar, aumente o andamento ou passe para mais notas.'
-          : 'Batuque na perna junto com o loop. Quando sair limpo, ligue "Tocar o ritmo" só para conferir, e depois desligue de novo.'}
+        {t(mode === 'notas' ? 'reading.hintNotes' : 'reading.hintRhythm')}
       </p>
     </div>
   );

@@ -6,62 +6,67 @@ import { encodeSettings } from '../exercises/Player';
 import type { SettingValue } from '../exercises/types';
 import { useStore } from '../state/store';
 import { Art, PageHead, SecTitle, Tag } from '../components/ui';
+import { useT, type MessageKey } from '../i18n';
 
-const SAMPLE_POSTS: { who: string; kind: string; text: string; ex?: string; s?: Record<string, SettingValue>; likes: number }[] = [
-  { who: 'Marina (exemplo)', kind: 'Baixo · músico', text: 'Montei um treino só com 4ª e 5ª justas, subindo e descendo. Ótimo para quem está começando a tirar linhas de baixo.', ex: 'ouvido-intervalo', s: { intervalos: ['5', '7'], direcao: 'misto' }, likes: 42 },
-  { who: 'Caio (exemplo)', kind: 'Violão · hobby', text: 'Semana de Sol maior: terminei o plano de tonalidade. A parte dos arpejos até a casa 5 foi a que mais mudou meu jeito de tocar.', likes: 31 },
-  { who: 'Duda (exemplo)', kind: 'Piano · iniciante', text: 'Meu treino de leitura para clave de fá, só com as notas da pauta. Quem estiver aprendendo a mão esquerda, bora.', ex: 'pauta-nota', s: { claves: ['fa'], extensao: 'pauta', acidentes: false }, likes: 18 },
+const SAMPLE_POSTS: { who: string; kind: MessageKey; text: MessageKey; ex?: string; s?: Record<string, SettingValue>; likes: number }[] = [
+  { who: 'Marina', kind: 'community.post1Kind', text: 'community.post1Text', ex: 'ouvido-intervalo', s: { intervalos: ['5', '7'], direcao: 'misto' }, likes: 42 },
+  { who: 'Caio', kind: 'community.post2Kind', text: 'community.post2Text', likes: 31 },
+  { who: 'Duda', kind: 'community.post3Kind', text: 'community.post3Text', ex: 'pauta-nota', s: { claves: ['fa'], extensao: 'pauta', acidentes: false }, likes: 18 },
 ];
-const SAMPLE_RANK = [{ who: 'Marina (exemplo)', xp: 1840 }, { who: 'Theo (exemplo)', xp: 1495 }, { who: 'Caio (exemplo)', xp: 1210 }, { who: 'Duda (exemplo)', xp: 640 }];
+const SAMPLE_RANK = [{ who: 'Marina', xp: 1840 }, { who: 'Theo', xp: 1495 }, { who: 'Caio', xp: 1210 }, { who: 'Duda', xp: 640 }];
 
 export default function Comunidade() {
   const stats = useStore(s => s.stats);
   const history = useStore(s => s.history);
   const name = useStore(s => s.profile.name);
+  const t = useT();
   const mine = Object.values(areaXP(stats, history)).reduce((a, b) => a + b, 0);
-  const rank = [...SAMPLE_RANK, { who: `${name || 'Você'} (você)`, xp: mine }].sort((a, b) => b.xp - a.xp);
+  const rank = [
+    ...SAMPLE_RANK.map(r => ({ who: t('community.sample', { name: r.who }), xp: r.xp, me: false })),
+    { who: t('community.me', { name: name || t('community.you') }), xp: mine, me: true },
+  ].sort((a, b) => b.xp - a.xp);
 
   return (
     <div>
-      <PageHead tag="Comunidade · prévia" title="Banda" sub="Um lugar para trocar treinos, mostrar progresso e se ajudar. Esta é uma prévia: as pessoas e posts abaixo são exemplos, mas os links de treino compartilhado já funcionam." aside={<Art name="genero-forro" style={{ width: 150 }} />} />
+      <PageHead tag={t('community.tag')} title={t('community.title')} sub={t('community.sub')} aside={<Art name="genero-forro" style={{ width: 150 }} />} />
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', alignItems: 'start', gap: 28 }}>
         <section>
-          <SecTitle>Feed</SecTitle>
+          <SecTitle>{t('community.feed')}</SecTitle>
           <div style={{ display: 'grid', gap: 12 }}>
             {SAMPLE_POSTS.map((p, i) => (
               <article key={i} className="panel" style={{ display: 'grid', gap: 10 }}>
-                <div className="row"><b>{p.who}</b><span className="muted" style={{ fontSize: 13 }}>{p.kind}</span></div>
-                <p>{p.text}</p>
-                {p.ex && <Link to={`/treinar/${p.ex}?c=${encodeSettings(p.s!)}`} className="btn small co" style={{ justifySelf: 'start' }}><span>Abrir o treino</span></Link>}
+                <div className="row"><b>{t('community.sample', { name: p.who })}</b><span className="muted" style={{ fontSize: 13 }}>{t(p.kind)}</span></div>
+                <p>{t(p.text)}</p>
+                {p.ex && <Link to={`/treinar/${p.ex}?c=${encodeSettings(p.s!)}`} className="btn small co" style={{ justifySelf: 'start' }}><span>{t('community.openWorkout')}</span></Link>}
                 <span className="muted" style={{ fontSize: 13 }}>♥ {p.likes}</span>
               </article>
             ))}
           </div>
         </section>
         <section>
-          <SecTitle>Ranking da semana</SecTitle>
+          <SecTitle>{t('community.ranking')}</SecTitle>
           <ol className="panel" style={{ listStyle: 'none', margin: 0, display: 'grid', gap: 8 }}>
             {rank.map((r, i) => (
-              <li key={r.who} style={{ display: 'flex', gap: 12, alignItems: 'baseline', color: r.who.includes('(você)') ? 'var(--mu)' : undefined }}>
+              <li key={r.who} style={{ display: 'flex', gap: 12, alignItems: 'baseline', color: r.me ? 'var(--mu)' : undefined }}>
                 <span style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 26, width: 24 }}>{i + 1}</span>
                 <span style={{ flex: 1, fontWeight: 600 }}>{r.who}</span>
                 <span className="num">{r.xp} XP</span>
               </li>
             ))}
           </ol>
-          <SecTitle>Compartilhe um treino</SecTitle>
+          <SecTitle>{t('community.share')}</SecTitle>
           <div className="panel" style={{ display: 'grid', gap: 8 }}>
-            <p>Em qualquer exercício, abra "Personalizar", ajuste do seu jeito e toque em "Copiar link". Quem abrir o link treina com as mesmas configurações.</p>
+            <p>{t('community.shareText')}</p>
           </div>
-          <SecTitle>Regras da banda</SecTitle>
+          <SecTitle>{t('community.rules')}</SecTitle>
           <div className="panel">
             <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 6 }}>
-              <li>Respeito acima de tudo: crítica é sobre a música, nunca sobre a pessoa.</li>
-              <li>Só publique áudio e vídeo que você tem direito de compartilhar.</li>
-              <li>Nada de spam, venda ou conteúdo ofensivo. Denúncias são revisadas por pessoas.</li>
+              <li>{t('community.rule1')}</li>
+              <li>{t('community.rule2')}</li>
+              <li>{t('community.rule3')}</li>
             </ul>
-            <div style={{ marginTop: 12 }}><Tag tone="dark">Em construção</Tag></div>
+            <div style={{ marginTop: 12 }}><Tag tone="dark">{t('community.building')}</Tag></div>
           </div>
         </section>
       </div>

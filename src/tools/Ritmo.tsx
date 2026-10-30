@@ -9,10 +9,11 @@ import {
   type Figure, type Level, type MeterId, type RestKind, type Trait,
 } from '../theory/rhythm-cells';
 import {
-  BAR_COUNTS, barSignature, DEFAULT_SETTINGS, describeSettings, generateExercise, offeredBy, timeline,
+  BAR_COUNTS, barSignature, DEFAULT_SETTINGS, generateExercise, offeredBy, timeline,
   type Exercise, type RhythmSettings,
 } from '../theory/rhythm-gen';
 import { tempoName, useToolLog } from './common';
+import { useT } from '../i18n';
 
 const STORE = 'clave:ritmo';
 const HISTORY = 30;
@@ -41,7 +42,7 @@ function make(s: RhythmSettings, prev?: Exercise): { ex?: Exercise; error?: stri
   try {
     return { ex: generateExercise(s, { avoid: prev && new Set(prev.bars.map(barSignature)) }) };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Não deu para gerar o exercício.' };
+    return { error: err instanceof Error ? err.message : '' };
   }
 }
 
@@ -51,6 +52,7 @@ const TRAITS: Trait[] = ['pontuada', 'sincope', 'ligadura', 'quialtera'];
 const levelOf = (l: Level) => LEVELS.find(x => x.level === l)!;
 
 export default function Ritmo() {
+  const t = useT();
   const [settings, setSettings] = useState(loadSettings);
   const [history, setHistory] = useState<Exercise[]>(() => {
     const first = make(settings);
@@ -130,7 +132,7 @@ export default function Ritmo() {
 
   const push = useCallback((s: RhythmSettings) => {
     const r = make(s, ex);
-    if (!r.ex) { setError(r.error ?? null); return; }
+    if (!r.ex) { setError(r.error ?? ''); return; }
     setError(null);
     const next = [...history.slice(0, idx + 1), r.ex].slice(-HISTORY);
     setHistory(next);
@@ -164,25 +166,25 @@ export default function Ritmo() {
     TRAITS.some(t => offered.traits.has(t) && !settings.traits[t]) ||
     (offered.rests.size > 0 && (!settings.rests || RESTS.some(r => offered.rests.has(r) && !settings.restKinds[r])));
   const resetFilters = () => update({ figures: DEFAULT_SETTINGS.figures, rests: true, restKinds: DEFAULT_SETTINGS.restKinds, traits: DEFAULT_SETTINGS.traits });
-  const fromLevel = (has: boolean) => (has ? undefined : 'Aparece em níveis mais altos');
+  const fromLevel = (has: boolean) => (has ? undefined : t('rhythm.higherLevels'));
 
   return (
     <div className="ritmo">
       <div className="ritmo-quick">
         <label className="ritmo-field">
-          <span>Compasso</span>
+          <span>{t('rhythm.meter')}</span>
           <select className="sel" id="rt-meter" value={settings.meter} onChange={e => update({ meter: e.target.value as MeterId })}>
             {METER_IDS.map(id => <option key={id} value={id}>{id}</option>)}
           </select>
         </label>
         <label className="ritmo-field">
-          <span>Compassos</span>
+          <span>{t('rhythm.bars')}</span>
           <select className="sel" id="rt-bars" value={settings.bars} onChange={e => update({ bars: Number(e.target.value) })}>
             {BAR_COUNTS.map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
         <label className="ritmo-field">
-          <span>Nível</span>
+          <span>{t('rhythm.level')}</span>
           <select className="sel" id="rt-level" value={settings.level} onChange={e => update({ level: Number(e.target.value) as Level })}>
             {LEVELS.map(l => <option key={l.level} value={l.level}>{l.level} · {l.name}</option>)}
           </select>
@@ -191,47 +193,47 @@ export default function Ritmo() {
 
       <section className="ritmo-stage" aria-live="polite">
         <div className="ritmo-status">
-          <span>{describeSettings({ ...settings, meter: ex.meter, level: ex.level, bars: ex.bars.length })}{restricted && ' · figuras restritas'}</span>
+          <span>{t('rhythm.status', { level: ex.level, name: levelOf(ex.level).name, meter: ex.meter, bars: ex.bars.length })}{restricted && ` · ${t('rhythm.restricted')}`}</span>
           {count !== null && <b className="ritmo-count">{count}</b>}
         </div>
         <RhythmScore exercise={ex} active={active} />
-        {error && (
+        {error !== null && (
           <div className="ritmo-warn" role="alert">
-            <span>{error}</span>
-            <Btn small tone="ghost" onClick={resetFilters}>Restaurar figuras</Btn>
+            <span>{error || t('rhythm.generateError')}</span>
+            <Btn small tone="ghost" onClick={resetFilters}>{t('rhythm.restoreFigures')}</Btn>
           </div>
         )}
       </section>
 
       <div className="ritmo-actions">
-        <Btn tone="ghost" onClick={back} disabled={idx === 0} label="Exercício anterior">←<span className="ritmo-wide"> Anterior</span></Btn>
-        <Btn onClick={next} id="rt-next">Novo exercício</Btn>
-        <Btn tone={running ? 'mu' : 'co'} onClick={toggle}>{running ? '■ Parar' : '▶ Tocar'}</Btn>
-        {running && <Btn tone="ghost" small onClick={play}>↺ Do início</Btn>}
+        <Btn tone="ghost" onClick={back} disabled={idx === 0} label={t('rhythm.previous')}>←<span className="ritmo-wide"> {t('rhythm.previousShort')}</span></Btn>
+        <Btn onClick={next} id="rt-next">{t('rhythm.newExercise')}</Btn>
+        <Btn tone={running ? 'mu' : 'co'} onClick={toggle}>{running ? t('rhythm.stop') : t('common.playPlay')}</Btn>
+        {running && <Btn tone="ghost" small onClick={play}>{t('rhythm.fromStart')}</Btn>}
       </div>
 
       <div className="ritmo-play panel">
         <div className="ritmo-tempo">
           <span className="num">{m.compound ? '♩.' : '♩'} = {bpm}</span>
           <span className="eyebrow">{tempoName(bpm)}</span>
-          <input className="range" type="range" min={30} max={200} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label="Andamento" id="rt-bpm" />
+          <input className="range" type="range" min={30} max={200} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label={t('common.tempo')} id="rt-bpm" />
         </div>
         <div className="row">
-          <label className="switch"><input type="checkbox" id="rt-sound" checked={sound} onChange={e => setSound(e.target.checked)} />Som do ritmo</label>
-          <label className="switch"><input type="checkbox" id="rt-click" checked={click} onChange={e => setClick(e.target.checked)} />Metrônomo</label>
-          <label className="switch"><input type="checkbox" id="rt-count" checked={countIn} onChange={e => setCountIn(e.target.checked)} />Contagem</label>
-          <label className="switch"><input type="checkbox" id="rt-loop" checked={loop} onChange={e => setLoop(e.target.checked)} />Repetir</label>
+          <label className="switch"><input type="checkbox" id="rt-sound" checked={sound} onChange={e => setSound(e.target.checked)} />{t('rhythm.sound')}</label>
+          <label className="switch"><input type="checkbox" id="rt-click" checked={click} onChange={e => setClick(e.target.checked)} />{t('rhythm.click')}</label>
+          <label className="switch"><input type="checkbox" id="rt-count" checked={countIn} onChange={e => setCountIn(e.target.checked)} />{t('rhythm.countIn')}</label>
+          <label className="switch"><input type="checkbox" id="rt-loop" checked={loop} onChange={e => setLoop(e.target.checked)} />{t('rhythm.loop')}</label>
         </div>
       </div>
 
       <button type="button" className="ritmo-more" aria-expanded={advanced} onClick={() => setAdvanced(a => !a)}>
-        {advanced ? '− Esconder ajustes' : '+ Ajustes: figuras, pausas e recursos'}
+        {t(advanced ? 'rhythm.hideAdjust' : 'rhythm.showAdjust')}
       </button>
       {advanced && (
         <div className="settings ritmo-adv">
-          <p className="muted">{levelOf(settings.level).desc} Desligue o que você ainda não estudou.</p>
+          <p className="muted">{levelOf(settings.level).desc} {t('rhythm.turnOff')}</p>
           <div className="field">
-            <span>Figuras</span>
+            <span>{t('rhythm.figures')}</span>
             <div className="row">
               {FIGURES.map(f => (
                 <Chip key={f} on={settings.figures[f] && offered.figures.has(f)} disabled={!offered.figures.has(f)} title={fromLevel(offered.figures.has(f))}
@@ -240,9 +242,9 @@ export default function Ritmo() {
             </div>
           </div>
           <div className="field">
-            <span>Pausas</span>
+            <span>{t('rhythm.rests')}</span>
             <div className="row">
-              <label className="switch"><input type="checkbox" id="rt-rests" checked={settings.rests} onChange={e => update({ rests: e.target.checked })} />Com pausas</label>
+              <label className="switch"><input type="checkbox" id="rt-rests" checked={settings.rests} onChange={e => update({ rests: e.target.checked })} />{t('rhythm.withRests')}</label>
               {RESTS.map(r => (
                 <Chip key={r} on={settings.rests && settings.restKinds[r] && offered.rests.has(r)} disabled={!settings.rests || !offered.rests.has(r)} title={fromLevel(offered.rests.has(r))}
                   onClick={() => update({ restKinds: { ...settings.restKinds, [r]: !settings.restKinds[r] } })}>{REST_NAMES[r]}</Chip>
@@ -250,7 +252,7 @@ export default function Ritmo() {
             </div>
           </div>
           <div className="field">
-            <span>Recursos</span>
+            <span>{t('rhythm.traits')}</span>
             <div className="row">
               {TRAITS.map(t => (
                 <Chip key={t} on={settings.traits[t] && offered.traits.has(t)} disabled={!offered.traits.has(t)} title={fromLevel(offered.traits.has(t))}
@@ -258,13 +260,12 @@ export default function Ritmo() {
               ))}
             </div>
           </div>
-          <div><Btn small tone="ghost" onClick={resetFilters} disabled={!restricted}>Restaurar padrão do nível</Btn></div>
+          <div><Btn small tone="ghost" onClick={resetFilters} disabled={!restricted}>{t('rhythm.restoreLevel')}</Btn></div>
         </div>
       )}
 
       <p className="muted ritmo-hint">
-        Leia batendo o pulso no pé e falando o ritmo (tá, ta-ka, ta-ka-di-mi). Sem fone? Desligue o som e toque assim mesmo:
-        o destaque anda no andamento e você confere em silêncio. Atalhos: espaço toca, N gera outro, ← volta.
+        {t('rhythm.hint')}
       </p>
     </div>
   );
