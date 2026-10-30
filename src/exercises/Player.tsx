@@ -6,8 +6,8 @@ import { atTime, now } from '../audio/engine';
 import { playContent, resolvePresentation, type Presentation } from '../audio/presentation';
 import { useContent } from '../data/localized';
 import { getState, logActivity, recordAnswer, saveSettings, useStore } from '../state/store';
-import { buildAttempt, newId } from '../state/attempts';
-import { saveAttempt } from '../state/attemptLog';
+import { buildAttempt, buildFeedback, CONFIDENCE_SERIES, newId, shouldAskConfidence, type AttemptFeedback } from '../state/attempts';
+import { saveAttempt, saveFeedback } from '../state/attemptLog';
 import { fromStep, mod, noteName, type Note } from '../theory/core';
 import Fretboard from '../components/music/Fretboard';
 import Keyboard from '../components/music/Keyboard';
@@ -72,6 +72,9 @@ export default function Player({ def, target, onDone, initialSettings, sessionId
   const askedAt = useRef(Date.now());
   const earReadyAt = useRef<number | null>(null);
   const listens = useRef(0);
+  // tentativas da série em curso; ao fechar a série, às vezes pergunta a confiança (nunca a cada resposta)
+  const series = useRef<string[]>([]);
+  const [confidenceFor, setConfidenceFor] = useState<string[] | null>(null);
   useEffect(() => { askedAt.current = Date.now(); earReadyAt.current = null; listens.current = 0; }, [q]);
 
   // ao sair, registra a atividade no histórico
@@ -124,11 +127,17 @@ export default function Player({ def, target, onDone, initialSettings, sessionId
     setPhase(ok ? 'right' : 'wrong');
     recordAnswer(def.id, ok);
     const readyAt = q.visual.kind === 'ear' ? earReadyAt.current ?? askedAt.current : askedAt.current;
-    saveAttempt(buildAttempt({
+    const attempt = buildAttempt({
       exercise: def, question: q, response, correct: ok, sessionId: session.current, locale, settings, params,
       presentation: q.sound ? presentationFor(q) : undefined,
       responseTimeMs: Date.now() - readyAt, repetitions: Math.max(0, listens.current - 1),
-    }));
+    });
+    saveAttempt(attempt);
+    series.current.push(attempt.id);
+    if (series.current.length >= CONFIDENCE_SERIES) {
+      if (shouldAskConfidence(series.current.length)) setConfidenceFor(series.current);
+      series.current = [];
+    }
     if (!q.autoplay && soundOn) play(q);
     if (target && ns.total >= target) {
       window.setTimeout(() => onDone?.({ correct: ns.correct, total: ns.total, seconds: Math.round((Date.now() - started.current) / 1000) }), ok ? 900 : 1800);
@@ -193,6 +202,18 @@ export default function Player({ def, target, onDone, initialSettings, sessionId
           <Btn small tone="ghost" onClick={copyLink}>{t('player.copyLink')}</Btn>
         </div>
       </div>
+
+      {confidenceFor && (
+        <div className="panel" role="group" aria-label={t('player.confidenceQuestion')} style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+          <span>{t('player.confidenceQuestion')}</span>
+          <div className="row">
+            {(['guess', 'unsure', 'sure'] as AttemptFeedback['confidence'][]).map(c => (
+              <Chip key={c} onClick={() => { saveFeedback(buildFeedback(session.current, confidenceFor, c)); setConfidenceFor(null); }}>{t(`player.confidence.${c}`)}</Chip>
+            ))}
+            <Btn small tone="ghost" onClick={() => setConfidenceFor(null)}>{t('player.confidenceSkip')}</Btn>
+          </div>
+        </div>
+      )}
 
       {showSettings && <SettingsPanel def={def} ctx={ctx} values={settings} onChange={v => saveSettings(def.id, v)} />}
       {toast && <div className="toast" role="status">{toast}</div>}

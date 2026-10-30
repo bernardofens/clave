@@ -9,6 +9,7 @@ import type { StoredParams } from '../exercises/params';
 import type { AgeGroup } from './age';
 import { migrateSaved } from './migrate';
 import { attemptLog } from './attemptLog';
+import { aggregateStats, mergeStats, subtractStats } from './attempts';
 import type { Locale } from '../i18n';
 
 export interface Profile {
@@ -44,7 +45,10 @@ export interface State {
   /** Nome das notas escolhido no perfil; null = segue o idioma. */
   naming: Naming | null;
   sound: boolean;
+  /** Totais por exercício: cache para as telas, refeito a partir do registro de tentativas (rebuildStats). */
   stats: Record<string, Stat>;
+  /** Totais de antes do registro de tentativas (C2), que não têm tentativas por trás. Calculado uma vez. */
+  legacyStats?: Record<string, Stat>;
   history: Activity[];
   arsenal: string[];
   settings: Record<string, Record<string, SettingValue>>;
@@ -111,6 +115,15 @@ export function useStore<T>(select: (s: State) => T): T {
     },
     () => select(state),
   );
+}
+/** Refaz os totais a partir do registro de tentativas (a fonte de verdade) mais a base de antes da C2.
+ *  Na primeira vez, o que estava nos totais e não veio do registro vira essa base. */
+export async function rebuildStats() {
+  const derived = aggregateStats(await attemptLog().all());
+  setState(s => {
+    const legacy = s.legacyStats ?? subtractStats(s.stats, derived);
+    return { ...s, legacyStats: legacy, stats: mergeStats(legacy, derived) };
+  });
 }
 export function resetAll() {
   setState(() => DEFAULT_STATE);

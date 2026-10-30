@@ -280,6 +280,9 @@ const pt = {
     option: 'Opção {n}',
     accidental: 'Acidente',
     resetDefaults: 'Voltar ao padrão',
+    confidenceQuestion: 'Como foram essas últimas respostas?',
+    confidence: { guess: 'Foi chute', unsure: 'Tive dúvida', sure: 'Tive certeza' },
+    confidenceSkip: 'Pular',
   },
   metronome: {
     meter: 'Compasso',

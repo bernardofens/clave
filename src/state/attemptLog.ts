@@ -96,6 +96,11 @@ export function setAttemptLog(log: AttemptLog) {
   current = log;
 }
 
+/** Grava a confiança declarada sem travar a tela. */
+export function saveFeedback(f: AttemptFeedback) {
+  attemptLog().addFeedback(f).catch(err => console.error('Não deu para gravar a confiança', err));
+}
+
 /** Grava uma tentativa sem travar a tela. Uma falha aparece no console, mas não interrompe o exercício. */
 export function saveAttempt(a: Attempt) {
   attemptLog().add(a).catch(err => console.error('Não deu para gravar a tentativa', err));

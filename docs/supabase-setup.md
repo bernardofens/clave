@@ -20,7 +20,11 @@ pronto esperando esses dados — nada aqui precisa de outra mudança no app.
 3. Clique em **Run**. Isso cria as sete tabelas (perfil, estatísticas, histórico, arsenal,
    configurações, cargas, plano de tonalidade), liga o RLS em todas (cada um só vê os próprios
    dados) e cria a função `delete_my_account` usada para apagar a conta.
-4. Confira em **Table Editor** que as tabelas apareceram.
+4. Repita os passos 1 a 3 com
+   [supabase/migrations/20261102120000_attempts.sql](../supabase/migrations/20261102120000_attempts.sql):
+   cria `attempts` e `attempt_feedback` (o registro de tentativas da C2), com RLS e sem
+   permissão de alterar uma tentativa já gravada.
+5. Confira em **Table Editor** que as tabelas apareceram.
 
 ## 3. Pegar as chaves e configurar o app
 
