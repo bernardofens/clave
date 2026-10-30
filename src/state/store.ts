@@ -5,6 +5,7 @@ import type { AreaId, GoalId, Instrument, ProfileKind } from '../data/areas';
 import type { Naming } from '../theory/core';
 import type { SettingValue } from '../exercises/types';
 import type { AgeGroup } from './age';
+import type { Locale } from '../i18n';
 
 export interface Profile {
   name: string;
@@ -42,6 +43,8 @@ export interface Account {
 export interface State {
   v: 1;
   profile: Profile;
+  /** Idioma escolhido no perfil; null = automático, segue o navegador. */
+  locale: Locale | null;
   naming: Naming;
   sound: boolean;
   stats: Record<string, Stat>;
@@ -67,6 +70,7 @@ export const DEFAULT_STATE: State = {
     levels: { ouvido: 1, tecnica: 1, mapeamento: 1, harmonia: 1, ritmo: 1, leitura: 1 },
     onboarded: false,
   },
+  locale: null,
   naming: 'pt',
   sound: true,
   stats: {},
@@ -151,6 +155,9 @@ export function setPlan(plan: TonalityPlan | null) {
 }
 export function setAccount(account: Account | null) {
   setState(s => ({ ...s, account }));
+}
+export function setLocale(locale: Locale | null) {
+  setState(s => ({ ...s, locale }));
 }
 export function setAgeGroup(ageGroup: AgeGroup | null) {
   setState(s => ({ ...s, ageGroup }));
