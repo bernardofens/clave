@@ -6,6 +6,7 @@ import { pcName } from '../theory/core';
 import Keyboard from '../components/music/Keyboard';
 import { TUNINGS } from '../components/music/Fretboard';
 import { Btn, Chip } from '../components/ui';
+import { useGlobalParams } from '../exercises/params';
 import { useToolLog } from './common';
 import { useNaming, useT, type MessageKey } from '../i18n';
 
@@ -45,6 +46,7 @@ export default function Tecnica() {
   const instrument = useStore(s => s.profile.instrument);
   const naming = useNaming();
   const t = useT();
+  const params = useGlobalParams();
   const available = ROUTINES.filter(r => r.for.includes(instrument));
   const [routine, setRoutine] = useState(available[0] ?? ROUTINES[0]);
   const [bpm, setBpm] = useState(70);
@@ -59,8 +61,9 @@ export default function Tecnica() {
 
   const tuning = instrument === 'baixo' ? TUNINGS.baixo : TUNINGS.violao;
   const seq = useMemo(() => routine.build(tuning.length), [routine, tuning.length]);
-  const live = useRef({ seq, hear, climb });
-  live.current = { seq, hear, climb };
+  // o timbre é o escolhido para o instrumento no Perfil (ver SoundPanel)
+  const live = useRef({ seq, hear, climb, voice: params.timbres[instrument] });
+  live.current = { seq, hear, climb, voice: params.timbres[instrument] };
   useEffect(() => () => clock.current?.stop(), []);
   useEffect(() => { if (clock.current) clock.current.bpm = bpm; }, [bpm]);
   useEffect(() => { clock.current?.stop(); setRunning(false); setIdx(-1); }, [routine]);
@@ -80,7 +83,7 @@ export default function Tecnica() {
       }
       atTime(t, () => setIdx(n));
       const p = L.seq[n];
-      if (L.hear) tone(instrument === 'piano' ? p.f : tuning[p.s] + p.f, t, 0.3, instrument === 'piano' ? 'piano' : instrument === 'baixo' ? 'baixo' : 'violao', 0.5);
+      if (L.hear) tone(instrument === 'piano' ? p.f : tuning[p.s] + p.f, t, 0.3, L.voice, 0.5);
     });
     clock.current = c;
     c.start();

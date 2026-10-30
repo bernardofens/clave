@@ -147,6 +147,10 @@ export function setAccount(account: Account | null) {
 export function setLocale(locale: Locale | null) {
   setState(s => ({ ...s, locale }));
 }
+/** Guarda parâmetros globais escolhidos; os timbres se juntam aos já escolhidos, o resto substitui. */
+export function setParams(patch: StoredParams) {
+  setState(s => ({ ...s, params: { ...s.params, ...patch, ...(patch.timbres ? { timbres: { ...s.params.timbres, ...patch.timbres } } : {}) } }));
+}
 export function setAgeGroup(ageGroup: AgeGroup | null) {
   setState(s => ({ ...s, ageGroup }));
 }

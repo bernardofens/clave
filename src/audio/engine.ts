@@ -4,25 +4,42 @@
 export type Voice = 'piano' | 'violao' | 'pad' | 'baixo' | 'orgao';
 export type Drum = 'bumbo' | 'caixa' | 'chimbal' | 'aro' | 'clique' | 'clique-forte';
 
-let ctx: AudioContext | null = null;
+let ctx: BaseAudioContext | null = null;
 let master: GainNode;
 let noise: AudioBuffer;
 
-export function audio(): AudioContext {
-  if (!ctx) {
-    ctx = new AudioContext();
-    const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -14;
-    comp.ratio.value = 4;
-    master = ctx.createGain();
-    master.gain.value = 0.8;
-    master.connect(comp).connect(ctx.destination);
-    noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-    const d = noise.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  }
-  if (ctx.state === 'suspended') void ctx.resume();
-  return ctx;
+/** Ganho final de tudo o que o motor toca; o volume das perguntas (vel) vem antes, em cada nota. */
+export const MASTER_GAIN = 0.8;
+
+function build(c: BaseAudioContext) {
+  ctx = c;
+  const comp = c.createDynamicsCompressor();
+  comp.threshold.value = -14;
+  comp.ratio.value = 4;
+  master = c.createGain();
+  master.gain.value = MASTER_GAIN;
+  // limitador no fim: com o volume dos exercícios mais alto, acordes de várias notas não estouram
+  const limiter = c.createDynamicsCompressor();
+  limiter.threshold.value = -2;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.002;
+  limiter.release.value = 0.12;
+  master.connect(comp).connect(limiter).connect(c.destination);
+  noise = c.createBuffer(1, c.sampleRate, c.sampleRate);
+  const d = noise.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+}
+
+/** Troca o contexto de áudio, para renderizar fora do tempo real (testes e medições de volume). */
+export function useAudioContext(c: BaseAudioContext) {
+  build(c);
+}
+
+export function audio(): BaseAudioContext {
+  if (!ctx) build(new AudioContext());
+  if (ctx!.state === 'suspended' && ctx instanceof AudioContext) void ctx.resume();
+  return ctx!;
 }
 export const now = () => audio().currentTime;
 export const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);

@@ -45,7 +45,7 @@ const STYLE_NAMES: Record<Style, MessageKey> = {
   rock: 'backing.styleRock', balada: 'backing.styleBallad', bossa: 'backing.styleBossa', samba: 'backing.styleSamba',
   baiao: 'backing.styleBaiao', swing: 'backing.styleSwing', shuffle: 'backing.styleShuffle', nenhum: 'backing.styleNone',
 };
-const VOICES: [Voice, MessageKey][] = [['piano', 'backing.voicePiano'], ['pad', 'backing.voicePad'], ['violao', 'backing.voiceGuitar'], ['orgao', 'backing.voiceOrgan']];
+const VOICES: [Voice, MessageKey][] = [['piano', 'voices.piano'], ['pad', 'voices.pad'], ['violao', 'voices.violao'], ['orgao', 'voices.orgao']];
 
 // ---------------- harmonia ----------------
 interface Resolved { root: Note; type: ChordId; symbol: string; roman: string; scales: { id: ScaleId; root: Note; why: MessageKey }[] }

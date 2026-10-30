@@ -1,12 +1,16 @@
 // Parâmetros globais: o contexto musical que vale para todos os exercícios (C1). Cada exercício lê
 // daqui em vez de guardar a própria cópia, e as rotinas (D3) vão poder substituí-los por etapa.
 import type { Voice } from '../audio/engine';
-import type { Presentation } from '../audio/presentation';
+import { DEFAULT_PRESENTATION, type Presentation } from '../audio/presentation';
 import type { Instrument } from '../data/modules';
 import type { Clef } from '../theory/core';
 import { useMemo } from 'react';
 import { TUNINGS } from '../components/music/Fretboard';
 import { useStore } from '../state/store';
+
+/** Limites do volume dos exercícios, em múltiplos do padrão (1 = 100%). Acima de 1,25 o limitador do
+ *  motor já corta os acordes mais cheios. */
+export const VOLUME_RANGE = { min: 0.3, max: 1.25, step: 0.05 };
 
 export interface GlobalParams {
   /** Instrumento da pessoa (do perfil). */
@@ -25,12 +29,12 @@ export interface GlobalParams {
   clef: Clef;
   /** Timbre escolhido para cada instrumento. */
   timbres: Record<Instrument, Voice>;
-  /** Volume geral dos exercícios com som, de 0 a 1. */
+  /** Volume dos exercícios com som, em múltiplos do padrão (1 = 100%, ver VOLUME_RANGE). */
   volume: number;
 }
 
 /** O que a pessoa escolheu (guardado no estado); o resto vem do padrão e do perfil. */
-export type StoredParams = Partial<Omit<GlobalParams, 'instrument'>>;
+export type StoredParams = Partial<Omit<GlobalParams, 'instrument' | 'timbres'>> & { timbres?: Partial<Record<Instrument, Voice>> };
 
 export const DEFAULT_PARAMS: Omit<GlobalParams, 'instrument' | 'tuning'> = {
   key: null,
@@ -39,7 +43,7 @@ export const DEFAULT_PARAMS: Omit<GlobalParams, 'instrument' | 'tuning'> = {
   material: 'cromatico',
   clef: 'sol',
   timbres: { piano: 'piano', violao: 'violao', baixo: 'baixo' },
-  volume: 0.7,
+  volume: 1,
 };
 
 export function defaultTuning(instrument: Instrument): readonly number[] {
@@ -58,7 +62,7 @@ export function resolveParams(instrument: Instrument, stored: StoredParams = {})
 
 /** A camada global da apresentação: timbre do instrumento do som e volume geral. */
 export function globalPresentation(p: GlobalParams, soundInstrument: Instrument = 'piano'): Partial<Presentation> {
-  return { voice: p.timbres[soundInstrument], volume: p.volume };
+  return { voice: p.timbres[soundInstrument], volume: p.volume * DEFAULT_PRESENTATION.volume };
 }
 
 /** Parâmetros globais da pessoa, resolvidos (o mesmo objeto enquanto nada muda). */

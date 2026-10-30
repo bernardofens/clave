@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { itemText, translate, type Locale, type MessageKey, type Vars } from '../i18n';
 import { EXERCISES } from './catalog';
 import { globalPresentation, resolveParams } from './params';
-import { resolvePresentation } from '../audio/presentation';
+import { DEFAULT_PRESENTATION, resolvePresentation } from '../audio/presentation';
 import { optionResponse, validate } from './validate';
 import { TOOLS } from './tools';
 import type { Ctx } from './types';
@@ -108,9 +108,9 @@ describe('catálogo de exercícios', () => {
     });
   });
 
-  it('um parâmetro global de som chega a todo exercício com áudio, sem editar o catálogo', () => {
-    // nenhum exercício (nem o som no formato antigo) pode sobrescrever o volume global
-    const params = { ...resolveParams('baixo'), volume: 0.33 };
+  it('os parâmetros globais de som (volume e timbre) chegam a todo exercício com áudio, sem editar o catálogo', () => {
+    // nenhum exercício pode sobrescrever o volume nem o timbre global; o timbre vem do instrumento do som
+    const params = { ...resolveParams('baixo', { timbres: { piano: 'orgao', violao: 'pad', baixo: 'violao' } }), volume: 0.5 };
     const ctx = { ...ctxFor('pt'), params };
     for (const ex of EXERCISES) {
       for (let i = 0; i < 20; i++) {
@@ -118,7 +118,8 @@ describe('catálogo de exercícios', () => {
         if (!q.sound) continue;
         const settingsLayer = ex.settings(ctx).reduce((acc, st) => (st.present ? { ...acc, ...st.present(ex.defaults[st.id]) } : acc), {});
         const pres = resolvePresentation([globalPresentation(params, q.sound.instrument), ex.presentation, settingsLayer]);
-        expect(pres.volume, ex.id).toBe(0.33);
+        expect(pres.volume, ex.id).toBe(0.5 * DEFAULT_PRESENTATION.volume);
+        expect(pres.voice, ex.id).toBe(params.timbres[q.sound.instrument ?? 'piano']);
       }
     }
   });

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PRESENTATION, resolvePresentation, schedule } from './presentation';
+import { DEFAULT_PRESENTATION, DRUM_GAIN, resolvePresentation, schedule } from './presentation';
+
+describe('volume padrão dos exercícios', () => {
+  it('é o nível medido fora do tempo real, bem acima dos 0,7 de antes', () => {
+    // a 0,7 uma nota de piano chegava a −21 dBFS; a 2 chega a −12 e o acorde de sétima, a −1 dBFS
+    expect(DEFAULT_PRESENTATION.volume).toBe(2);
+  });
+  it('os tambores têm reforço próprio sobre o volume das notas', () => {
+    expect(DRUM_GAIN.accent).toBeGreaterThan(DRUM_GAIN.click);
+    expect(DRUM_GAIN.click).toBeGreaterThan(1);
+  });
+});
 
 describe('perfil de apresentação', () => {
   it('as camadas de cima valem mais e as ausentes não apagam as de baixo', () => {
