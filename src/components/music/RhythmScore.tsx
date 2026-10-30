@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Beam, BarlineType, Dot, Formatter, Renderer, Stave, StaveNote, StaveTie, Tuplet, Voice, type StemmableNote } from 'vexflow/bravura';
 import { METERS, type Meter, type NoteValue } from '../../theory/rhythm-cells';
 import type { Bar, Exercise, RhythmEvent } from '../../theory/rhythm-gen';
+import { useT } from '../../i18n';
 
 const LINE_H = 96; // altura lógica de cada linha
 const ONLY_MIDDLE_LINE = [0, 1, 2, 3, 4].map(i => ({ visible: i === 2 }));
@@ -57,6 +58,7 @@ interface Props {
 }
 
 export default function RhythmScore({ exercise, active = null, onError }: Props) {
+  const t = useT();
   const host = useRef<HTMLDivElement>(null);
   const els = useRef(new Map<string, SVGElement>());
   const [width, setWidth] = useState(0);
@@ -98,7 +100,7 @@ export default function RhythmScore({ exercise, active = null, onError }: Props)
 
   const m = METERS[exercise.meter];
   return (
-    <div className="rhythm-score" role="img" aria-label={`Partitura rítmica: ${exercise.bars.length} compassos em ${m.id}`}>
+    <div className="rhythm-score" role="img" aria-label={t('music.rhythmScore', { bars: exercise.bars.length, meter: m.id })}>
       <div ref={host} />
       {failed && <p className="rs-error">Não deu para desenhar este exercício. Gere outro.</p>}
     </div>

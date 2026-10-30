@@ -7,20 +7,21 @@ import Keyboard from '../components/music/Keyboard';
 import { TUNINGS } from '../components/music/Fretboard';
 import { Btn, Chip } from '../components/ui';
 import { useToolLog } from './common';
+import { useT, type MessageKey } from '../i18n';
 
 interface Pos { s: number; f: number; finger?: number }
-interface Routine { id: string; name: string; desc: string; for: ('violao' | 'baixo' | 'piano')[]; build: (strings: number) => Pos[] }
+interface Routine { id: string; name: MessageKey; desc: MessageKey; for: ('violao' | 'baixo' | 'piano')[]; build: (strings: number) => Pos[] }
 
 const ROUTINES: Routine[] = [
   {
-    id: 'tqo', name: 'Tônica, quinta e oitava', desc: 'Cruzando cordas com a mão direita, falando o nome de cada nota.', for: ['violao', 'baixo'],
+    id: 'tqo', name: 'technique.tqoName', desc: 'technique.tqoDesc', for: ['violao', 'baixo'],
     build: () => [3, 5, 7, 8, 5, 3].flatMap((r, i) => {
       const s = i % 2; // alterna raiz na corda mais grave e na seguinte
       return [{ s, f: r, finger: 2 }, { s: s + 1, f: r + 2, finger: 4 }, { s: s + 2, f: r + 2, finger: 4 }, { s: s + 1, f: r + 2, finger: 4 }];
     }),
   },
   {
-    id: 'aranha', name: 'Aranha (1-2-3-4)', desc: 'Um dedo por casa, subindo as cordas e voltando uma casa acima.', for: ['violao', 'baixo'],
+    id: 'aranha', name: 'technique.spiderName', desc: 'technique.spiderDesc', for: ['violao', 'baixo'],
     build: n => {
       const out: Pos[] = [];
       for (let pos = 1; pos <= 3; pos++) {
@@ -31,7 +32,7 @@ const ROUTINES: Routine[] = [
     },
   },
   {
-    id: 'cinco', name: 'Cinco dedos', desc: 'Dó-Ré-Mi-Fá-Sol e volta, depois o mesmo em Ré e em Mi. Dedos 1 a 5.', for: ['piano'],
+    id: 'cinco', name: 'technique.fiveName', desc: 'technique.fiveDesc', for: ['piano'],
     build: () => [60, 62, 64].flatMap(r => {
       const up = [0, 2, 4, 5, 7];
       const seq = [...up, ...up.slice(0, -1).reverse()];
@@ -43,6 +44,7 @@ const ROUTINES: Routine[] = [
 export default function Tecnica() {
   const instrument = useStore(s => s.profile.instrument);
   const naming = useStore(s => s.naming);
+  const t = useT();
   const available = ROUTINES.filter(r => r.for.includes(instrument));
   const [routine, setRoutine] = useState(available[0] ?? ROUTINES[0]);
   const [bpm, setBpm] = useState(70);
@@ -93,15 +95,15 @@ export default function Tecnica() {
   return (
     <div style={{ display: 'grid', gap: 18 }}>
       <div className="row">
-        {available.map(r => <Chip key={r.id} on={r.id === routine.id} onClick={() => setRoutine(r)}>{r.name}</Chip>)}
+        {available.map(r => <Chip key={r.id} on={r.id === routine.id} onClick={() => setRoutine(r)}>{t(r.name)}</Chip>)}
       </div>
-      <p className="muted">{routine.desc}</p>
+      <p className="muted">{t(routine.desc)}</p>
 
       <div style={{ background: 'var(--co)', padding: 18, overflowX: 'auto' }}>
         {isPiano ? (
           <Keyboard lo={60} hi={76} marks={idx >= 0 ? { [seq[idx].f]: 'var(--mu)' } : {}} naming={naming} labels="all" />
         ) : (
-          <svg viewBox={`0 0 ${40 + perLine * 38} ${26 + (tuning.length - 1) * 22 + 22}`} style={{ width: '100%', minWidth: 520, display: 'block' }} role="img" aria-label="Tablatura">
+          <svg viewBox={`0 0 ${40 + perLine * 38} ${26 + (tuning.length - 1) * 22 + 22}`} style={{ width: '100%', minWidth: 520, display: 'block' }} role="img" aria-label={t('technique.tab')}>
             {tuning.map((open, s) => {
               const y = 18 + (tuning.length - 1 - s) * 22;
               return <g key={s}>
@@ -124,15 +126,15 @@ export default function Tecnica() {
       </div>
 
       <div className="row">
-        <Btn onClick={toggle} tone={running ? 'mu' : undefined}>{running ? 'Parar' : '▶ Começar'}</Btn>
+        <Btn onClick={toggle} tone={running ? 'mu' : undefined}>{t(running ? 'common.stop' : 'common.startPlay')}</Btn>
         <span className="num" style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 30 }}>♩ = {bpm}</span>
-        <input className="range" style={{ maxWidth: 200 }} type="range" min={40} max={200} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label="Andamento" id="tc-bpm" />
-        {!running && [[1, '♩ por nota'], [2, '♫ por nota'], [4, '♬ por nota']].map(([n, l]) => <Chip key={n} on={sub === n} onClick={() => setSub(Number(n))}>{l}</Chip>)}
+        <input className="range" style={{ maxWidth: 200 }} type="range" min={40} max={200} value={bpm} onChange={e => setBpm(Number(e.target.value))} aria-label={t('common.tempo')} id="tc-bpm" />
+        {!running && ([[1, '♩'], [2, '♫'], [4, '♬']] as const).map(([n, figure]) => <Chip key={n} on={sub === n} onClick={() => setSub(n)}>{t('technique.perNote', { figure })}</Chip>)}
       </div>
       <div className="row">
-        <label className="switch"><input type="checkbox" id="tc-climb" checked={climb} onChange={e => setClimb(e.target.checked)} />Subir 4 bpm a cada volta</label>
-        <label className="switch"><input type="checkbox" id="tc-hear" checked={hear} onChange={e => setHear(e.target.checked)} />Tocar as notas junto</label>
-        {running && <span className="muted">Volta {round + 1}</span>}
+        <label className="switch"><input type="checkbox" id="tc-climb" checked={climb} onChange={e => setClimb(e.target.checked)} />{t('technique.climb')}</label>
+        <label className="switch"><input type="checkbox" id="tc-hear" checked={hear} onChange={e => setHear(e.target.checked)} />{t('technique.hear')}</label>
+        {running && <span className="muted">{t('technique.round', { n: round + 1 })}</span>}
       </div>
     </div>
   );

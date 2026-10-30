@@ -10,6 +10,7 @@ import RhythmLine from '../components/music/RhythmLine';
 import Staff from '../components/music/Staff';
 import { Btn, Chip, PlayIcon, Tag } from '../components/ui';
 import type { Answer, ExerciseDef, Question, SettingValue, Sound } from './types';
+import { useT } from '../i18n';
 
 type Phase = 'ask' | 'right' | 'wrong';
 
@@ -46,6 +47,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
   const naming = useStore(s => s.naming);
   const instrument = useStore(s => s.profile.instrument);
   const soundOn = useStore(s => s.sound);
+  const t = useT();
   const saved = useStore(s => s.settings[def.id]);
   const settings = useMemo(() => ({ ...def.defaults, ...(initialSettings ?? saved ?? {}) }), [def, saved, initialSettings]);
   const make = useCallback(() => def.make(settings, { naming, instrument }), [def, settings, naming, instrument]);
@@ -129,7 +131,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
 
   const copyLink = async () => {
     const url = `${location.origin}/treinar/${def.id}?c=${encodeSettings(settings)}`;
-    try { await navigator.clipboard.writeText(url); setToast('Link copiado'); } catch { setToast(url); }
+    try { await navigator.clipboard.writeText(url); setToast(t('player.copied')); } catch { setToast(url); }
     window.setTimeout(() => setToast(''), 2400);
   };
 
@@ -137,16 +139,16 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     <div className="player">
       <div className="player-head">
         <div>
-          <div className="row"><Tag>{area.name}</Tag>{def.mobile && <Tag tone="dark">sem instrumento</Tag>}</div>
+          <div className="row"><Tag>{area.name}</Tag>{def.mobile && <Tag tone="dark">{t('common.mobile')}</Tag>}</div>
           <h1>{def.title}</h1>
         </div>
         <div className="score">
-          <div><b className="num">{score.correct}/{score.total}</b><span>acertos</span></div>
-          <div><b className="num" style={{ color: 'var(--mu)' }}>{pct}%</b><span>precisão</span></div>
-          <div><b className="num">{score.streak}</b><span>seguidas</span></div>
+          <div><b className="num">{score.correct}/{score.total}</b><span>{t('player.hits')}</span></div>
+          <div><b className="num" style={{ color: 'var(--mu)' }}>{pct}%</b><span>{t('player.accuracy')}</span></div>
+          <div><b className="num">{score.streak}</b><span>{t('player.streak')}</span></div>
         </div>
       </div>
-      {target && <div className="progressbar" aria-label={`${score.total} de ${target}`}><i style={{ width: `${(score.total / target) * 100}%` }} /></div>}
+      {target && <div className="progressbar" aria-label={t('player.progressOf', { done: score.total, total: target })}><i style={{ width: `${(score.total / target) * 100}%` }} /></div>}
 
       <Stage q={q} phase={phase} playing={playing} heard={heard} onPlay={() => play(q.sound)} naming={naming} picked={picked} acc={acc} onAnswer={submit} />
 
@@ -154,14 +156,14 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
 
       <div className="player-foot">
         <div className="reveal" aria-live="polite">
-          {phase === 'wrong' && <>Resposta: <b>{q.reveal}</b></>}
-          {phase === 'right' && <span className="muted">Certo! {score.streak >= 5 ? `${score.streak} seguidas.` : ''}</span>}
+          {phase === 'wrong' && <>{t('player.answer')} <b>{q.reveal}</b></>}
+          {phase === 'right' && <span className="muted">{t('player.right')} {score.streak >= 5 ? t('player.inARow', { n: score.streak }) : ''}</span>}
           {phase === 'ask' && <span className="muted">{def.desc}</span>}
         </div>
         <div className="row">
-          {phase === 'wrong' && <Btn onClick={next} tone="mu">Próxima ↵</Btn>}
-          <Btn small tone="ghost" onClick={() => setShowSettings(v => !v)}>{showSettings ? 'Fechar' : 'Personalizar'}</Btn>
-          <Btn small tone="ghost" onClick={copyLink}>Copiar link</Btn>
+          {phase === 'wrong' && <Btn onClick={next} tone="mu">{t('player.next')}</Btn>}
+          <Btn small tone="ghost" onClick={() => setShowSettings(v => !v)}>{t(showSettings ? 'player.close' : 'player.customize')}</Btn>
+          <Btn small tone="ghost" onClick={copyLink}>{t('player.copyLink')}</Btn>
         </div>
       </div>
 
@@ -176,9 +178,10 @@ function Stage({ q, phase, playing, heard, onPlay, naming, picked, acc, onAnswer
   q: Question; phase: Phase; playing: boolean; heard: boolean; onPlay: () => void; naming: 'pt' | 'en';
   picked: string | null; acc: number; onAnswer: (ok: boolean, id: string) => void;
 }) {
+  const t = useT();
   const v = q.visual;
   const a = q.answer;
-  const fb = phase === 'right' ? <div className="feedback ok">Certo</div> : phase === 'wrong' ? <div className="feedback bad">Quase</div> : null;
+  const fb = phase === 'right' ? <div className="feedback ok">{t('player.feedbackRight')}</div> : phase === 'wrong' ? <div className="feedback bad">{t('player.feedbackWrong')}</div> : null;
   const isText = v.kind === 'text' && v.text;
 
   // respostas que acontecem no próprio palco (teclado, braço, pauta)
@@ -220,7 +223,7 @@ function Stage({ q, phase, playing, heard, onPlay, naming, picked, acc, onAnswer
         <div className="prompt">{q.prompt}</div>
         <Staff clef={a.clef} columns={shown.map(c => ({ notes: c.map(n => ({ note: n })) }))} colWidth={90} ghostAcc={acc}
           onPick={phase === 'ask' ? s => onAnswer(s === stepOf(a.correct) && acc === a.correct.acc, `${s}:${acc}`) : undefined} />
-        <div className="hint">toque na linha ou no espaço</div>
+        <div className="hint">{t('player.tapStaff')}</div>
       </div>
     );
   }
@@ -238,10 +241,11 @@ function Stage({ q, phase, playing, heard, onPlay, naming, picked, acc, onAnswer
 }
 
 function Listen({ playing, heard, onPlay }: { playing: boolean; heard: boolean; onPlay: () => void }) {
+  const t = useT();
   return (
     <>
-      <button type="button" className={`listen ${playing ? 'playing' : ''}`} onClick={onPlay} aria-label={heard ? 'Ouvir de novo' : 'Ouvir'}><PlayIcon /></button>
-      <div className="hint">{heard ? 'toque no disco ou aperte espaço para ouvir de novo' : 'toque no disco para ouvir'}</div>
+      <button type="button" className={`listen ${playing ? 'playing' : ''}`} onClick={onPlay} aria-label={t(heard ? 'player.listenAgain' : 'player.listen')}><PlayIcon /></button>
+      <div className="hint">{t(heard ? 'player.hintAgain' : 'player.hintFirst')}</div>
     </>
   );
 }
@@ -250,6 +254,7 @@ function Listen({ playing, heard, onPlay }: { playing: boolean; heard: boolean; 
 function AnswerArea({ q, phase, picked, acc, setAcc, onAnswer, naming }: {
   q: Question; phase: Phase; picked: string | null; acc: number; setAcc: (n: number) => void; onAnswer: (ok: boolean, id: string) => void; naming: 'pt' | 'en';
 }) {
+  const t = useT();
   const a: Answer = q.answer;
   const state = (id: string, correct: boolean) => (phase === 'ask' ? '' : correct ? 'right' : picked === id ? 'wrong' : '');
 
@@ -260,14 +265,14 @@ function AnswerArea({ q, phase, picked, acc, setAcc, onAnswer, naming }: {
         {a.options.map((o, i) => (
           <button key={o.id} type="button" className={`ans ${rhythm ? 'rhythm' : ''} ${state(o.id, o.id === a.correct)}`} disabled={phase !== 'ask'} onClick={() => onAnswer(o.id === a.correct, o.id)}>
             {i < 9 && <span className="k">{i + 1}</span>}
-            {o.rhythm ? <RhythmLine bars={o.rhythm} label={`Opção ${i + 1}`} /> : o.label}
+            {o.rhythm ? <RhythmLine bars={o.rhythm} label={t('player.option', { n: i + 1 })} /> : o.label}
           </button>
         ))}
       </div>
     );
   }
   const accRow = (allowed: boolean) => allowed && (
-    <div className="accrow" role="group" aria-label="Acidente">
+    <div className="accrow" role="group" aria-label={t('player.accidental')}>
       {[[-1, '♭'], [0, '♮'], [1, '♯']].map(([v, l]) => <Chip key={v} on={acc === v} onClick={() => setAcc(Number(v))}>{l}</Chip>)}
     </div>
   );
@@ -295,13 +300,14 @@ function AnswerArea({ q, phase, picked, acc, setAcc, onAnswer, naming }: {
 
 // ---------------- personalizar ----------------
 function SettingsPanel({ def, values, onChange }: { def: ExerciseDef; values: Record<string, SettingValue>; onChange: (v: Record<string, SettingValue>) => void }) {
+  const t = useT();
   return (
     <div className="settings">
       {def.settings.map(s => (
         <div className="field" key={s.id}>
           <span>{s.label}</span>
           {s.type === 'toggle' && (
-            <label className="switch"><input type="checkbox" id={`set-${def.id}-${s.id}`} checked={!!values[s.id]} onChange={e => onChange({ ...values, [s.id]: e.target.checked })} />{values[s.id] ? 'Sim' : 'Não'}</label>
+            <label className="switch"><input type="checkbox" id={`set-${def.id}-${s.id}`} checked={!!values[s.id]} onChange={e => onChange({ ...values, [s.id]: e.target.checked })} />{t(values[s.id] ? 'common.yes' : 'common.no')}</label>
           )}
           {s.type === 'single' && (
             <div className="row">{s.options!.map(o => <Chip key={o.id} on={values[s.id] === o.id} onClick={() => onChange({ ...values, [s.id]: o.id })}>{o.label}</Chip>)}</div>
@@ -318,7 +324,7 @@ function SettingsPanel({ def, values, onChange }: { def: ExerciseDef; values: Re
           )}
         </div>
       ))}
-      <div className="row"><Btn small tone="ghost" onClick={() => onChange({ ...def.defaults })}>Voltar ao padrão</Btn></div>
+      <div className="row"><Btn small tone="ghost" onClick={() => onChange({ ...def.defaults })}>{t('player.resetDefaults')}</Btn></div>
     </div>
   );
 }

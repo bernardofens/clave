@@ -1,6 +1,7 @@
 // Pauta desenhada em SVG: linhas brancas finas sobre cor, como as cordas do contrabaixo da referência.
 import { useState } from 'react';
 import { clefBottom, keyAccidentals, keySignatureSteps, type Clef, type Note, step as stepOf } from '../../theory/core';
+import { useT } from '../../i18n';
 
 export const CLEF_PATH = 'M58,190 C48,206 66,214 76,204 C86,194 80,170 76,140 L62,34 C60,16 78,10 80,28 C84,52 52,70 42,92 C30,118 34,150 62,154 C88,156 98,130 84,116 C70,102 48,110 52,130 C54,140 64,144 70,138';
 
@@ -68,6 +69,7 @@ function ClefGlyph({ clef }: { clef: Clef }) {
 }
 
 export default function Staff({ clef, fifths = 0, columns, timeSig, cursor = null, colWidth = 58, onPick, ghostAcc = 0, label }: Props) {
+  const t = useT();
   const bottom = clefBottom(clef);
   const y = (s: number) => BASE - (s - bottom) * H;
   const keySteps = keySignatureSteps(fifths, clef);
@@ -99,7 +101,7 @@ export default function Staff({ clef, fifths = 0, columns, timeSig, cursor = nul
       className="staff-svg"
       viewBox={`0 0 ${width} 176`}
       role="img"
-      aria-label={label ?? 'Pauta'}
+      aria-label={label ?? t('music.staff')}
       style={{ cursor: onPick ? 'pointer' : undefined, touchAction: onPick ? 'none' : undefined, maxWidth: Math.max(width * 2, 320) }}
       onPointerMove={onPick ? ev => setGhost(stepFromEvent(ev)) : undefined}
       onPointerLeave={onPick ? () => setGhost(null) : undefined}

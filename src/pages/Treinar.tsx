@@ -5,7 +5,6 @@ import { MODULES } from '../data/content';
 import { EXERCISES, exerciseById } from '../exercises/catalog';
 import Player, { decodeSettings } from '../exercises/Player';
 import { toolById, TOOLS } from '../exercises/tools';
-import { GROUPS } from '../exercises/types';
 import { toggleArsenal, useStore } from '../state/store';
 import Ambiente from '../tools/Ambiente';
 import Backing from '../tools/Backing';
@@ -14,6 +13,7 @@ import Leitura from '../tools/Leitura';
 import Tecnica from '../tools/Tecnica';
 import { Art, Chip, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
+import { useT } from '../i18n';
 
 // A leitura rítmica traz a VexFlow; só baixa quando a ferramenta abre.
 const Ritmo = lazy(() => import('../tools/Ritmo'));
@@ -23,39 +23,45 @@ export const TOOL_COMPONENTS: Record<string, () => React.ReactElement> = {
   ambiente: () => <Ambiente />,
   backing: () => <Backing />,
   leitura: () => <Leitura />,
-  ritmo: () => <Suspense fallback={<p className="muted">Carregando a partitura…</p>}><Ritmo /></Suspense>,
+  ritmo: () => <Suspense fallback={<LoadingScore />}><Ritmo /></Suspense>,
   tecnica: () => <Tecnica />,
 };
 
+function LoadingScore() {
+  const t = useT();
+  return <p className="muted">{t('train.loadingScore')}</p>;
+}
+
 export default function Treinar() {
+  const t = useT();
   const stats = useStore(s => s.stats);
   const arsenal = useStore(s => s.arsenal);
   const [mobileOnly, setMobileOnly] = useState(false);
   const [area, setArea] = useState<AreaId | 'todas'>('todas');
   const areas = AREAS.filter(a => area === 'todas' || a.id === area);
-  const tools = TOOLS.filter(t => t.id !== 'tonalidade' && (!mobileOnly || t.mobile) && (area === 'todas' || t.area === area));
+  const tools = TOOLS.filter(tool => tool.id !== 'tonalidade' && (!mobileOnly || tool.mobile) && (area === 'todas' || tool.area === area));
 
   return (
     <div>
-      <PageHead tag="Academia" title="Treinar" sub="Cada área é um grupo muscular. Escolha um exercício, personalize e repita até virar reflexo. A estrela coloca o exercício no seu arsenal." />
+      <PageHead tag={t('train.tag')} title={t('train.title')} sub={t('train.sub')} />
       <div className="row" style={{ marginBottom: 8 }}>
-        <Chip on={area === 'todas'} onClick={() => setArea('todas')}>Todas</Chip>
+        <Chip on={area === 'todas'} onClick={() => setArea('todas')}>{t('train.all')}</Chip>
         {AREAS.map(a => <Chip key={a.id} on={area === a.id} onClick={() => setArea(a.id)}>{a.name}</Chip>)}
-        <label className="switch" style={{ marginLeft: 'auto' }}><input type="checkbox" id="mobile-only" checked={mobileOnly} onChange={e => setMobileOnly(e.target.checked)} />Só sem instrumento</label>
+        <label className="switch" style={{ marginLeft: 'auto' }}><input type="checkbox" id="mobile-only" checked={mobileOnly} onChange={e => setMobileOnly(e.target.checked)} />{t('train.mobileOnly')}</label>
       </div>
 
       {tools.length > 0 && (
         <section className="sec" style={{ marginTop: 32 }}>
-          <SecTitle>Ferramentas</SecTitle>
+          <SecTitle>{t('train.tools')}</SecTitle>
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))' }}>
-            {tools.map(t => (
-              <Link key={t.id} to={t.path} className="ex-card">
-                <span className="acc" style={{ background: areaById[t.area].color }} />
-                <Art name={t.art} style={{ width: 56, height: 56, objectFit: 'contain', flex: 'none' }} />
+            {tools.map(tool => (
+              <Link key={tool.id} to={tool.path} className="ex-card">
+                <span className="acc" style={{ background: areaById[tool.area].color }} />
+                <Art name={tool.art} style={{ width: 56, height: 56, objectFit: 'contain', flex: 'none' }} />
                 <div style={{ minWidth: 0 }}>
-                  <h3>{t.title}</h3>
-                  <p>{t.desc}</p>
-                  <div className="meta"><span className="mini-tag">{areaById[t.area].name}</span>{t.mobile ? <span className="mini-tag">sem instrumento</span> : <span className="mini-tag">com instrumento</span>}</div>
+                  <h3>{tool.title}</h3>
+                  <p>{tool.desc}</p>
+                  <div className="meta"><span className="mini-tag">{areaById[tool.area].name}</span><span className="mini-tag">{t(tool.mobile ? 'common.mobile' : 'common.withInstrument')}</span></div>
                 </div>
               </Link>
             ))}
@@ -83,11 +89,11 @@ export default function Treinar() {
                       <div style={{ minWidth: 0, paddingRight: 26 }}>
                         <h3>{e.title}</h3>
                         <p>{e.desc}</p>
-                        <div className="meta"><span className="mini-tag">{GROUPS[e.group]}</span>{st && <span className="mini-tag">{st.attempts} feitas</span>}</div>
+                        <div className="meta"><span className="mini-tag">{t(`train.groups.${e.group}`)}</span>{st && <span className="mini-tag">{t('train.done', { count: st.attempts })}</span>}</div>
                       </div>
                       {st && <span className="pct num">{Math.round((st.correct / st.attempts) * 100)}%</span>}
                     </Link>
-                    <button type="button" onClick={() => toggleArsenal(e.id)} aria-pressed={pinned} aria-label={pinned ? 'Tirar do arsenal' : 'Pôr no arsenal'}
+                    <button type="button" onClick={() => toggleArsenal(e.id)} aria-pressed={pinned} aria-label={t(pinned ? 'train.unpin' : 'train.pin')}
                       style={{ position: 'absolute', right: 10, top: 10, border: 0, background: 'none', cursor: 'pointer', fontSize: 20, color: pinned ? 'var(--mu)' : 'var(--muted)' }}>{pinned ? '★' : '☆'}</button>
                   </div>
                 );
@@ -103,6 +109,7 @@ export default function Treinar() {
 export function ExercisePage() {
   const { id = '' } = useParams();
   const [params] = useSearchParams();
+  const t = useT();
   const def = exerciseById[id];
   if (!def) return <NotFound />;
   const shared = decodeSettings(params.get('c'));
@@ -110,10 +117,10 @@ export function ExercisePage() {
   return (
     <div style={{ display: 'grid', gap: 20 }}>
       <div className="row" style={{ justifyContent: 'space-between' }}>
-        <Link to="/treinar" className="eyebrow" style={{ textDecoration: 'none' }}>← Treinar</Link>
-        {mod && <Link to={`/estudar/${mod.id}`} className="eyebrow" style={{ textDecoration: 'none', color: 'var(--mu)' }}>Aula: {mod.title} →</Link>}
+        <Link to="/treinar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('train.back')}</Link>
+        {mod && <Link to={`/estudar/${mod.id}`} className="eyebrow" style={{ textDecoration: 'none', color: 'var(--mu)' }}>{t('train.lesson', { title: mod.title })}</Link>}
       </div>
-      {shared && <div className="panel" style={{ background: 'var(--bk-3)', padding: 12 }}>Você abriu um treino compartilhado, com configurações próprias.</div>}
+      {shared && <div className="panel" style={{ background: 'var(--bk-3)', padding: 12 }}>{t('train.shared')}</div>}
       <Player key={id + (shared ? 'c' : '')} def={def} initialSettings={shared} />
     </div>
   );
@@ -121,15 +128,16 @@ export function ExercisePage() {
 
 export function ToolPage() {
   const { id = '' } = useParams();
-  const t = toolById[id];
+  const t = useT();
+  const tool = toolById[id];
   const Comp = TOOL_COMPONENTS[id];
-  if (!t || !Comp) return <NotFound />;
+  if (!tool || !Comp) return <NotFound />;
   return (
     <div style={{ display: 'grid', gap: 20 }}>
-      <Link to="/treinar" className="eyebrow" style={{ textDecoration: 'none' }}>← Treinar</Link>
+      <Link to="/treinar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('train.back')}</Link>
       <header className="page-head" style={{ marginBottom: 0 }}>
-        <div><div className="row"><Tag>{areaById[t.area].name}</Tag>{t.mobile ? <Tag tone="dark">sem instrumento</Tag> : <Tag tone="co">com instrumento</Tag>}</div><h1>{t.title}</h1><p>{t.desc}</p></div>
-        <Art name={t.art} style={{ width: 110 }} />
+        <div><div className="row"><Tag>{areaById[tool.area].name}</Tag>{tool.mobile ? <Tag tone="dark">{t('common.mobile')}</Tag> : <Tag tone="co">{t('common.withInstrument')}</Tag>}</div><h1>{tool.title}</h1><p>{tool.desc}</p></div>
+        <Art name={tool.art} style={{ width: 110 }} />
       </header>
       <Comp />
     </div>

@@ -1,5 +1,6 @@
 // Teclado em SVG. Marca teclas com cores e, se interativo, avisa qual tecla foi tocada.
 import { pcName, type Naming } from '../../theory/core';
+import { useT } from '../../i18n';
 
 const BLACK = new Set([1, 3, 6, 8, 10]);
 const WW = 28; // largura da tecla branca
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function Keyboard({ lo, hi, marks = {}, onPress, labels = 'do', naming = 'pt', label }: Props) {
+  const t = useT();
   const whites: number[] = [];
   for (let m = lo; m <= hi; m++) if (!BLACK.has(m % 12)) whites.push(m);
   const xOfWhite = new Map(whites.map((m, i) => [m, i * WW]));
@@ -32,7 +34,7 @@ export default function Keyboard({ lo, hi, marks = {}, onPress, labels = 'do', n
   const width = whites.length * WW;
   const interactive = !!onPress;
   return (
-    <svg className="kbd-svg" viewBox={`-2 -2 ${width + 4} ${WH + 4}`} role="img" aria-label={label ?? 'Teclado'}>
+    <svg className="kbd-svg" viewBox={`-2 -2 ${width + 4} ${WH + 4}`} role="img" aria-label={label ?? t('music.keyboard')}>
       {whites.map(m => {
         const x = xOfWhite.get(m)!;
         const mark = marks[m];

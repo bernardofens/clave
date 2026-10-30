@@ -11,11 +11,11 @@ import Progresso from './pages/Progresso';
 import Sessao from './pages/Sessao';
 import Treinar, { ExercisePage, ToolPage } from './pages/Treinar';
 import NotFound from './pages/NotFound';
-import { useLocale } from './i18n';
+import { localeTag, useLocale } from './i18n';
 
 export default function App() {
   const locale = useLocale();
-  useEffect(() => { document.documentElement.lang = locale === 'pt' ? 'pt-BR' : 'en'; }, [locale]);
+  useEffect(() => { document.documentElement.lang = localeTag(locale); }, [locale]);
   return (
     <BrowserRouter>
       <Routes>

@@ -4,22 +4,24 @@ import { useNavigate } from 'react-router-dom';
 import { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } from '../data/areas';
 import { updateProfile, useStore } from '../state/store';
 import { Art, Btn, Chip, Tag } from '../components/ui';
+import { useT, type MessageKey } from '../i18n';
 
-const LEVELS = ['Nunca estudei', 'Básico', 'Intermediário', 'Avançado'];
+const LEVELS: MessageKey[] = ['common.levelNone', 'common.levelBasic', 'common.levelIntermediate', 'common.levelAdvanced'];
 
 export default function Onboarding() {
   const profile = useStore(s => s.profile);
   const [step, setStep] = useState(0);
   const nav = useNavigate();
+  const t = useT();
   const finish = () => { updateProfile({ onboarded: true }); nav('/'); };
   const steps = [
     {
-      title: 'O que você toca?', art: 'correria',
+      title: t('onboarding.whatPlay'), art: 'correria',
       body: (
         <div style={{ display: 'grid', gap: 18 }}>
           <label style={{ display: 'grid', gap: 6, maxWidth: 360 }}>
-            <span className="eyebrow">Como o Clave te chama</span>
-            <input id="ob-nome" value={profile.name} onChange={e => updateProfile({ name: e.target.value })} placeholder="Seu nome" autoFocus
+            <span className="eyebrow">{t('common.nameLabel')}</span>
+            <input id="ob-nome" value={profile.name} onChange={e => updateProfile({ name: e.target.value })} placeholder={t('common.namePlaceholder')} autoFocus
               style={{ background: 'var(--bk-3)', border: 0, color: 'var(--cream)', padding: '12px 14px', font: 'inherit', fontSize: 18 }} />
           </label>
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
@@ -35,7 +37,7 @@ export default function Onboarding() {
       ),
     },
     {
-      title: 'Como você se descreve?', art: 'clave-sentado',
+      title: t('onboarding.describe'), art: 'clave-sentado',
       body: (
         <div style={{ display: 'grid', gap: 10 }}>
           {PROFILE_KINDS.map(k => (
@@ -48,23 +50,23 @@ export default function Onboarding() {
       ),
     },
     {
-      title: 'O que você quer conseguir?', art: 'genero-jazz',
+      title: t('onboarding.goals'), art: 'genero-jazz',
       body: (
         <div style={{ display: 'grid', gap: 12 }}>
-          <p className="muted">Escolha quantos quiser.</p>
+          <p className="muted">{t('onboarding.pickMany')}</p>
           <div className="row">{GOALS.map(g => <Chip key={g.id} on={profile.goals.includes(g.id)} onClick={() => updateProfile({ goals: profile.goals.includes(g.id) ? profile.goals.filter(x => x !== g.id) : [...profile.goals, g.id] })}>{g.name}</Chip>)}</div>
         </div>
       ),
     },
     {
-      title: 'Onde você está hoje?', art: 'haltere',
+      title: t('onboarding.where'), art: 'haltere',
       body: (
         <div style={{ display: 'grid', gap: 12 }}>
-          <p className="muted">Sem pressão: isso só ajusta o começo. O nível de verdade vem dos seus acertos.</p>
+          <p className="muted">{t('onboarding.whereNote')}</p>
           {AREAS.map(a => (
             <div key={a.id} style={{ display: 'grid', gap: 6 }}>
               <b>{a.name} <span className="muted" style={{ fontWeight: 400 }}>· {a.short}</span></b>
-              <div className="row">{LEVELS.map((l, i) => <Chip key={i} on={profile.levels[a.id] === i} onClick={() => updateProfile({ levels: { ...profile.levels, [a.id]: i } })}>{l}</Chip>)}</div>
+              <div className="row">{LEVELS.map((l, i) => <Chip key={i} on={profile.levels[a.id] === i} onClick={() => updateProfile({ levels: { ...profile.levels, [a.id]: i } })}>{t(l)}</Chip>)}</div>
             </div>
           ))}
         </div>
@@ -77,8 +79,8 @@ export default function Onboarding() {
       <div className="rule3" />
       <main className="page" style={{ maxWidth: 1000, display: 'grid', gap: 28 }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <Tag>Passo {step + 1} de {steps.length}</Tag>
-          <button type="button" onClick={finish} style={{ background: 'none', border: 0, color: 'var(--muted)', cursor: 'pointer' }}>Pular por agora</button>
+          <Tag>{t('onboarding.step', { i: step + 1, n: steps.length })}</Tag>
+          <button type="button" onClick={finish} style={{ background: 'none', border: 0, color: 'var(--muted)', cursor: 'pointer' }}>{t('onboarding.skip')}</button>
         </div>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', alignItems: 'start', gap: 32 }}>
           <div style={{ display: 'grid', gap: 20 }}>
@@ -88,8 +90,8 @@ export default function Onboarding() {
           <Art name={s.art} style={{ width: '100%', maxWidth: 360, justifySelf: 'center' }} />
         </div>
         <div className="row">
-          {step > 0 && <Btn tone="ghost" onClick={() => setStep(step - 1)}>Voltar</Btn>}
-          {step < steps.length - 1 ? <Btn onClick={() => setStep(step + 1)}>Continuar</Btn> : <Btn tone="mu" onClick={finish}>Montar minha primeira sessão</Btn>}
+          {step > 0 && <Btn tone="ghost" onClick={() => setStep(step - 1)}>{t('common.back')}</Btn>}
+          {step < steps.length - 1 ? <Btn onClick={() => setStep(step + 1)}>{t('common.continue')}</Btn> : <Btn tone="mu" onClick={finish}>{t('onboarding.finish')}</Btn>}
         </div>
       </main>
     </div>
