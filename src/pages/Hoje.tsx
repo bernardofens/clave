@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useContent } from '../data/localized';
-import { suggestSession, type Block } from '../data/session';
+import { moduleOf, suggestSession, type Block } from '../data/session';
 import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
-import { minutesByArea, streakDays, toggleArsenal, useStore } from '../state/store';
+import { minutesByModule, streakDays, toggleArsenal, useStore } from '../state/store';
 import { Art, Btn, Chip, fmtMin, SecTitle, Tag } from '../components/ui';
 import { itemText, useT, type MessageKey } from '../i18n';
 
@@ -30,13 +30,13 @@ export default function Hoje() {
   const [seed, setSeed] = useState(0);
   const nav = useNavigate();
   const t = useT();
-  const { AREAS, areaById } = useContent();
+  const { MODULES, moduleById } = useContent();
   const scene = sceneForNow();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const plan = useMemo(() => suggestSession(minutes, withInst, profile, history), [minutes, withInst, profile, seed]);
   const total = plan.reduce((a, b) => a + b.minutes, 0);
-  const byArea = minutesByArea(history, 30);
-  const maxMin = Math.max(10, ...Object.values(byArea));
+  const byModule = minutesByModule(history, 30);
+  const maxMin = Math.max(10, ...Object.values(byModule));
   const streak = streakDays(history);
 
   const start = () => {
@@ -89,7 +89,7 @@ export default function Hoje() {
               <span style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 26, width: 24, color: 'var(--mu)' }}>{i + 1}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600 }}>{b.label ? t(b.label) : itemText(t, b.id, 'title')}</div>
-                <div style={{ fontSize: 13, opacity: 0.85 }}>{areaById[b.area].name} · {b.kind === 'exercise' ? t('home.questions', { count: b.target ?? 0 }) : t('home.tool')}</div>
+                <div style={{ fontSize: 13, opacity: 0.85 }}>{moduleById[moduleOf(b.id)].name} · {b.kind === 'exercise' ? t('home.questions', { count: b.target ?? 0 }) : t('home.tool')}</div>
               </div>
               <span className="num" style={{ fontWeight: 600 }}>{t('common.minutes', { n: b.minutes })}</span>
             </li>
@@ -111,10 +111,10 @@ export default function Hoje() {
             return (
               <div key={id} style={{ position: 'relative' }}>
                 <Link to={e ? `/treinar/${id}` : tool.path} className="ex-card">
-                  <span className="acc" style={{ background: areaById[item.area].color }} />
+                  <span className="acc" style={{ background: moduleById[item.primaryModule].color }} />
                   <div style={{ minWidth: 0 }}>
                     <h3>{title}</h3>
-                    <p>{areaById[item.area].name}{st ? ` · ${t('home.accuracy', { pct: Math.round((st.correct / st.attempts) * 100) })}` : ''}</p>
+                    <p>{moduleById[item.primaryModule].name}{st ? ` · ${t('home.accuracy', { pct: Math.round((st.correct / st.attempts) * 100) })}` : ''}</p>
                   </div>
                 </Link>
                 <button type="button" onClick={() => toggleArsenal(id)} aria-label={t('home.removeFromArsenal', { title })} style={{ position: 'absolute', right: 8, top: 8, border: 0, background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18 }}>×</button>
@@ -129,11 +129,11 @@ export default function Hoje() {
         <div>
           <SecTitle link={{ to: '/progresso', label: t('home.history') }}>{t('home.last30')}</SecTitle>
           <div className="panel" style={{ display: 'grid', gap: 10 }}>
-            {AREAS.map(a => (
-              <div key={a.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 56px', gap: 10, alignItems: 'center' }}>
+            {MODULES.map(a => (
+              <div key={a.id} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 56px', gap: 10, alignItems: 'center' }}>
                 <span style={{ fontWeight: 600 }}>{a.name}</span>
-                <div style={{ height: 14, background: 'var(--bk-3)' }}><div style={{ height: '100%', width: `${((byArea[a.id] ?? 0) / maxMin) * 100}%`, background: a.color }} /></div>
-                <span className="num muted" style={{ textAlign: 'right' }}>{fmtMin((byArea[a.id] ?? 0) * 60)}</span>
+                <div style={{ height: 14, background: 'var(--bk-3)' }}><div style={{ height: '100%', width: `${((byModule[a.id] ?? 0) / maxMin) * 100}%`, background: a.color }} /></div>
+                <span className="num muted" style={{ textAlign: 'right' }}>{fmtMin((byModule[a.id] ?? 0) * 60)}</span>
               </div>
             ))}
           </div>

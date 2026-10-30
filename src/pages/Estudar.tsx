@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { MODULES as MODULE_BASE } from '../data/content';
+import { LESSONS as LESSON_BASE } from '../data/content';
 import { useContent } from '../data/localized';
 import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
@@ -8,8 +8,8 @@ import { Art, Btn, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
 import { itemText, useT } from '../i18n';
 
-export function moduleProgress(id: string, stats: Record<string, { correct: number }>) {
-  const m = MODULE_BASE.find(x => x.id === id)!;
+export function lessonProgress(id: string, stats: Record<string, { correct: number }>) {
+  const m = LESSON_BASE.find(x => x.id === id)!;
   if (!m.exercises.length) return 0;
   return m.exercises.reduce((a, e) => a + Math.min(1, (stats[e]?.correct ?? 0) / 20), 0) / m.exercises.length;
 }
@@ -17,7 +17,7 @@ export function moduleProgress(id: string, stats: Record<string, { correct: numb
 export default function Estudar() {
   const stats = useStore(s => s.stats);
   const t = useT();
-  const { AREAS, GENRES, MODULES, moduleById, ROADMAPS } = useContent();
+  const { GENRES, LESSONS, lessonById, MODULES, ROADMAPS } = useContent();
   return (
     <div>
       <PageHead tag={t('study.tag')} title={t('study.title')} sub={t('study.sub')} />
@@ -26,7 +26,7 @@ export default function Estudar() {
         <SecTitle>{t('study.roadmaps')}</SecTitle>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
           {ROADMAPS.map(r => {
-            const p = r.steps.reduce((a, s) => a + moduleProgress(s.module, stats), 0) / r.steps.length;
+            const p = r.steps.reduce((a, s) => a + lessonProgress(s.lesson, stats), 0) / r.steps.length;
             return (
               <div key={r.id} className="panel" style={{ display: 'grid', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -38,7 +38,7 @@ export default function Estudar() {
                 </div>
                 <div className="progressbar"><i style={{ width: `${p * 100}%` }} /></div>
                 <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 4, fontSize: 14 }}>
-                  {r.steps.map(s => <li key={s.module}><Link to={`/estudar/${s.module}`}>{moduleById[s.module].title}</Link> <span className="muted">· {s.note}</span></li>)}
+                  {r.steps.map(s => <li key={s.lesson}><Link to={`/estudar/${s.lesson}`}>{lessonById[s.lesson].title}</Link> <span className="muted">· {s.note}</span></li>)}
                 </ol>
               </div>
             );
@@ -58,8 +58,8 @@ export default function Estudar() {
         </div>
       </section>
 
-      {AREAS.map(a => {
-        const mods = MODULES.filter(m => m.area === a.id);
+      {MODULES.map(a => {
+        const mods = LESSONS.filter(l => l.primaryModule === a.id);
         if (!mods.length) return null;
         return (
           <section key={a.id} className="sec" style={{ marginTop: 40 }}>
@@ -71,7 +71,7 @@ export default function Estudar() {
                   <div style={{ minWidth: 0 }}>
                     <h3>{m.title}</h3>
                     <p>{m.why}</p>
-                    <div className="progressbar" style={{ marginTop: 10 }}><i style={{ width: `${moduleProgress(m.id, stats) * 100}%` }} /></div>
+                    <div className="progressbar" style={{ marginTop: 10 }}><i style={{ width: `${lessonProgress(m.id, stats) * 100}%` }} /></div>
                   </div>
                 </Link>
               ))}
@@ -83,13 +83,13 @@ export default function Estudar() {
   );
 }
 
-export function ModulePage() {
+export function LessonPage() {
   const { id = '' } = useParams();
   const t = useT();
-  const { areaById, moduleById } = useContent();
-  const m = moduleById[id];
+  const { lessonById, moduleById } = useContent();
+  const m = lessonById[id];
   if (!m) return <NotFound />;
-  const a = areaById[m.area];
+  const a = moduleById[m.primaryModule];
   return (
     <div style={{ display: 'grid', gap: 28 }}>
       <Link to="/estudar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('study.back')}</Link>
@@ -116,7 +116,7 @@ export function ModulePage() {
         <SecTitle>{t('study.practice')}</SecTitle>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
           {m.exercises.map(e => exerciseById[e] && (
-            <Link key={e} to={`/treinar/${e}`} className="ex-card"><span className="acc" style={{ background: areaById[exerciseById[e].area].color }} /><div><h3>{itemText(t, e, 'title')}</h3><p>{itemText(t, e, 'desc')}</p></div></Link>
+            <Link key={e} to={`/treinar/${e}`} className="ex-card"><span className="acc" style={{ background: moduleById[exerciseById[e].primaryModule].color }} /><div><h3>{itemText(t, e, 'title')}</h3><p>{itemText(t, e, 'desc')}</p></div></Link>
           ))}
           {m.tools.map(id => toolById[id] && (
             <Link key={id} to={toolById[id].path} className="ex-card"><span className="acc" style={{ background: 'var(--co)' }} /><Art name={toolById[id].art} style={{ width: 48, flex: 'none' }} /><div><h3>{itemText(t, id, 'title')}</h3><p>{itemText(t, id, 'desc')}</p></div></Link>

@@ -1,13 +1,13 @@
 // Partes comuns das ferramentas: registro de tempo no histórico e o metrônomo reaproveitável.
 import { useEffect, useRef, useState } from 'react';
 import { atTime, Clock, drum } from '../audio/engine';
-import type { AreaId } from '../data/areas';
+import type { ModuleId } from '../exercises/taxonomy';
 import { logActivity } from '../state/store';
 import { Btn, Chip } from '../components/ui';
 import { useT } from '../i18n';
 
 /** Soma o tempo em que a ferramenta ficou ativa e registra no histórico ao sair. */
-export function useToolLog(id: string, title: string, area: AreaId, active: boolean) {
+export function useToolLog(id: string, title: string, module: ModuleId, active: boolean) {
   const acc = useRef(0);
   const since = useRef<number | null>(null);
   useEffect(() => {
@@ -16,8 +16,8 @@ export function useToolLog(id: string, title: string, area: AreaId, active: bool
   }, [active]);
   useEffect(() => () => {
     const total = acc.current + (since.current ? Date.now() - since.current : 0);
-    logActivity({ id, title, area, seconds: Math.round(total / 1000) });
-  }, [id, title, area]);
+    logActivity({ id, title, module, seconds: Math.round(total / 1000) });
+  }, [id, title, module]);
 }
 
 export function Metronome({ compact = false, onRunning }: { compact?: boolean; onRunning?: (r: boolean) => void }) {

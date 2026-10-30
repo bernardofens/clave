@@ -25,7 +25,7 @@ export default function Ambiente({ goalMinutes }: { goalMinutes?: number }) {
   const [metro, setMetro] = useState(false);
   const stopDrone = useRef<(() => void) | null>(null);
   const chimed = useRef(false);
-  useToolLog('ambiente', 'Solfejar e tocar', 'ouvido', timing || droneOn || metro);
+  useToolLog('ambiente', 'Solfejar e tocar', 'perception.melodic', timing || droneOn || metro);
 
   useEffect(() => () => stopDrone.current?.(), []);
   useEffect(() => {

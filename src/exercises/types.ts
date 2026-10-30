@@ -1,7 +1,7 @@
-import type { AreaId, Instrument } from '../data/areas';
+import type { Instrument } from '../data/modules';
 import type { Clef, Convention, Naming, Note } from '../theory/core';
 import type { Translate } from '../i18n';
-import type { Classification } from './taxonomy';
+import type { Classification, ModuleId } from './taxonomy';
 import type { CellId } from '../theory/rhythm';
 import type { FretMark } from '../components/music/Fretboard';
 
@@ -64,7 +64,6 @@ export type GroupId = 'pauta' | 'teclado' | 'braco' | 'ouvido' | 'teoria' | 'rit
 // nunca muda (catalog.test.ts trava a lista). Módulo e etiquetas: ver src/exercises/taxonomy.ts.
 export interface ExerciseDef extends Classification {
   id: string;
-  area: AreaId;
   group: GroupId;
   /** Dá para fazer sem o instrumento (no ônibus, por exemplo). */
   mobile: boolean;
@@ -75,7 +74,8 @@ export interface ExerciseDef extends Classification {
 
 export interface ToolDef {
   id: string;
-  area: AreaId;
+  /** Onde a ferramenta mora no catálogo. */
+  primaryModule: ModuleId;
   mobile: boolean;
   path: string;
   art: string;

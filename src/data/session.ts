@@ -1,8 +1,9 @@
 // Sugere uma sessão de estudo para o tempo que a pessoa tem agora.
-// Pesa as áreas pelos objetivos e pelo nível declarado, e alivia o que já foi muito treinado nos últimos dias.
-import { EXERCISES } from '../exercises/catalog';
-import { TOOLS } from '../exercises/tools';
-import { AREAS, GOALS, type AreaId } from './areas';
+// Pesa os módulos pelos objetivos e alivia o que já foi muito treinado nos últimos dias.
+import { EXERCISES, exerciseById } from '../exercises/catalog';
+import { TOOLS, toolById } from '../exercises/tools';
+import { GOALS, MODULE_LIST } from './modules';
+import type { ModuleId } from '../exercises/taxonomy';
 import type { Activity, Profile } from '../state/store';
 import type { MessageKey } from '../i18n';
 
@@ -11,17 +12,15 @@ export interface Block {
   id: string;
   /** Rótulo próprio do bloco (ex.: aquecimento); sem ele, vale o título do exercício ou da ferramenta. */
   label?: MessageKey;
-  area: AreaId;
   minutes: number;
   target?: number; // perguntas, para exercícios
 }
 
-export function areaWeights(profile: Profile, history: Activity[]): Record<AreaId, number> {
-  const w = Object.fromEntries(AREAS.map(a => [a.id, 1])) as Record<AreaId, number>;
-  profile.goals.forEach(g => GOALS.find(x => x.id === g)?.areas.forEach(a => (w[a] += 1.2)));
-  AREAS.forEach(a => (w[a.id] += (3 - (profile.levels[a.id] ?? 1)) * 0.4));
+export function moduleWeights(profile: Profile, history: Activity[]): Record<ModuleId, number> {
+  const w = Object.fromEntries(MODULE_LIST.map(m => [m.id, 1])) as Record<ModuleId, number>;
+  profile.goals.forEach(g => GOALS.find(x => x.id === g)?.modules.forEach(m => (w[m] += 1.2)));
   const since = Date.now() - 3 * 864e5;
-  history.filter(h => h.at > since).forEach(h => (w[h.area] = Math.max(0.3, w[h.area] - h.seconds / 1200)));
+  history.filter(h => h.at > since).forEach(h => (w[h.module] = Math.max(0.3, w[h.module] - h.seconds / 1200)));
   return w;
 }
 
@@ -36,15 +35,15 @@ function weightedPick<T>(items: T[], weight: (t: T) => number): T {
 }
 
 export function suggestSession(minutes: number, withInstrument: boolean, profile: Profile, history: Activity[]): Block[] {
-  const w = areaWeights(profile, history);
+  const w = moduleWeights(profile, history);
   const blocks: Block[] = [];
   let left = minutes;
-  const tools = TOOLS.filter(t => t.session && (withInstrument || t.mobile));
+  const tools = TOOLS.filter(t => withInstrument || t.mobile);
 
   // com instrumento e tempo: aquecimento técnico no começo
   if (withInstrument && minutes >= 15) {
     const warm = profile.instrument === 'piano' ? TOOLS.find(t => t.id === 'metronomo')! : TOOLS.find(t => t.id === 'tecnica')!;
-    blocks.push({ kind: 'tool', id: warm.id, label: warm.id === 'tecnica' ? 'tools.warmupTechnique' : 'tools.warmupMetronome', area: 'tecnica', minutes: 5 });
+    blocks.push({ kind: 'tool', id: warm.id, label: warm.id === 'tecnica' ? 'tools.warmupTechnique' : 'tools.warmupMetronome', minutes: 5 });
     left -= 5;
   }
   const finale = withInstrument && minutes >= 20 ? TOOLS.find(t => t.id === 'backing')! : null;
@@ -55,31 +54,21 @@ export function suggestSession(minutes: number, withInstrument: boolean, profile
     const pool = EXERCISES.filter(e => !used.has(e.id));
     const useTool = withInstrument && left >= 6 && Math.random() < 0.25;
     if (useTool) {
-      const t = weightedPick(tools.filter(x => !used.has(x.id) && x.id !== 'backing' && x.id !== 'tecnica'), x => w[x.area]);
-      if (t) { used.add(t.id); blocks.push({ kind: 'tool', id: t.id, area: t.area, minutes: 6 }); left -= 6; continue; }
+      const t = weightedPick(tools.filter(x => !used.has(x.id) && x.id !== 'backing' && x.id !== 'tecnica'), x => w[x.primaryModule]);
+      if (t) { used.add(t.id); blocks.push({ kind: 'tool', id: t.id, minutes: 6 }); left -= 6; continue; }
     }
     if (!pool.length) break;
-    const e = weightedPick(pool, x => w[x.area]);
+    const e = weightedPick(pool, x => w[x.primaryModule]);
     used.add(e.id);
     const m = left >= 8 ? 4 : 3;
-    blocks.push({ kind: 'exercise', id: e.id, area: e.area, minutes: m, target: m * 3 });
+    blocks.push({ kind: 'exercise', id: e.id, minutes: m, target: m * 3 });
     left -= m;
   }
-  if (finale) blocks.push({ kind: 'tool', id: 'backing', label: 'tools.improvise', area: 'harmonia', minutes: 8 });
+  if (finale) blocks.push({ kind: 'tool', id: 'backing', label: 'tools.improvise', minutes: 8 });
   return blocks;
 }
 
-/** XP por área: acertos nos exercícios e minutos nas ferramentas. */
-export function areaXP(stats: Record<string, { correct: number }>, history: Activity[]): Record<AreaId, number> {
-  const xp = Object.fromEntries(AREAS.map(a => [a.id, 0])) as Record<AreaId, number>;
-  EXERCISES.forEach(e => (xp[e.area] += stats[e.id]?.correct ?? 0));
-  history.filter(h => !h.total).forEach(h => (xp[h.area] += Math.round(h.seconds / 30)));
-  return xp;
-}
-/** Nível a partir do XP: cada nível pede um pouco mais que o anterior. */
-export function levelOf(xp: number) {
-  const level = Math.floor(Math.sqrt(xp / 15));
-  const cur = 15 * level * level;
-  const nxt = 15 * (level + 1) * (level + 1);
-  return { level, progress: (xp - cur) / (nxt - cur), toNext: nxt - xp };
+/** Módulo de um exercício ou ferramenta, pelo id. */
+export function moduleOf(id: string): ModuleId {
+  return (exerciseById[id] ?? toolById[id]).primaryModule;
 }

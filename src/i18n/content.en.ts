@@ -2,24 +2,17 @@ import type ptContent from './content.pt';
 import type { Shape } from './index';
 
 const enContent: Shape<typeof ptContent> = {
-  areas: {
-    ouvido: { name: 'Ear', short: 'Ear training', why: 'Recognizing intervals, scales and chords by ear is what lets you figure out songs, improvise and play with other people.' },
-    tecnica: { name: 'Technique', short: 'Precision and agility', why: 'Correct fingering and relaxed hands get the instrument out of the way, so you think about the music and not your fingers. Always with a metronome.' },
-    mapeamento: { name: 'Mapping', short: 'Know your instrument', why: 'Knowing where every note is and seeing the shape of intervals on the fretboard or keyboard gives you the fluency to play what you hear.' },
-    harmonia: { name: 'Harmony', short: 'Theory and harmony', why: 'Internalizing the notes of each scale and the chords of each harmonic field is what turns memorization into musical choices.' },
-    ritmo: { name: 'Rhythm', short: 'Inner time', why: 'Rhythmic precision and time feel are what make music sound good, even with just a few notes.' },
-    leitura: { name: 'Reading', short: 'Sight-reading', why: 'Reading music opens up the written repertoire. We train notes and rhythm separately, then put them together.' },
+  modules: {
+    theory: { name: 'Theory', short: 'Notation, scales, chords and the map of your instrument' },
+    technique: { name: 'Technique', short: 'Motor control and steadiness' },
+    'perception.melodic': { name: 'Melodic perception', short: 'Pitches, intervals and scales' },
+    'perception.harmonic': { name: 'Harmonic perception', short: 'Chords and sonorities' },
+    'perception.rhythmic': { name: 'Rhythmic perception', short: 'Pulse, note values and cells' },
   },
   instruments: {
     piano: 'Piano / keyboard',
     violao: 'Guitar',
     baixo: 'Bass',
-  },
-  profileKinds: {
-    iniciante: { name: 'Just starting', desc: 'I want to learn from scratch, with a guided path.' },
-    hobby: { name: 'I play for fun', desc: 'I want to improve at my own pace, no pressure.' },
-    musico: { name: 'Musician', desc: 'I play seriously and want to polish specific areas.' },
-    produtor: { name: 'Producer', desc: 'I make music on the computer and want more theory and ear training.' },
   },
   goals: {
     improvisar: 'Improvise fluently',
@@ -30,7 +23,7 @@ const enContent: Shape<typeof ptContent> = {
     jazz: 'Play jazz',
     repertorio: 'Learn songs',
   },
-  modules: {
+  lessons: {
     'ler-partitura': {
       title: 'How to read sheet music',
       why: 'Sheet music is the most precise way to store and share music. Reading well opens up the written repertoire and speeds up learning any piece.',
@@ -180,29 +173,6 @@ const enContent: Shape<typeof ptContent> = {
       sides: { a: 'Side A · baião' },
       tracks: { mixolidio: 'The Mixolydian of baião', levada: 'Baião groove' },
     },
-  },
-  tonality: {
-    groups: { notas: '1. Note positions', acordes: '2. Chords of the harmonic field', relativo: '3. Relative minor', repertorio: '4. Reading and repertoire' },
-    steps: {
-      solfejar: 'Sing the scale slowly, saying the name and degree of each note.',
-      'graus-quiz': 'Flash quiz: which note is the 3rd degree? Which degree is C?',
-      posicoes: 'Play every position of the scale’s notes up to the 5th fret.',
-      'arpejos-5': 'Play the arpeggio of each degree, from the open string to the 5th fret, alternating name and degree.',
-      'arpejos-8': 'Repeat in the next position (frets 5 to 8).',
-      'penta-maior': 'Play the major pentatonic in this key.',
-      relativa: 'Move to the relative minor. Which notes became which degrees?',
-      'menor-blues': 'Play the minor scale, the minor pentatonic and the blues scale.',
-      leitura: 'Use the reading generator in this key, with a steady note value.',
-      musica: 'Learn a song in this key: sing it, play the melody, then roots and thirds over the backing track.',
-    },
-  },
-  badges: {
-    'primeira-sessao': { name: 'First session', desc: 'Finished your first activity.' },
-    sequencia: { name: '7 days in a row', desc: 'Studied a whole week without missing a day.' },
-    ouvido: { name: 'Sharp ear', desc: '50 correct answers in ear exercises.' },
-    leitor: { name: 'Reader', desc: '100 notes read correctly on the staff.' },
-    braco: { name: 'Fretboard map', desc: '100 correct answers on the fretboard.' },
-    improviso: { name: 'Improviser', desc: '30 minutes playing over backing tracks.' },
   },
 };
 

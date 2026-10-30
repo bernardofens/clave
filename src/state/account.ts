@@ -82,11 +82,10 @@ export async function upsertProfileAfterSignIn(birthdate?: string) {
   const row: Record<string, unknown> = {
     user_id: user.id,
     name: profile.name,
-    kind: profile.kind,
     instrument: profile.instrument,
     goals: profile.goals,
-    levels: profile.levels,
   };
+  // As colunas kind e levels do servidor ficaram sem uso (têm valor padrão); não são mais enviadas.
   if (birthdate) { row.birthdate = birthdate; row.age_group = group; }
   const { error } = await client.from('profiles').upsert(row);
   if (error) throw error;

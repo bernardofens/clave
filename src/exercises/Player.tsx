@@ -48,7 +48,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
   const instrument = useStore(s => s.profile.instrument);
   const soundOn = useStore(s => s.sound);
   const t = useT();
-  const { areaById } = useContent();
+  const { moduleById } = useContent();
   const saved = useStore(s => s.settings[def.id]);
   const settings = useMemo(() => ({ ...def.defaults, ...(initialSettings ?? saved ?? {}) }), [def, saved, initialSettings]);
   const locale = useLocale();
@@ -73,7 +73,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     const t0 = started.current;
     return () => {
       const s = scoreRef.current;
-      if (s.total > 0 && !target) logActivity({ id: def.id, title: itemText(t, def.id, 'title'), area: def.area, seconds: Math.round((Date.now() - t0) / 1000), correct: s.correct, total: s.total });
+      if (s.total > 0 && !target) logActivity({ id: def.id, title: itemText(t, def.id, 'title'), module: def.primaryModule, seconds: Math.round((Date.now() - t0) / 1000), correct: s.correct, total: s.total });
     };
   }, [def, target, t]);
 
@@ -104,7 +104,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     setScore(ns);
     setPicked(pickedId);
     setPhase(ok ? 'right' : 'wrong');
-    recordAnswer(def.id, ok, streak);
+    recordAnswer(def.id, ok);
     if (!q.autoplay && soundOn) play(q.sound);
     if (target && ns.total >= target) {
       window.setTimeout(() => onDone?.({ correct: ns.correct, total: ns.total, seconds: Math.round((Date.now() - started.current) / 1000) }), ok ? 900 : 1800);
@@ -129,7 +129,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, q, next, play, submit]);
 
-  const area = areaById[def.area];
+  const area = moduleById[def.primaryModule];
   const pct = score.total ? Math.round((score.correct / score.total) * 100) : 0;
 
   const copyLink = async () => {

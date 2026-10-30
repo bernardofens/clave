@@ -1,19 +1,17 @@
-// Primeira vez: quatro perguntas rápidas para o Clave entender quem você é.
+// Primeira vez: duas perguntas rápidas — o que você toca e o que quer conseguir.
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContent } from '../data/localized';
 import { updateProfile, useStore } from '../state/store';
 import { Art, Btn, Chip, Tag } from '../components/ui';
-import { useT, type MessageKey } from '../i18n';
-
-const LEVELS: MessageKey[] = ['common.levelNone', 'common.levelBasic', 'common.levelIntermediate', 'common.levelAdvanced'];
+import { useT } from '../i18n';
 
 export default function Onboarding() {
   const profile = useStore(s => s.profile);
   const [step, setStep] = useState(0);
   const nav = useNavigate();
   const t = useT();
-  const { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } = useContent();
+  const { GOALS, INSTRUMENTS } = useContent();
   const finish = () => { updateProfile({ onboarded: true }); nav('/'); };
   const steps = [
     {
@@ -38,38 +36,11 @@ export default function Onboarding() {
       ),
     },
     {
-      title: t('onboarding.describe'), art: 'clave-sentado',
-      body: (
-        <div style={{ display: 'grid', gap: 10 }}>
-          {PROFILE_KINDS.map(k => (
-            <button key={k.id} type="button" onClick={() => updateProfile({ kind: k.id })} aria-pressed={profile.kind === k.id}
-              style={{ border: 0, cursor: 'pointer', textAlign: 'left', padding: '14px 18px', background: profile.kind === k.id ? 'var(--mu)' : 'var(--bk-2)', color: profile.kind === k.id ? 'var(--bk)' : 'var(--cream)' }}>
-              <b style={{ fontFamily: 'var(--display)', fontSize: 26, textTransform: 'uppercase' }}>{k.name}</b><div>{k.desc}</div>
-            </button>
-          ))}
-        </div>
-      ),
-    },
-    {
       title: t('onboarding.goals'), art: 'genero-jazz',
       body: (
         <div style={{ display: 'grid', gap: 12 }}>
           <p className="muted">{t('onboarding.pickMany')}</p>
           <div className="row">{GOALS.map(g => <Chip key={g.id} on={profile.goals.includes(g.id)} onClick={() => updateProfile({ goals: profile.goals.includes(g.id) ? profile.goals.filter(x => x !== g.id) : [...profile.goals, g.id] })}>{g.name}</Chip>)}</div>
-        </div>
-      ),
-    },
-    {
-      title: t('onboarding.where'), art: 'haltere',
-      body: (
-        <div style={{ display: 'grid', gap: 12 }}>
-          <p className="muted">{t('onboarding.whereNote')}</p>
-          {AREAS.map(a => (
-            <div key={a.id} style={{ display: 'grid', gap: 6 }}>
-              <b>{a.name} <span className="muted" style={{ fontWeight: 400 }}>· {a.short}</span></b>
-              <div className="row">{LEVELS.map((l, i) => <Chip key={i} on={profile.levels[a.id] === i} onClick={() => updateProfile({ levels: { ...profile.levels, [a.id]: i } })}>{t(l)}</Chip>)}</div>
-            </div>
-          ))}
         </div>
       ),
     },

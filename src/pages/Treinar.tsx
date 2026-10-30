@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import type { AreaId } from '../data/areas';
+import type { ModuleId } from '../exercises/taxonomy';
 import { useContent } from '../data/localized';
 import { EXERCISES, exerciseById } from '../exercises/catalog';
 import Player, { decodeSettings } from '../exercises/Player';
@@ -34,20 +34,20 @@ function LoadingScore() {
 
 export default function Treinar() {
   const t = useT();
-  const { AREAS, areaById } = useContent();
+  const { MODULES, moduleById } = useContent();
   const stats = useStore(s => s.stats);
   const arsenal = useStore(s => s.arsenal);
   const [mobileOnly, setMobileOnly] = useState(false);
-  const [area, setArea] = useState<AreaId | 'todas'>('todas');
-  const areas = AREAS.filter(a => area === 'todas' || a.id === area);
-  const tools = TOOLS.filter(tool => tool.id !== 'tonalidade' && (!mobileOnly || tool.mobile) && (area === 'todas' || tool.area === area));
+  const [module, setModule] = useState<ModuleId | 'todas'>('todas');
+  const modules = MODULES.filter(m => module === 'todas' || m.id === module);
+  const tools = TOOLS.filter(tool => (!mobileOnly || tool.mobile) && (module === 'todas' || tool.primaryModule === module));
 
   return (
     <div>
       <PageHead tag={t('train.tag')} title={t('train.title')} sub={t('train.sub')} />
       <div className="row" style={{ marginBottom: 8 }}>
-        <Chip on={area === 'todas'} onClick={() => setArea('todas')}>{t('train.all')}</Chip>
-        {AREAS.map(a => <Chip key={a.id} on={area === a.id} onClick={() => setArea(a.id)}>{a.name}</Chip>)}
+        <Chip on={module === 'todas'} onClick={() => setModule('todas')}>{t('train.all')}</Chip>
+        {MODULES.map(m => <Chip key={m.id} on={module === m.id} onClick={() => setModule(m.id)}>{m.name}</Chip>)}
         <label className="switch" style={{ marginLeft: 'auto' }}><input type="checkbox" id="mobile-only" checked={mobileOnly} onChange={e => setMobileOnly(e.target.checked)} />{t('train.mobileOnly')}</label>
       </div>
 
@@ -57,12 +57,12 @@ export default function Treinar() {
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))' }}>
             {tools.map(tool => (
               <Link key={tool.id} to={tool.path} className="ex-card">
-                <span className="acc" style={{ background: areaById[tool.area].color }} />
+                <span className="acc" style={{ background: moduleById[tool.primaryModule].color }} />
                 <Art name={tool.art} style={{ width: 56, height: 56, objectFit: 'contain', flex: 'none' }} />
                 <div style={{ minWidth: 0 }}>
                   <h3>{itemText(t, tool.id, 'title')}</h3>
                   <p>{itemText(t, tool.id, 'desc')}</p>
-                  <div className="meta"><span className="mini-tag">{areaById[tool.area].name}</span><span className="mini-tag">{t(tool.mobile ? 'common.mobile' : 'common.withInstrument')}</span></div>
+                  <div className="meta"><span className="mini-tag">{moduleById[tool.primaryModule].name}</span><span className="mini-tag">{t(tool.mobile ? 'common.mobile' : 'common.withInstrument')}</span></div>
                 </div>
               </Link>
             ))}
@@ -70,8 +70,8 @@ export default function Treinar() {
         </section>
       )}
 
-      {areas.map(a => {
-        const list = EXERCISES.filter(e => e.area === a.id && (!mobileOnly || e.mobile));
+      {modules.map(a => {
+        const list = EXERCISES.filter(e => e.primaryModule === a.id && (!mobileOnly || e.mobile));
         if (!list.length) return null;
         return (
           <section key={a.id} className="sec" style={{ marginTop: 40 }}>
@@ -111,16 +111,16 @@ export function ExercisePage() {
   const { id = '' } = useParams();
   const [params] = useSearchParams();
   const t = useT();
-  const { MODULES } = useContent();
+  const { LESSONS } = useContent();
   const def = exerciseById[id];
   if (!def) return <NotFound />;
   const shared = decodeSettings(params.get('c'));
-  const mod = MODULES.find(m => m.exercises.includes(id));
+  const lesson = LESSONS.find(l => l.exercises.includes(id));
   return (
     <div style={{ display: 'grid', gap: 20 }}>
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <Link to="/treinar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('train.back')}</Link>
-        {mod && <Link to={`/estudar/${mod.id}`} className="eyebrow" style={{ textDecoration: 'none', color: 'var(--mu)' }}>{t('train.lesson', { title: mod.title })}</Link>}
+        {lesson && <Link to={`/estudar/${lesson.id}`} className="eyebrow" style={{ textDecoration: 'none', color: 'var(--mu)' }}>{t('train.lesson', { title: lesson.title })}</Link>}
       </div>
       {shared && <div className="panel" style={{ background: 'var(--bk-3)', padding: 12 }}>{t('train.shared')}</div>}
       <Player key={id + (shared ? 'c' : '')} def={def} initialSettings={shared} />
@@ -131,7 +131,7 @@ export function ExercisePage() {
 export function ToolPage() {
   const { id = '' } = useParams();
   const t = useT();
-  const { areaById } = useContent();
+  const { moduleById } = useContent();
   const tool = toolById[id];
   const Comp = TOOL_COMPONENTS[id];
   if (!tool || !Comp) return <NotFound />;
@@ -139,7 +139,7 @@ export function ToolPage() {
     <div style={{ display: 'grid', gap: 20 }}>
       <Link to="/treinar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('train.back')}</Link>
       <header className="page-head" style={{ marginBottom: 0 }}>
-        <div><div className="row"><Tag>{areaById[tool.area].name}</Tag>{tool.mobile ? <Tag tone="dark">{t('common.mobile')}</Tag> : <Tag tone="co">{t('common.withInstrument')}</Tag>}</div><h1>{itemText(t, tool.id, 'title')}</h1><p>{itemText(t, tool.id, 'desc')}</p></div>
+        <div><div className="row"><Tag>{moduleById[tool.primaryModule].name}</Tag>{tool.mobile ? <Tag tone="dark">{t('common.mobile')}</Tag> : <Tag tone="co">{t('common.withInstrument')}</Tag>}</div><h1>{itemText(t, tool.id, 'title')}</h1><p>{itemText(t, tool.id, 'desc')}</p></div>
         <Art name={tool.art} style={{ width: 110 }} />
       </header>
       <Comp />
