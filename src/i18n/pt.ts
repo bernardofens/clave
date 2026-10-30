@@ -504,6 +504,7 @@ const pt = {
     together: 'Juntas',
     mixed: 'Misturado',
     arpeggiate: 'Arpejar antes',
+    chordDuration: 'Duração do acorde',
     pentatonic: 'Pentatônica',
     pentaMajor: 'Maior (1 2 3 5 6)',
     pentaMinor: 'Menor (1 ♭3 4 5 ♭7)',

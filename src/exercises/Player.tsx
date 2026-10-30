@@ -1,31 +1,25 @@
 // Jogador de exercício: mostra a pergunta, toca o som, confere a resposta e guarda o progresso.
+// Só conhece o modelo da C1 (superfície, esperado, conteúdo sonoro); perguntas no formato antigo
+// passam pelo adaptador de legacy.ts. A conferência é de validate.ts e o som, de presentation.ts.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { atTime, drum, now, playGroups } from '../audio/engine';
+import { atTime, now } from '../audio/engine';
+import { playContent, resolvePresentation, type Presentation } from '../audio/presentation';
 import { useContent } from '../data/localized';
 import { getState, logActivity, recordAnswer, saveSettings, useStore } from '../state/store';
-import { fromStep, mod, noteName, step as stepOf, type Note } from '../theory/core';
+import { fromStep, mod, noteName, type Note } from '../theory/core';
 import Fretboard from '../components/music/Fretboard';
 import Keyboard from '../components/music/Keyboard';
 import RhythmLine from '../components/music/RhythmLine';
 import Staff from '../components/music/Staff';
 import { Btn, Chip, PlayIcon, Tag } from '../components/ui';
-import type { Answer, Ctx, ExerciseDef, Question, SettingValue, Sound } from './types';
+import { prepare, type Prepared } from './legacy';
+import { globalPresentation, useGlobalParams } from './params';
+import { optionResponse, validate } from './validate';
+import type { Ctx, ExerciseDef, Question, Response, SettingValue } from './types';
 import { itemText, useLocale, useNaming, useT } from '../i18n';
 
 type Phase = 'ask' | 'right' | 'wrong';
-
-export function playSound(sound: Sound): number {
-  if (sound.drums) {
-    const bpm = sound.bpm ?? 84;
-    const beat = 60 / bpm;
-    const t0 = now() + 0.1;
-    for (let i = 0; i < 4; i++) drum(i === 0 ? 'clique-forte' : 'clique', t0 + i * beat);
-    sound.drums.forEach(o => drum('aro', t0 + (4 + o) * beat));
-    for (let i = 0; i < 4; i++) drum('clique', t0 + (4 + i) * beat, 0.35);
-    return 8 * beat;
-  }
-  return playGroups(sound.groups, { gap: sound.gap, arp: sound.arp, voice: sound.voice });
-}
+type Submit = (r: Response, pickedId: string) => void;
 
 export function encodeSettings(v: Record<string, SettingValue>) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(v))));
@@ -45,17 +39,21 @@ interface Props {
 
 export default function Player({ def, target, onDone, initialSettings }: Props) {
   const naming = useNaming();
-  const instrument = useStore(s => s.profile.instrument);
   const soundOn = useStore(s => s.sound);
   const t = useT();
   const { moduleById } = useContent();
+  const params = useGlobalParams();
   const saved = useStore(s => s.settings[def.id]);
   const settings = useMemo(() => ({ ...def.defaults, ...(initialSettings ?? saved ?? {}) }), [def, saved, initialSettings]);
   const locale = useLocale();
-  const ctx = useMemo(() => ({ naming, instrument, conv: locale, t }), [naming, instrument, locale, t]);
-  const make = useCallback(() => def.make(settings, ctx), [def, settings, ctx]);
+  const ctx: Ctx = useMemo(() => ({ naming, conv: locale, t, params }), [naming, locale, t, params]);
+  const make = useCallback(() => prepare(def.make(settings, ctx)), [def, settings, ctx]);
+  // o que as configurações da pessoa mudam no som (ex.: arpejar, duração do acorde)
+  const settingsPresentation = useMemo(() => def.settings(ctx).reduce<Partial<Presentation>>(
+    (acc, s) => (s.present && settings[s.id] !== undefined ? { ...acc, ...s.present(settings[s.id]) } : acc), {}), [def, ctx, settings]);
 
-  const [q, setQ] = useState<Question>(make);
+  const [prepared, setPrepared] = useState<Prepared>(make);
+  const q = prepared.question;
   const [phase, setPhase] = useState<Phase>('ask');
   const [picked, setPicked] = useState<string | null>(null);
   const [acc, setAcc] = useState(0);
@@ -77,57 +75,61 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     };
   }, [def, target, t]);
 
-  const play = useCallback((sound?: Sound) => {
-    if (!sound || !getState().sound) return;
-    const dur = playSound(sound);
+  const play = useCallback((p: Prepared) => {
+    const content = p.question.sound;
+    if (!content || !getState().sound) return;
+    // camadas: global (timbre do instrumento, volume) < exercício < som antigo < configurações da pessoa
+    const presentation = resolvePresentation([globalPresentation(params, content.instrument), def.presentation, p.legacyPresentation, settingsPresentation]);
+    const dur = playContent(content, presentation);
     setPlaying(true);
     setHeard(true);
     atTime(now() + dur, () => setPlaying(false));
-  }, []);
+  }, [params, def.presentation, settingsPresentation]);
 
   const next = useCallback(() => {
-    const nq = make();
-    setQ(nq);
+    const np = make();
+    setPrepared(np);
     setPhase('ask');
     setPicked(null);
     setAcc(0);
-    if (nq.autoplay && heard) window.setTimeout(() => play(nq.sound), 250);
+    if (np.question.autoplay && heard) window.setTimeout(() => play(np), 250);
   }, [make, heard, play]);
 
   // configurações mudaram: recomeça
-  useEffect(() => { setQ(make()); setPhase('ask'); setPicked(null); }, [make]);
+  useEffect(() => { setPrepared(make()); setPhase('ask'); setPicked(null); }, [make]);
 
-  const submit = useCallback((ok: boolean, pickedId: string) => {
+  const submit: Submit = useCallback((response, pickedId) => {
     if (phase !== 'ask') return;
+    const ok = validate(q.expected, response);
     const streak = ok ? score.streak + 1 : 0;
     const ns = { correct: score.correct + (ok ? 1 : 0), total: score.total + 1, streak };
     setScore(ns);
     setPicked(pickedId);
     setPhase(ok ? 'right' : 'wrong');
     recordAnswer(def.id, ok);
-    if (!q.autoplay && soundOn) play(q.sound);
+    if (!q.autoplay && soundOn) play(prepared);
     if (target && ns.total >= target) {
       window.setTimeout(() => onDone?.({ correct: ns.correct, total: ns.total, seconds: Math.round((Date.now() - started.current) / 1000) }), ok ? 900 : 1800);
       return;
     }
     if (ok) window.setTimeout(next, 850);
-  }, [phase, score, def.id, q, soundOn, play, target, onDone, next]);
+  }, [phase, score, def.id, q, prepared, soundOn, play, target, onDone, next]);
 
   // atalhos de teclado: 1-9 para opções, Enter para seguir, espaço para ouvir de novo
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
       if (e.key === 'Enter' && phase === 'wrong') { e.preventDefault(); next(); }
-      if (e.key === ' ' && q.sound && q.autoplay) { e.preventDefault(); play(q.sound); }
+      if (e.key === ' ' && q.sound && q.autoplay) { e.preventDefault(); play(prepared); }
       const n = Number(e.key);
-      if (q.answer.kind === 'choice' && n >= 1 && n <= q.answer.options.length && phase === 'ask') {
-        const o = q.answer.options[n - 1];
-        submit(o.id === q.answer.correct, o.id);
+      if (q.surface.kind === 'choices' && n >= 1 && n <= q.surface.options.length && phase === 'ask') {
+        const o = q.surface.options[n - 1];
+        submit(optionResponse(o), o.id);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phase, q, next, play, submit]);
+  }, [phase, q, prepared, next, play, submit]);
 
   const area = moduleById[def.primaryModule];
   const pct = score.total ? Math.round((score.correct / score.total) * 100) : 0;
@@ -153,7 +155,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
       </div>
       {target && <div className="progressbar" aria-label={t('player.progressOf', { done: score.total, total: target })}><i style={{ width: `${(score.total / target) * 100}%` }} /></div>}
 
-      <Stage q={q} phase={phase} playing={playing} heard={heard} onPlay={() => play(q.sound)} naming={naming} picked={picked} acc={acc} onAnswer={submit} />
+      <Stage q={q} phase={phase} playing={playing} heard={heard} onPlay={() => play(prepared)} naming={naming} picked={picked} acc={acc} onAnswer={submit} />
 
       <AnswerArea q={q} phase={phase} picked={picked} acc={acc} setAcc={setAcc} onAnswer={submit} naming={naming} />
 
@@ -179,53 +181,59 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
 // ---------------- palco: o que é perguntado ----------------
 function Stage({ q, phase, playing, heard, onPlay, naming, picked, acc, onAnswer }: {
   q: Question; phase: Phase; playing: boolean; heard: boolean; onPlay: () => void; naming: 'pt' | 'en';
-  picked: string | null; acc: number; onAnswer: (ok: boolean, id: string) => void;
+  picked: string | null; acc: number; onAnswer: Submit;
 }) {
   const t = useT();
   const v = q.visual;
-  const a = q.answer;
+  const sf = q.surface;
+  const ok = (r: Response) => validate(q.expected, r);
   const fb = phase === 'right' ? <div className="feedback ok">{t('player.feedbackRight')}</div> : phase === 'wrong' ? <div className="feedback bad">{t('player.feedbackWrong')}</div> : null;
   const isText = v.kind === 'text' && v.text;
 
-  // respostas que acontecem no próprio palco (teclado, braço, pauta)
-  if (a.kind === 'key') {
+  // superfícies que ficam no próprio palco (teclado, braço, pauta)
+  if (sf.kind === 'keyboard') {
     const marks: Record<number, string> = {};
     if (picked) marks[Number(picked)] = phase === 'right' ? 'var(--mu)' : 'var(--ve)';
-    if (phase === 'wrong') for (let m = a.lo; m <= a.hi; m++) if (mod(m, 12) === a.correctPc) marks[m] = 'var(--mu)';
+    if (phase === 'wrong') for (let m = sf.lo; m <= sf.hi; m++) if (ok({ kind: 'pitch', midi: m })) marks[m] = 'var(--mu)';
     return (
       <div className="stage dark">
         {fb}
         <div className="prompt">{q.prompt}</div>
         {v.kind === 'ear' && <Listen playing={playing} heard={heard} onPlay={onPlay} />}
         <div style={{ width: '100%', marginTop: 16, display: 'flex', justifyContent: 'center' }}>
-          <Keyboard lo={a.lo} hi={a.hi} marks={marks} naming={naming} onPress={m => phase === 'ask' && onAnswer(mod(m, 12) === a.correctPc, String(m))} labels="do" />
+          <Keyboard lo={sf.lo} hi={sf.hi} marks={marks} naming={naming} onPress={m => phase === 'ask' && onAnswer({ kind: 'pitch', midi: m }, String(m))} labels="do" />
         </div>
       </div>
     );
   }
-  if (a.kind === 'fret') {
+  if (sf.kind === 'fretboard') {
     const marks = [];
     if (picked) { const [s, f] = picked.split(':').map(Number); marks.push({ s, f, color: phase === 'right' ? 'var(--mu)' : 'var(--ve)' }); }
-    if (phase === 'wrong') for (let f = a.from; f <= a.to; f++) if (mod(a.tuning[a.onlyString ?? 0] + f, 12) === a.correctPc) marks.push({ s: a.onlyString ?? 0, f, color: 'var(--mu)', label: '✓' });
+    if (phase === 'wrong') {
+      const strings = sf.onlyString !== undefined ? [sf.onlyString] : sf.tuning.map((_, i) => i);
+      for (const s of strings) for (let f = sf.from; f <= sf.to; f++) if (ok({ kind: 'pitch', midi: sf.tuning[s] + f })) marks.push({ s, f, color: 'var(--mu)', label: '✓' });
+    }
     return (
       <div className="stage dark">
         {fb}
         <div className="prompt">{q.prompt}</div>
-        <Fretboard tuning={a.tuning} from={a.from} to={a.to} marks={marks} onlyString={a.onlyString} naming={naming}
-          onPick={(s, f) => phase === 'ask' && onAnswer(mod(a.tuning[s] + f, 12) === a.correctPc, `${s}:${f}`)} />
+        <Fretboard tuning={sf.tuning} from={sf.from} to={sf.to} marks={marks} onlyString={sf.onlyString} naming={naming}
+          onPick={(s, f) => phase === 'ask' && onAnswer({ kind: 'pitch', midi: sf.tuning[s] + f }, `${s}:${f}`)} />
       </div>
     );
   }
-  if (a.kind === 'staff') {
+  if (sf.kind === 'staff') {
     const cols: Note[][] = [];
     if (picked) cols.push([fromStep(Number(picked.split(':')[0]), Number(picked.split(':')[1]))]);
-    const shown = phase === 'wrong' ? [[...(cols[0] ?? []), a.correct]] : cols;
+    const e = q.expected;
+    const answer: Note | null = e.kind === 'spelled' && e.oct !== undefined ? { letter: mod(e.letter, 7) as 0, acc: e.acc, oct: e.oct } : null;
+    const shown = phase === 'wrong' && answer ? [[...(cols[0] ?? []), answer]] : cols;
     return (
       <div className="stage">
         {fb}
         <div className="prompt">{q.prompt}</div>
-        <Staff clef={a.clef} columns={shown.map(c => ({ notes: c.map(n => ({ note: n })) }))} colWidth={90} ghostAcc={acc}
-          onPick={phase === 'ask' ? s => onAnswer(s === stepOf(a.correct) && acc === a.correct.acc, `${s}:${acc}`) : undefined} />
+        <Staff clef={sf.clef} columns={shown.map(c => ({ notes: c.map(n => ({ note: n })) }))} colWidth={90} ghostAcc={acc}
+          onPick={phase === 'ask' ? s => onAnswer({ kind: 'spelled', letter: mod(s, 7), acc, oct: Math.floor(s / 7) }, `${s}:${acc}`) : undefined} />
         <div className="hint">{t('player.tapStaff')}</div>
       </div>
     );
@@ -255,18 +263,19 @@ function Listen({ playing, heard, onPlay }: { playing: boolean; heard: boolean; 
 
 // ---------------- área de resposta ----------------
 function AnswerArea({ q, phase, picked, acc, setAcc, onAnswer, naming }: {
-  q: Question; phase: Phase; picked: string | null; acc: number; setAcc: (n: number) => void; onAnswer: (ok: boolean, id: string) => void; naming: 'pt' | 'en';
+  q: Question; phase: Phase; picked: string | null; acc: number; setAcc: (n: number) => void; onAnswer: Submit; naming: 'pt' | 'en';
 }) {
   const t = useT();
-  const a: Answer = q.answer;
+  const sf = q.surface;
+  const ok = (r: Response) => validate(q.expected, r);
   const state = (id: string, correct: boolean) => (phase === 'ask' ? '' : correct ? 'right' : picked === id ? 'wrong' : '');
 
-  if (a.kind === 'choice') {
-    const rhythm = a.options.some(o => o.rhythm);
+  if (sf.kind === 'choices') {
+    const rhythm = sf.options.some(o => o.rhythm);
     return (
-      <div className={`answers ${a.wide ? 'wide' : ''} ${rhythm ? 'rhythm' : ''}`}>
-        {a.options.map((o, i) => (
-          <button key={o.id} type="button" className={`ans ${rhythm ? 'rhythm' : ''} ${state(o.id, o.id === a.correct)}`} disabled={phase !== 'ask'} onClick={() => onAnswer(o.id === a.correct, o.id)}>
+      <div className={`answers ${sf.wide ? 'wide' : ''} ${rhythm ? 'rhythm' : ''}`}>
+        {sf.options.map((o, i) => (
+          <button key={o.id} type="button" className={`ans ${rhythm ? 'rhythm' : ''} ${state(o.id, ok(optionResponse(o)))}`} disabled={phase !== 'ask'} onClick={() => onAnswer(optionResponse(o), o.id)}>
             {i < 9 && <span className="k">{i + 1}</span>}
             {o.rhythm ? <RhythmLine bars={o.rhythm} label={t('player.option', { n: i + 1 })} /> : o.label}
           </button>
@@ -279,17 +288,19 @@ function AnswerArea({ q, phase, picked, acc, setAcc, onAnswer, naming }: {
       {[[-1, '♭'], [0, '♮'], [1, '♯']].map(([v, l]) => <Chip key={v} on={acc === v} onClick={() => setAcc(Number(v))}>{l}</Chip>)}
     </div>
   );
-  if (a.kind === 'spelled') {
+  if (sf.kind === 'letters') {
+    // na revelação, a letra certa aparece com o acidente certo
+    const revealAcc = q.expected.kind === 'spelled' ? q.expected.acc : acc;
     return (
       <div>
-        {accRow(a.accidentals)}
+        {accRow(sf.accidentals)}
         <div className="letters">
           {[0, 1, 2, 3, 4, 5, 6].map(l => {
-            const id = `${l}:${acc}`;
+            const right = ok({ kind: 'spelled', letter: l, acc: revealAcc });
             return (
-              <button key={l} type="button" className={`ans ${phase === 'ask' ? '' : l === a.correct.letter ? 'right' : picked?.startsWith(`${l}:`) ? 'wrong' : ''}`}
-                disabled={phase !== 'ask'} onClick={() => onAnswer(l === a.correct.letter && acc === a.correct.acc, id)}>
-                {noteName({ letter: l as 0, acc: phase === 'ask' ? acc : l === a.correct.letter ? a.correct.acc : acc }, naming)}
+              <button key={l} type="button" className={`ans ${phase === 'ask' ? '' : right ? 'right' : picked?.startsWith(`${l}:`) ? 'wrong' : ''}`}
+                disabled={phase !== 'ask'} onClick={() => onAnswer({ kind: 'spelled', letter: l, acc }, `${l}:${acc}`)}>
+                {noteName({ letter: l as 0, acc: phase !== 'ask' && right ? revealAcc : acc }, naming)}
               </button>
             );
           })}
@@ -297,7 +308,7 @@ function AnswerArea({ q, phase, picked, acc, setAcc, onAnswer, naming }: {
       </div>
     );
   }
-  if (a.kind === 'staff') return <div>{accRow(a.accidentals)}</div>;
+  if (sf.kind === 'staff') return <div>{accRow(sf.accidentals)}</div>;
   return null;
 }
 
@@ -325,10 +336,19 @@ function SettingsPanel({ def, ctx, values, onChange }: { def: ExerciseDef; ctx: 
               }}>{o.label}</Chip>;
             })}</div>
           )}
+          {s.type === 'range' && (() => {
+            const v = Number(values[s.id] ?? s.min ?? 0);
+            return (
+              <div className="row">
+                <input className="range" type="range" style={{ maxWidth: 240 }} id={`set-${def.id}-${s.id}`} aria-label={s.label}
+                  min={s.min} max={s.max} step={s.step} value={v} onChange={e => onChange({ ...values, [s.id]: Number(e.target.value) })} />
+                <span className="num">{s.format ? s.format(v) : v}</span>
+              </div>
+            );
+          })()}
         </div>
       ))}
       <div className="row"><Btn small tone="ghost" onClick={() => onChange({ ...def.defaults })}>{t('player.resetDefaults')}</Btn></div>
     </div>
   );
 }
-
