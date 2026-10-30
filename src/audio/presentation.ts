@@ -7,7 +7,9 @@ import { drum, now, tone, type Voice } from './engine';
 
 export interface Presentation {
   voice: Voice;
-  /** Intensidade das notas, de 0 a 1. */
+  /** Intensidade das notas (a "velocidade" que o motor recebe). 2 é o padrão dos exercícios: medido
+   *  fora do tempo real, uma nota de piano a 0,7 tinha pico de −21 dBFS, baixo demais; a 2,0 chega
+   *  a −12 e o acorde de sétima a −1, sem passar do limitador do motor. */
   volume: number;
   /** Segundos entre um grupo de notas e o seguinte. */
   gap: number;
@@ -22,7 +24,7 @@ export interface Presentation {
 }
 
 export const DEFAULT_PRESENTATION: Presentation = {
-  voice: 'piano', volume: 0.7, gap: 0.75, arp: 0, dur: 0.9, chord: 'block', bpm: 84,
+  voice: 'piano', volume: 2, gap: 0.75, arp: 0, dur: 0.9, chord: 'block', bpm: 84,
 };
 
 /** Junta as camadas; as últimas valem mais. Campos ausentes ficam com o valor de baixo. */
@@ -51,18 +53,29 @@ export function schedule(content: SoundContent, p: Presentation): { notes: [numb
   return { notes, length: t };
 }
 
+/** Ajuste de nível de cada timbre, para que todos soem igualmente altos no mesmo volume. Medido fora
+ *  do tempo real, a 2,0 e em tríade (e em nota solta): o violão saía ~6 dB abaixo do piano, o baixo ~4
+ *  dB e o órgão ~7 dB acima. Sem isso, trocar de timbre no Perfil mudaria o volume sem querer. */
+export const VOICE_LEVEL: Record<Voice, number> = { piano: 1, pad: 1, violao: 1.8, baixo: 0.6, orgao: 0.45 };
+
+/** Reforço dos tambores em relação às notas, para o mesmo volume. O aro é ruído de banda estreita e
+ *  soa muito mais baixo que uma nota (pico −29 dBFS contra −21 a 0,7); o clique da contagem é agudo e
+ *  já chega perto. Medidos fora do tempo real para ficarem no nível das notas. */
+export const DRUM_GAIN = { click: 1.5, accent: 3 };
+
 /** Toca o conteúdo com a apresentação dada. Devolve a duração, em segundos. */
 export function playContent(content: SoundContent, p: Presentation): number {
   if (content.drums) {
     const beat = 60 / p.bpm;
     const t0 = now() + 0.1;
-    for (let i = 0; i < 4; i++) drum(i === 0 ? 'clique-forte' : 'clique', t0 + i * beat, p.volume / 0.7);
-    content.drums.forEach(o => drum('aro', t0 + (4 + o) * beat, p.volume / 0.7));
-    for (let i = 0; i < 4; i++) drum('clique', t0 + (4 + i) * beat, 0.35 * p.volume / 0.7);
+    for (let i = 0; i < 4; i++) drum(i === 0 ? 'clique-forte' : 'clique', t0 + i * beat, p.volume * DRUM_GAIN.click);
+    content.drums.forEach(o => drum('aro', t0 + (4 + o) * beat, p.volume * DRUM_GAIN.accent));
+    for (let i = 0; i < 4; i++) drum('clique', t0 + (4 + i) * beat, 0.35 * p.volume * DRUM_GAIN.click);
     return 8 * beat;
   }
   const t0 = now() + 0.05;
   const { notes, length } = schedule(content, p);
-  notes.forEach(([m, t]) => tone(m, t0 + t, p.dur, p.voice, p.volume));
+  const vel = p.volume * VOICE_LEVEL[p.voice];
+  notes.forEach(([m, t]) => tone(m, t0 + t, p.dur, p.voice, vel));
   return length;
 }

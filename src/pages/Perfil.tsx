@@ -5,12 +5,12 @@ import { resetAll, setLocale, setState, updateProfile, useStore } from '../state
 import { detectLocale, LOCALES, useLocale, useT } from '../i18n';
 import { Art, Btn, Chip, PageHead, SecTitle } from '../components/ui';
 import AccountPanel from '../components/AccountPanel';
+import SoundPanel from '../components/SoundPanel';
 
 
 export default function Perfil() {
   const profile = useStore(s => s.profile);
   const naming = useStore(s => s.naming);
-  const sound = useStore(s => s.sound);
   const locale = useStore(s => s.locale);
   const t = useT();
   const { GOALS, INSTRUMENTS } = useContent();
@@ -53,9 +53,10 @@ export default function Perfil() {
               <Chip on={naming === 'pt'} onClick={() => setState(s => ({ ...s, naming: 'pt' }))}>Dó Ré Mi</Chip>
               <Chip on={naming === 'en'} onClick={() => setState(s => ({ ...s, naming: 'en' }))}>C D E</Chip>
             </div>
-            <label className="switch"><input type="checkbox" id="som" checked={sound} onChange={e => setState(s => ({ ...s, sound: e.target.checked }))} />{t('profile.sound')}</label>
           </div>
         </section>
+
+        <SoundPanel />
 
         <AccountPanel />
 
