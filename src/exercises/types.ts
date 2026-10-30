@@ -25,6 +25,8 @@ export type Visual =
 /** Resposta estruturada, como a superfície a entrega. É o que a C2 grava em cada tentativa. */
 export type Response =
   | { kind: 'option'; id: string }
+  /** Uma classe de altura escolhida (opções de nome de nota), sem oitava nem grafia. */
+  | { kind: 'pitchClass'; pc: number }
   /** Uma altura tocada (teclado, braço). */
   | { kind: 'pitch'; midi: number }
   /** Uma nota escrita (letras, pauta); oct só quando a superfície define a oitava. */
@@ -78,33 +80,6 @@ export interface Question {
   reveal: string; // a resposta certa, por extenso
 }
 
-// ---------- formato antigo, enquanto o catálogo migra (ver toQuestion em validate.ts) ----------
-/** @deprecated Formato anterior à C1: superfície e regra de validação fundidas. */
-export type LegacyAnswer =
-  | { kind: 'choice'; options: ChoiceOption[]; correct: string; wide?: boolean }
-  | { kind: 'spelled'; correct: { letter: number; acc: number }; accidentals: boolean }
-  | { kind: 'key'; lo: number; hi: number; correctPc: number }
-  | { kind: 'fret'; tuning: readonly number[]; from: number; to: number; correctPc: number; onlyString?: number }
-  | { kind: 'staff'; clef: Clef; correct: Note; accidentals: boolean };
-/** @deprecated Som com a apresentação embutida. */
-export interface LegacySound {
-  groups: number[][];
-  gap?: number;
-  arp?: number;
-  voice?: 'piano' | 'violao' | 'baixo';
-  drums?: number[];
-  bpm?: number;
-}
-/** @deprecated Pergunta no formato anterior à C1. */
-export interface LegacyQuestion {
-  prompt: string;
-  visual: Visual;
-  answer: LegacyAnswer;
-  sound?: LegacySound;
-  autoplay?: boolean;
-  reveal: string;
-}
-
 export type SettingValue = string | string[] | boolean | number;
 export interface Setting {
   id: string;
@@ -142,7 +117,7 @@ export interface ExerciseDef extends Classification {
   defaults: Record<string, SettingValue>;
   /** Apresentação própria do exercício (ex.: intervalo maior entre notas), por cima da global. */
   presentation?: Partial<Presentation>;
-  make: (s: Record<string, SettingValue>, ctx: Ctx) => Question | LegacyQuestion;
+  make: (s: Record<string, SettingValue>, ctx: Ctx) => Question;
 }
 
 export interface ToolDef {

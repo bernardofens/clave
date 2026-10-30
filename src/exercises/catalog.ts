@@ -3,14 +3,14 @@
 // cada idioma (src/theory/names.ts). As cifras seguem a convenção do idioma (ctx.conv).
 import {
   buildChord, buildScale, CHORDS, chordSymbol, clefBottom, fromStep, harmonicField,
-  majorTonic, midi, mod, note, noteName, optionsWith, pcName, pick, randInt, relativeMinor, SCALES, semisFor, shuffle, transpose,
+  majorTonic, midi, mod, note, noteName, optionsWith, pc, pcName, pick, randInt, relativeMinor, SCALES, semisFor, shuffle, transpose,
   type ChordId, type Clef, type Note, type Quality, type ScaleId,
 } from '../theory/core';
 import { accidentalCount, intervalName, ordinal, semitoneName } from '../theory/names';
 import type { MessageKey } from '../i18n';
 import { CELLS, RHYTHM_PRESETS, randomBars, type CellId } from '../theory/rhythm';
 import { TUNINGS } from '../components/music/Fretboard';
-import type { ChoiceOption, Ctx, ExerciseDef, LegacyQuestion, Question, Setting, SettingValue } from './types';
+import type { ChoiceOption, Ctx, ExerciseDef, Expected, Question, Setting, SettingValue } from './types';
 
 type S = Record<string, SettingValue>;
 const arr = (v: SettingValue | undefined, fallback: string[]) => (Array.isArray(v) && v.length ? v : fallback);
@@ -60,7 +60,12 @@ function tuningOf(s: S, ctx: Ctx) {
   if (s.instrumento === 'auto' || !s.instrumento) return ctx.params.tuning;
   return TUNINGS[s.instrumento as 'violao' | 'baixo'];
 }
-const pcOptions = (naming: Ctx['naming']): ChoiceOption[] => Array.from({ length: 12 }, (_, p) => ({ id: String(p), label: pcName(p, naming) }));
+const pcOptions = (naming: Ctx['naming']): ChoiceOption[] => Array.from({ length: 12 }, (_, p) => ({ id: String(p), label: pcName(p, naming), value: { kind: 'pitchClass', pc: p } }));
+/** Opção que é uma cifra: confere pela fundamental e pela qualidade, não pelo texto. */
+const chordOption = (label: string): ChoiceOption => ({ id: label, label, value: { kind: 'chord', text: label } });
+const chordExpected = (root: Pick<Note, 'letter' | 'acc'>, quality: ChordId): Expected => ({ kind: 'chord', root: pc({ ...root, oct: 4 }), quality });
+/** Opção comum, escolhida pelo id. */
+const plain = (o: string): ChoiceOption => ({ id: o, label: o });
 
 // =====================================================================
 export const EXERCISES: ExerciseDef[] = [
@@ -95,7 +100,8 @@ export const EXERCISES: ExerciseDef[] = [
       const n = fromStep(randInt(lo, hi), randAcc(s.acidentes));
       return {
         prompt: ctx.t('quiz.writeNote', { note: `${noteName(n, ctx.naming)}${n.oct}` }), visual: { kind: 'text', text: '' },
-        answer: { kind: 'staff', clef, correct: n, accidentals: !!s.acidentes }, sound: { groups: [[midi(n)]] },
+        surface: { kind: 'staff', clef, accidentals: !!s.acidentes }, expected: { kind: 'spelled', letter: n.letter, acc: n.acc, oct: n.oct },
+        sound: { groups: [[midi(n)]] },
         reveal: `${noteName(n, ctx.naming)}${n.oct}`,
       };
     },
@@ -117,7 +123,7 @@ export const EXERCISES: ExerciseDef[] = [
       const opts = optionsWith(f, pool, Math.min(6, pool.length));
       return {
         prompt: ctx.t(minor ? 'quiz.whichKeyMinor' : 'quiz.whichKeyMajor'), visual: { kind: 'staff', clef: pickClef(s), fifths: f, columns: [] },
-        answer: { kind: 'choice', options: opts.map(o => ({ id: String(o), label: label(o) })), correct: String(f) },
+        surface: { kind: 'choices', options: opts.map(o => ({ id: String(o), label: label(o) })) }, expected: { kind: 'option', id: String(f) },
         reveal: label(f),
       };
     },
@@ -145,7 +151,7 @@ export const EXERCISES: ExerciseDef[] = [
       const columns = s.forma === 'harmonico' ? [[lower, upper]] : [[lower], [upper]];
       return {
         prompt: ctx.t('quiz.whatInterval'), visual: { kind: 'staff', clef, columns },
-        answer: { kind: 'choice', options: ids.map(i => ({ id: i, label: ivLabel(i, ctx) })), correct: id },
+        surface: { kind: 'choices', options: ids.map(i => ({ id: i, label: ivLabel(i, ctx) })) }, expected: { kind: 'option', id },
         sound: { groups: s.forma === 'harmonico' ? [[midi(lower), midi(upper)]] : [[midi(lower)], [midi(upper)]] },
         reveal: ivLabel(id, ctx),
       };
@@ -159,6 +165,7 @@ export const EXERCISES: ExerciseDef[] = [
     settings: ctx => [CLEFS(ctx), { id: 'tipos', label: ctx.t('settings.types'), type: 'multi', options: chordTypes(ctx.t, ALL_CHORDS) },
       { id: 'inversoes', label: ctx.t('settings.inversions'), type: 'toggle' }],
     defaults: { claves: ['sol'], tipos: ['maior', 'menor', 'dim', 'aum'], inversoes: false },
+    presentation: { arp: 0.08 },
     make(s, ctx) {
       const clef = pickClef(s);
       const types = arr(s.tipos, ['maior']) as ChordId[];
@@ -171,8 +178,8 @@ export const EXERCISES: ExerciseDef[] = [
       const opts = optionsWith(sym, [...new Set(pool)], 6);
       return {
         prompt: ctx.t('quiz.whatChord'), visual: { kind: 'staff', clef, columns: [notes] },
-        answer: { kind: 'choice', options: opts.map(o => ({ id: o, label: o })), correct: sym },
-        sound: { groups: [notes.map(midi)], arp: 0.08 }, reveal: ctx.t('quiz.chordReveal', { symbol: sym, name: chordName(ctx.t, type).toLowerCase() }),
+        surface: { kind: 'choices', options: opts.map(chordOption) }, expected: chordExpected(root, type),
+        sound: { groups: [notes.map(midi)] }, reveal: ctx.t('quiz.chordReveal', { symbol: sym, name: chordName(ctx.t, type).toLowerCase() }),
       };
     },
   },
@@ -183,6 +190,7 @@ export const EXERCISES: ExerciseDef[] = [
     group: 'pauta', mobile: true,
     settings: ctx => [CLEFS(ctx), { id: 'tipos', label: ctx.t('settings.scales'), type: 'multi', options: ALL_SCALES.map(k => ({ id: k, label: scaleName(ctx.t, k) })) }],
     defaults: { claves: ['sol'], tipos: ['maior', 'menor', 'menor-harmonica', 'menor-melodica'] },
+    presentation: { gap: 0.32 },
     make(s, ctx) {
       const clef = pickClef(s);
       const types = arr(s.tipos, ['maior']) as ScaleId[];
@@ -194,8 +202,8 @@ export const EXERCISES: ExerciseDef[] = [
       const correct = name(tonic, type);
       return {
         prompt: ctx.t('quiz.whatScale'), visual: { kind: 'staff', clef, columns: notes.map(n => [n]) },
-        answer: { kind: 'choice', options: optionsWith(correct, [...new Set(pool)], 6).map(o => ({ id: o, label: o })), correct, wide: true },
-        sound: { groups: notes.map(n => [midi(n)]), gap: 0.32 }, reveal: correct,
+        surface: { kind: 'choices', options: optionsWith(correct, [...new Set(pool)], 6).map(plain), wide: true }, expected: { kind: 'option', id: correct },
+        sound: { groups: notes.map(n => [midi(n)]) }, reveal: correct,
       };
     },
   },
@@ -226,7 +234,7 @@ export const EXERCISES: ExerciseDef[] = [
       do m = randInt(lo, hi); while (!s.pretas && [1, 3, 6, 8, 10].includes(m % 12));
       return {
         prompt: ctx.t('quiz.whatKey'), visual: { kind: 'keyboard', lo, hi, marks: [m] },
-        answer: { kind: 'choice', options: pcOptions(ctx.naming).filter(o => s.pretas || ![1, 3, 6, 8, 10].includes(Number(o.id))), correct: String(m % 12) },
+        surface: { kind: 'choices', options: pcOptions(ctx.naming).filter(o => s.pretas || ![1, 3, 6, 8, 10].includes(Number(o.id))) }, expected: { kind: 'pitchClass', pc: m % 12 },
         sound: { groups: [[m]] }, reveal: pcName(m, ctx.naming),
       };
     },
@@ -243,7 +251,7 @@ export const EXERCISES: ExerciseDef[] = [
       const n = spellPc(p);
       return {
         prompt: ctx.t('quiz.tapNote', { note: noteName(n, ctx.naming) }), visual: { kind: 'text', text: '' },
-        answer: { kind: 'key', lo: 48, hi: 71, correctPc: p }, sound: { groups: [[60 + p]] }, reveal: noteName(n, ctx.naming),
+        surface: { kind: 'keyboard', lo: 48, hi: 71 }, expected: { kind: 'pitchClass', pc: p }, sound: { groups: [[60 + p]] }, reveal: noteName(n, ctx.naming),
       };
     },
   },
@@ -263,7 +271,7 @@ export const EXERCISES: ExerciseDef[] = [
       const pool = [...types.map(t => chordSymbol(root, t, ctx.conv)), ...shuffle(ROOTS).slice(0, 6).map(r => chordSymbol(r, type, ctx.conv))];
       return {
         prompt: ctx.t('quiz.whatChord'), visual: { kind: 'keyboard', lo: 48, hi: 83, marks: notes },
-        answer: { kind: 'choice', options: optionsWith(sym, [...new Set(pool)], 6).map(o => ({ id: o, label: o })), correct: sym },
+        surface: { kind: 'choices', options: optionsWith(sym, [...new Set(pool)], 6).map(chordOption) }, expected: chordExpected(root, type),
         sound: { groups: [notes] }, reveal: sym,
       };
     },
@@ -283,8 +291,8 @@ export const EXERCISES: ExerciseDef[] = [
       const m = tuning[str] + f;
       return {
         prompt: ctx.t('quiz.whatNote'), visual: { kind: 'fretboard', tuning, from, to, marks: [{ s: str, f }] },
-        answer: { kind: 'choice', options: pcOptions(ctx.naming), correct: String(m % 12) },
-        sound: { groups: [[m]], voice: tuning.length === 4 ? 'baixo' : 'violao' }, reveal: pcName(m, ctx.naming),
+        surface: { kind: 'choices', options: pcOptions(ctx.naming) }, expected: { kind: 'pitchClass', pc: m % 12 },
+        sound: { groups: [[m]], instrument: tuning.length === 4 ? 'baixo' : 'violao' }, reveal: pcName(m, ctx.naming),
       };
     },
   },
@@ -305,8 +313,8 @@ export const EXERCISES: ExerciseDef[] = [
       const string = tuning.length === 6 && str === 0 ? ctx.t('quiz.lowString', { note: open }) : tuning.length === 6 && str === 5 ? ctx.t('quiz.highString', { note: open }) : open;
       return {
         prompt: ctx.t('quiz.tapOnString', { note: pcName(m, ctx.naming, false), string }), visual: { kind: 'text', text: '' },
-        answer: { kind: 'fret', tuning, from, to, correctPc: m % 12, onlyString: str },
-        sound: { groups: [[m]], voice: tuning.length === 4 ? 'baixo' : 'violao' }, reveal: ctx.t('quiz.atFret', { note: pcName(m, ctx.naming), fret: f }),
+        surface: { kind: 'fretboard', tuning, from, to, onlyString: str }, expected: { kind: 'pitchClass', pc: m % 12 },
+        sound: { groups: [[m]], instrument: tuning.length === 4 ? 'baixo' : 'violao' }, reveal: ctx.t('quiz.atFret', { note: pcName(m, ctx.naming), fret: f }),
       };
     },
   },
@@ -329,8 +337,8 @@ export const EXERCISES: ExerciseDef[] = [
       const lo = tuning[s1] + f1;
       return {
         prompt: ctx.t('quiz.whatInterval'), visual: { kind: 'fretboard', tuning, from: 0, to: 9, marks: [{ s: s1, f: f1, label: '1' }, { s: s2, f: f2, color: 'var(--ve)' }] },
-        answer: { kind: 'choice', options: semiOptions(ctx), correct: String(d) },
-        sound: { groups: [[lo], [lo + d]], voice: tuning.length === 4 ? 'baixo' : 'violao' }, reveal: semitoneName(d, ctx.conv),
+        surface: { kind: 'choices', options: semiOptions(ctx) }, expected: { kind: 'option', id: String(d) },
+        sound: { groups: [[lo], [lo + d]], instrument: tuning.length === 4 ? 'baixo' : 'violao' }, reveal: semitoneName(d, ctx.conv),
       };
     },
   },
@@ -339,7 +347,8 @@ export const EXERCISES: ExerciseDef[] = [
     primaryModule: 'theory', skillTags: ['fretboard.chord_shapes', 'keyboard.chord_shapes', 'theory.chord_identification'],
     contentTags: ['chord.triads', 'chord.sevenths', 'chord.open_shapes', 'chord.barre_shapes', 'instrument.guitar', 'instrument.keyboard'],
     group: 'braco', mobile: true,
-    settings: ctx => [{ id: 'onde', label: ctx.t('settings.instrument'), type: 'single', options: [{ id: 'violao', label: ctx.t('settings.guitar') }, { id: 'piano', label: ctx.t('settings.piano') }] },
+    settings: ctx => [{ id: 'onde', label: ctx.t('settings.instrument'), type: 'single', options: [{ id: 'violao', label: ctx.t('settings.guitar') }, { id: 'piano', label: ctx.t('settings.piano') }],
+        present: v => (v === 'violao' ? { arp: 0.04 } : {}) },
       { id: 'formas', label: ctx.t('settings.shapes'), type: 'single', options: [{ id: 'abertos', label: ctx.t('settings.openChords') }, { id: 'pestana', label: ctx.t('settings.barreChords') }, { id: 'todos', label: ctx.t('settings.all') }] }],
     defaults: { onde: 'violao', formas: 'abertos' },
     make(s, ctx) {
@@ -383,7 +392,7 @@ export const EXERCISES: ExerciseDef[] = [
       const groups = dir === 'juntas' ? [[base, base + d]] : dir === 'desce' ? [[base + d], [base]] : [[base], [base + d]];
       return {
         prompt: ctx.t('quiz.earInterval'), visual: { kind: 'ear', hint: ctx.t(dir === 'juntas' ? 'quiz.hintTogether' : dir === 'desce' ? 'quiz.hintDown' : 'quiz.hintUp') },
-        answer: { kind: 'choice', options: ids.map(i => ({ id: i, label: semitoneName(Number(i), ctx.conv) })), correct: String(d) },
+        surface: { kind: 'choices', options: ids.map(i => ({ id: i, label: semitoneName(Number(i), ctx.conv) })) }, expected: { kind: 'option', id: String(d) },
         sound: { groups }, autoplay: true, reveal: semitoneName(d, ctx.conv),
       };
     },
@@ -417,6 +426,7 @@ export const EXERCISES: ExerciseDef[] = [
     group: 'ouvido', mobile: true,
     settings: ctx => [{ id: 'tipos', label: ctx.t('settings.scales'), type: 'multi', options: ALL_SCALES.map(k => ({ id: k, label: scaleName(ctx.t, k) })) }],
     defaults: { tipos: ['maior', 'menor', 'menor-harmonica'] },
+    presentation: { gap: 0.3 },
     make(s, ctx) {
       const types = arr(s.tipos, ['maior', 'menor']) as ScaleId[];
       const type = pick(types);
@@ -424,8 +434,8 @@ export const EXERCISES: ExerciseDef[] = [
       const ms = [...SCALES[type].degs.map(([, semi]) => tonic + semi), tonic + 12];
       return {
         prompt: ctx.t('quiz.whatScale'), visual: { kind: 'ear' },
-        answer: { kind: 'choice', options: types.map(t => ({ id: t, label: scaleName(ctx.t, t) })), correct: type, wide: true },
-        sound: { groups: ms.map(m => [m]), gap: 0.3 }, autoplay: true, reveal: scaleName(ctx.t, type),
+        surface: { kind: 'choices', options: types.map(t => ({ id: t, label: scaleName(ctx.t, t) })), wide: true }, expected: { kind: 'option', id: type },
+        sound: { groups: ms.map(m => [m]) }, autoplay: true, reveal: scaleName(ctx.t, type),
       };
     },
   },
@@ -437,6 +447,7 @@ export const EXERCISES: ExerciseDef[] = [
     settings: ctx => [{ id: 'escala', label: ctx.t('settings.pentatonic'), type: 'single', options: [{ id: 'maior', label: ctx.t('settings.pentaMajor') }, { id: 'menor', label: ctx.t('settings.pentaMinor') }] },
       { id: 'tamanho', label: ctx.t('settings.cellSize'), type: 'single', options: [{ id: '3', label: '3' }, { id: '4', label: '4' }] }],
     defaults: { escala: 'maior', tamanho: '3' },
+    presentation: { gap: 0.55 },
     make(s, ctx) {
       const minor = s.escala === 'menor';
       const degs = minor ? ['1', '♭3', '4', '5', '♭7', "1'"] : ['1', '2', '3', '5', '6', "1'"];
@@ -455,8 +466,8 @@ export const EXERCISES: ExerciseDef[] = [
       const triad = minor ? [tonic, tonic + 3, tonic + 7] : [tonic, tonic + 4, tonic + 7];
       return {
         prompt: ctx.t('quiz.cells'), visual: { kind: 'ear', hint: ctx.t('quiz.cellsHint') },
-        answer: { kind: 'choice', options: shuffle([key(c), ...others]).map(o => ({ id: o, label: o })), correct: key(c) },
-        sound: { groups: [triad, ...c.map(i => [tonic + semis[i]])], gap: 0.55 }, autoplay: true, reveal: key(c),
+        surface: { kind: 'choices', options: shuffle([key(c), ...others]).map(plain) }, expected: { kind: 'option', id: key(c) },
+        sound: { groups: [triad, ...c.map(i => [tonic + semis[i]])] }, autoplay: true, reveal: key(c),
       };
     },
   },
@@ -468,6 +479,7 @@ export const EXERCISES: ExerciseDef[] = [
     group: 'ritmo', mobile: true,
     settings: ctx => [{ id: 'nivel', label: ctx.t('settings.rhythmValues'), type: 'single', options: RHYTHM_PRESETS.map(p => ({ id: p.id, label: ctx.t(`theory.rhythmPresets.${p.id}` as MessageKey) })) }],
     defaults: { nivel: 'duas' },
+    presentation: { bpm: 84 },
     make(s, ctx) {
       const cells = (RHYTHM_PRESETS.find(p => p.id === s.nivel) ?? RHYTHM_PRESETS[0]).cells;
       const bar = randomBars(cells, 1);
@@ -480,8 +492,8 @@ export const EXERCISES: ExerciseDef[] = [
       bar[0].forEach(c => CELLS[c].events.forEach(ev => { if (!ev.rest) onsets.push(t); t += ev.d; }));
       return {
         prompt: ctx.t('quiz.rhythm'), visual: { kind: 'ear', hint: ctx.t('quiz.rhythmHint') },
-        answer: { kind: 'choice', options: opts, correct: key(bar), wide: true },
-        sound: { groups: [], drums: onsets, bpm: 84 }, autoplay: true, reveal: ctx.t('quiz.rhythmReveal'),
+        surface: { kind: 'choices', options: opts, wide: true }, expected: { kind: 'option', id: key(bar) },
+        sound: { groups: [], drums: onsets }, autoplay: true, reveal: ctx.t('quiz.rhythmReveal'),
       };
     },
   },
@@ -494,15 +506,19 @@ export const exerciseById = Object.fromEntries(EXERCISES.map(e => [e.id, e])) as
 // =====================================================================
 // Cada frase é uma mensagem com lacunas (quiz.* em src/i18n); o que muda de forma conforme o
 // idioma — ordinais, nomes de intervalo, plural de acidentes — vem de src/theory/names.ts.
-function theoryQuestion(topic: string, ctx: Ctx): LegacyQuestion {
+function theoryQuestion(topic: string, ctx: Ctx): Question {
   const { t, conv } = ctx;
   const nm = (n: Pick<Note, 'letter' | 'acc'>) => noteName(n, ctx.naming);
   const sym = (root: Pick<Note, 'letter' | 'acc'>, id: ChordId) => chordSymbol(root, id, conv);
   const major = (n: Pick<Note, 'letter' | 'acc'>) => t('theory.keyMajor', { note: nm(n) });
   const modeName = (id: ScaleId) => t(`theory.modes.${id}` as MessageKey);
   const keyPool = Array.from({ length: 13 }, (_, i) => i - 6);
-  const text = (q: string, opts: string[], correct: string, reveal = correct, wide = false): LegacyQuestion => ({
-    prompt: q, visual: { kind: 'text', text: q }, answer: { kind: 'choice', options: opts.map(o => ({ id: o, label: o })), correct, wide }, reveal,
+  const text = (q: string, opts: string[], correct: string, reveal = correct, wide = false): Question => ({
+    prompt: q, visual: { kind: 'text', text: q }, surface: { kind: 'choices', options: opts.map(plain), wide }, expected: { kind: 'option', id: correct }, reveal,
+  });
+  // respostas que são cifras: conferem pela fundamental e pela qualidade, não pelo texto
+  const chordText = (q: string, opts: string[], expected: Expected, reveal: string): Question => ({
+    prompt: q, visual: { kind: 'text', text: q }, surface: { kind: 'choices', options: opts.map(chordOption) }, expected, reveal,
   });
   const notePool = (exclude: string) => ROOTS.map(r => nm(r)).filter(x => x !== exclude);
 
@@ -577,7 +593,7 @@ function theoryQuestion(topic: string, ctx: Ctx): LegacyQuestion {
     const field = harmonicField(tonic, 'maior', Math.random() < 0.5, conv);
     const d = pick(field);
     const pool = [...field.map(x => x.symbol), ...field.map(x => sym(x.root, x.chord === 'maior' ? 'menor' : x.chord === 'menor' ? 'maior' : '7'))];
-    return text(t('quiz.fieldDegree', { key: major(tonic), roman: d.roman }), optionsWith(d.symbol, [...new Set(pool)], 6), d.symbol);
+    return chordText(t('quiz.fieldDegree', { key: major(tonic), roman: d.roman }), optionsWith(d.symbol, [...new Set(pool)], 6), chordExpected(d.root, d.chord), d.symbol);
   }
   if (topic === 'sub5') {
     const f = pick(keyPool);
@@ -586,7 +602,7 @@ function theoryQuestion(topic: string, ctx: Ctx): LegacyQuestion {
     const sub = transpose(tonic, { num: 2, semis: 1 });
     const ans = sym(sub, '7');
     const pool = [sym(v, '7'), sym(transpose(tonic, { num: 4, semis: 5 }), '7'), sym(transpose(tonic, { num: 7, semis: 10 }), '7'), sym(transpose(tonic, { num: 6, semis: 8 }), '7'), sym(transpose(tonic, { num: 3, semis: 3 }), '7')];
-    return text(t('quiz.sub5', { chord: sym(tonic, 'maior') }), optionsWith(ans, pool, 5), ans, t('quiz.sub5Reveal', { answer: ans, dominant: sym(v, '7') }));
+    return chordText(t('quiz.sub5', { chord: sym(tonic, 'maior') }), optionsWith(ans, pool, 5), chordExpected(sub, '7'), t('quiz.sub5Reveal', { answer: ans, dominant: sym(v, '7') }));
   }
   // tonalidades
   const f = pick(keyPool.filter(x => x !== 0));
@@ -623,9 +639,9 @@ function chordOptions(root: Note, type: ChordId, conv: Ctx['conv']) {
   const sym = chordSymbol(root, type, conv);
   const types: ChordId[] = ['maior', 'menor', '7', 'm7', '7M'];
   const pool = [...types.map(t => chordSymbol(root, t, conv)), ...shuffle(ROOTS).slice(0, 5).map(r => chordSymbol(r, type, conv))];
-  return { sym, options: optionsWith(sym, [...new Set(pool)], 6).map(o => ({ id: o, label: o })) };
+  return { sym, options: optionsWith(sym, [...new Set(pool)], 6).map(chordOption), expected: chordExpected(root, type) };
 }
-function guitarChordQuestion(forms: string, ctx: Ctx): LegacyQuestion {
+function guitarChordQuestion(forms: string, ctx: Ctx): Question {
   const tuning = TUNINGS.violao;
   let root: Note, type: ChordId, frets: Shape;
   if (forms === 'abertos' || (forms === 'todos' && Math.random() < 0.4)) {
@@ -640,17 +656,17 @@ function guitarChordQuestion(forms: string, ctx: Ctx): LegacyQuestion {
   const played = frets.map((f, s) => (f === null ? null : tuning[s] + f)).filter((m): m is number => m !== null);
   const used = frets.filter((f): f is number => f !== null && f > 0);
   const from = used.length && Math.min(...used) > 3 ? Math.min(...used) - 1 : 0;
-  const { sym, options } = chordOptions(root, type, ctx.conv);
+  const { sym, options, expected } = chordOptions(root, type, ctx.conv);
   return {
     prompt: ctx.t('quiz.whatChord'),
     visual: { kind: 'fretboard', tuning, from, to: from + 5, marks: frets.flatMap((f, s) => (f === null ? [] : [{ s, f, color: f === 0 ? 'var(--cream)' : undefined }])), muted: frets.flatMap((f, s) => (f === null ? [s] : [])) },
-    answer: { kind: 'choice', options, correct: sym }, sound: { groups: [played], arp: 0.04, voice: 'violao' }, reveal: sym,
+    surface: { kind: 'choices', options }, expected, sound: { groups: [played], instrument: 'violao' }, reveal: sym,
   };
 }
-function pianoChordQuestion(ctx: Ctx): LegacyQuestion {
+function pianoChordQuestion(ctx: Ctx): Question {
   const type = pick(['maior', 'menor', '7', 'm7', '7M'] as ChordId[]);
   const root = { ...pick(ROOTS), oct: 4 };
   const ms = buildChord(root, type).map(midi);
-  const { sym, options } = chordOptions(root, type, ctx.conv);
-  return { prompt: ctx.t('quiz.whatChord'), visual: { kind: 'keyboard', lo: 48, hi: 83, marks: ms }, answer: { kind: 'choice', options, correct: sym }, sound: { groups: [ms] }, reveal: sym };
+  const { sym, options, expected } = chordOptions(root, type, ctx.conv);
+  return { prompt: ctx.t('quiz.whatChord'), visual: { kind: 'keyboard', lo: 48, hi: 83, marks: ms }, surface: { kind: 'choices', options }, expected, sound: { groups: [ms] }, reveal: sym };
 }

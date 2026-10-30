@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { itemText, translate, type Locale, type MessageKey, type Vars } from '../i18n';
 import { EXERCISES } from './catalog';
-import { prepare } from './legacy';
 import { globalPresentation, resolveParams } from './params';
 import { resolvePresentation } from '../audio/presentation';
 import { optionResponse, validate } from './validate';
@@ -20,7 +19,7 @@ describe('catálogo de exercícios', () => {
       for (const locale of ['pt', 'en'] as const) {
         const ctx = ctxFor(locale);
         for (let i = 0; i < 300; i++) {
-          const { question: q } = prepare(ex.make(ex.defaults, ctx));
+          const q = ex.make(ex.defaults, ctx);
           expect(q.prompt).toBeTruthy();
           expect(q.reveal).toBeTruthy();
           const sf = q.surface, e = q.expected;
@@ -39,12 +38,30 @@ describe('catálogo de exercícios', () => {
       }
     });
 
+    it(`${ex.id}: toda pergunta tem resposta certa que a superfície consegue dar`, () => {
+      const ctx = ctxFor('pt');
+      for (let i = 0; i < 200; i++) {
+        const q = ex.make(ex.defaults, ctx);
+        const sf = q.surface, e = q.expected;
+        let can = false;
+        if (sf.kind === 'choices') can = sf.options.some(o => validate(e, optionResponse(o)));
+        else if (sf.kind === 'keyboard') can = Array.from({ length: sf.hi - sf.lo + 1 }, (_, k) => sf.lo + k).some(m => validate(e, { kind: 'pitch', midi: m }));
+        else if (sf.kind === 'fretboard') {
+          const strings = sf.onlyString !== undefined ? [sf.onlyString] : sf.tuning.map((_, k) => k);
+          can = strings.some(st => Array.from({ length: sf.to - sf.from + 1 }, (_, k) => sf.from + k).some(f => validate(e, { kind: 'pitch', midi: sf.tuning[st] + f })));
+        } else if (sf.kind === 'letters') can = [0, 1, 2, 3, 4, 5, 6].some(l => [-1, 0, 1].some(acc => validate(e, { kind: 'spelled', letter: l, acc })));
+        else can = e.kind === 'spelled' && e.oct !== undefined; // pauta: a pessoa escolhe a linha, então a oitava vem na pergunta
+        expect(can, `${ex.id}: ${q.prompt}`).toBe(true);
+        if (q.sound) expect(q.sound.groups.some(g => g.length) || (q.sound.drums?.length ?? 0) > 0).toBe(true);
+      }
+    });
+
     it(`${ex.id} não deixa português escapar no inglês`, () => {
       const ctx = ctxFor('en');
       const texts = [itemText(ctx.t, ex.id, 'title'), itemText(ctx.t, ex.id, 'desc')];
       ex.settings(ctx).forEach(s => texts.push(s.label, ...(s.options ?? []).map(o => o.label)));
       for (let i = 0; i < 100; i++) {
-        const { question: q } = prepare(ex.make(ex.defaults, ctx));
+        const q = ex.make(ex.defaults, ctx);
         texts.push(q.prompt, q.reveal, ...(q.surface.kind === 'choices' ? q.surface.options.map(o => o.label) : []));
         if (q.visual.kind === 'ear' && q.visual.hint) texts.push(q.visual.hint);
       }
@@ -52,16 +69,55 @@ describe('catálogo de exercícios', () => {
     });
   }
 
+  // O que o formato antigo embutia no som de cada exercício (gap, arp, timbre, andamento) tem que
+  // continuar saindo igual depois da migração, só que agora pela apresentação.
+  describe('o som sai como antes da migração', () => {
+    const final = (id: string, over: Record<string, unknown> = {}, instrument: 'violao' | 'baixo' = 'violao') => {
+      const ex = EXERCISES.find(e => e.id === id)!;
+      const params = resolveParams(instrument);
+      const ctx = { ...ctxFor('pt'), params };
+      const values = { ...ex.defaults, ...over } as Record<string, never>;
+      const q = ex.make(values, ctx);
+      const fromSettings = ex.settings(ctx).reduce((acc, st) => (st.present && values[st.id] !== undefined ? { ...acc, ...st.present(values[st.id]) } : acc), {});
+      return resolvePresentation([globalPresentation(params, q.sound?.instrument), ex.presentation, fromSettings]);
+    };
+    const base = { gap: 0.75, arp: 0, voice: 'piano', bpm: 84 };
+    it.each([
+      ['pauta-nota', {}, { ...base }],
+      ['pauta-intervalo', {}, { ...base }],
+      ['pauta-acorde', {}, { ...base, arp: 0.08 }],
+      ['pauta-escala', {}, { ...base, gap: 0.32 }],
+      ['teclado-acorde', {}, { ...base }],
+      ['ouvido-tecla', {}, { ...base, gap: 0.9 }],
+      ['ouvido-intervalo', {}, { ...base }],
+      ['ouvido-escala', {}, { ...base, gap: 0.3 }],
+      ['ouvido-celulas', {}, { ...base, gap: 0.55 }],
+      ['ouvido-acorde', {}, { ...base, gap: 0.45, chord: 'arpeggio-block' }],
+      ['ouvido-acorde', { arpejo: false }, { ...base, gap: 0.45, chord: 'block' }],
+      ['ritmo-ouvido', {}, { ...base, bpm: 84 }],
+      ['acorde-visual', { onde: 'violao' }, { ...base, voice: 'violao', arp: 0.04 }],
+      ['acorde-visual', { onde: 'piano' }, { ...base }],
+    ] as const)('%s %j', (id, over, expected) => {
+      expect(final(id, over)).toMatchObject(expected);
+    });
+    it('exercícios de braço usam o timbre do instrumento (violão ou baixo)', () => {
+      for (const id of ['braco-nota', 'braco-ache', 'braco-intervalo']) {
+        expect(final(id, {}, 'violao').voice).toBe('violao');
+        expect(final(id, {}, 'baixo').voice).toBe('baixo');
+      }
+    });
+  });
+
   it('um parâmetro global de som chega a todo exercício com áudio, sem editar o catálogo', () => {
     // nenhum exercício (nem o som no formato antigo) pode sobrescrever o volume global
     const params = { ...resolveParams('baixo'), volume: 0.33 };
     const ctx = { ...ctxFor('pt'), params };
     for (const ex of EXERCISES) {
       for (let i = 0; i < 20; i++) {
-        const p = prepare(ex.make(ex.defaults, ctx));
-        if (!p.question.sound) continue;
+        const q = ex.make(ex.defaults, ctx);
+        if (!q.sound) continue;
         const settingsLayer = ex.settings(ctx).reduce((acc, st) => (st.present ? { ...acc, ...st.present(ex.defaults[st.id]) } : acc), {});
-        const pres = resolvePresentation([globalPresentation(params, p.question.sound.instrument), ex.presentation, p.legacyPresentation, settingsLayer]);
+        const pres = resolvePresentation([globalPresentation(params, q.sound.instrument), ex.presentation, settingsLayer]);
         expect(pres.volume, ex.id).toBe(0.33);
       }
     }

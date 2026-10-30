@@ -40,6 +40,12 @@ describe('alturas', () => {
     expect(validate(e, { kind: 'spelled', letter: 1, acc: -1 })).toBe(true); // Ré♭
     expect(validate(e, { kind: 'pitch', midi: 62 })).toBe(false);
   });
+  it('opção de nome de nota responde uma classe de altura', () => {
+    const e = { kind: 'pitchClass', pc: 6 } as const;
+    expect(validate(e, { kind: 'pitchClass', pc: 6 })).toBe(true);
+    expect(validate(e, { kind: 'pitchClass', pc: 7 })).toBe(false);
+    expect(validate({ kind: 'pitch', midi: 66 }, { kind: 'pitchClass', pc: 6 })).toBe(false); // sem oitava, não é altura exata
+  });
   it('posições diferentes do braço com a mesma altura contam igual', () => {
     const e = { kind: 'pitch', midi: 64 } as const; // Mi4
     const tuning = [40, 45, 50, 55, 59, 64];
