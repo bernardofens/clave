@@ -69,7 +69,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'pauta-nota',
     primaryModule: 'theory', skillTags: ['notation.pitch_reading'],
     contentTags: ['pitch.naturals', 'pitch.accidentals', 'clef.treble', 'clef.bass', 'staff.ledger_lines'],
-    area: 'leitura', group: 'pauta', mobile: true,
+    group: 'pauta', mobile: true,
     settings: ctx => [CLEFS(ctx), EXT(ctx), ACC(ctx)], defaults: { claves: ['sol'], extensao: 'pauta', acidentes: false },
     make(s, ctx): Question {
       const clef = pickClef(s);
@@ -86,7 +86,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'pauta-construir',
     primaryModule: 'theory', skillTags: ['notation.pitch_writing'],
     contentTags: ['pitch.naturals', 'pitch.accidentals', 'clef.treble', 'clef.bass', 'staff.ledger_lines'],
-    area: 'leitura', group: 'pauta', mobile: true,
+    group: 'pauta', mobile: true,
     settings: ctx => [CLEFS(ctx), EXT(ctx), ACC(ctx)], defaults: { claves: ['sol'], extensao: 'pauta', acidentes: false },
     make(s, ctx) {
       const clef = pickClef(s);
@@ -103,7 +103,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'pauta-armadura',
     primaryModule: 'theory', skillTags: ['notation.key_signature', 'theory.key_relations'],
     contentTags: ['key.major', 'key.minor', 'key.signatures', 'clef.treble', 'clef.bass'],
-    area: 'leitura', group: 'pauta', mobile: true,
+    group: 'pauta', mobile: true,
     settings: ctx => [CLEFS(ctx), { id: 'modo', label: ctx.t('settings.keyMode'), type: 'single', options: [{ id: 'maior', label: ctx.t('settings.major') }, { id: 'menor', label: ctx.t('settings.minor') }, { id: 'ambos', label: ctx.t('settings.both') }] },
       { id: 'max', label: ctx.t('settings.maxAccidentals'), type: 'single', options: [{ id: '2', label: '2' }, { id: '4', label: '4' }, { id: '7', label: '7' }] }],
     defaults: { claves: ['sol'], modo: 'maior', max: '4' },
@@ -126,7 +126,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'pauta-intervalo',
     primaryModule: 'theory', skillTags: ['theory.interval_naming', 'notation.pitch_reading'],
     contentTags: ['interval.simple', 'pitch.accidentals', 'clef.treble', 'clef.bass'],
-    area: 'harmonia', group: 'pauta', mobile: true,
+    group: 'pauta', mobile: true,
     settings: ctx => [CLEFS(ctx), { id: 'intervalos', label: ctx.t('settings.intervals'), type: 'multi', options: INTERVALS.map(i => ({ id: i.id, label: ivLabel(i.id, ctx) })) },
       { id: 'forma', label: ctx.t('settings.form'), type: 'single', options: [{ id: 'melodico', label: ctx.t('settings.melodic') }, { id: 'harmonico', label: ctx.t('settings.harmonic') }] }],
     defaults: { claves: ['sol'], intervalos: ['m2', 'M2', 'm3', 'M3', 'J4', 'J5', 'm6', 'M6', 'J8'], forma: 'melodico' },
@@ -154,7 +154,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'pauta-acorde',
     primaryModule: 'theory', skillTags: ['theory.chord_identification', 'notation.pitch_reading'],
     contentTags: ['chord.triads', 'chord.sevenths', 'chord.inversions', 'clef.treble', 'clef.bass'],
-    area: 'harmonia', group: 'pauta', mobile: true,
+    group: 'pauta', mobile: true,
     settings: ctx => [CLEFS(ctx), { id: 'tipos', label: ctx.t('settings.types'), type: 'multi', options: chordTypes(ctx.t, ALL_CHORDS) },
       { id: 'inversoes', label: ctx.t('settings.inversions'), type: 'toggle' }],
     defaults: { claves: ['sol'], tipos: ['maior', 'menor', 'dim', 'aum'], inversoes: false },
@@ -179,7 +179,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'pauta-escala',
     primaryModule: 'theory', skillTags: ['theory.scale_identification', 'notation.pitch_reading'],
     contentTags: ['scale.major', 'scale.minor', 'scale.modes', 'scale.pentatonic', 'scale.blues', 'clef.treble', 'clef.bass'],
-    area: 'harmonia', group: 'pauta', mobile: true,
+    group: 'pauta', mobile: true,
     settings: ctx => [CLEFS(ctx), { id: 'tipos', label: ctx.t('settings.scales'), type: 'multi', options: ALL_SCALES.map(k => ({ id: k, label: scaleName(ctx.t, k) })) }],
     defaults: { claves: ['sol'], tipos: ['maior', 'menor', 'menor-harmonica', 'menor-melodica'] },
     make(s, ctx) {
@@ -202,7 +202,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'quiz-teoria',
     primaryModule: 'theory', skillTags: ['theory.scale_degrees', 'theory.modes', 'theory.chord_construction', 'theory.harmonic_field', 'theory.key_relations', 'theory.reharmonization'],
     contentTags: ['scale.major', 'scale.modes', 'chord.triads', 'chord.sevenths', 'harmony.diatonic_field', 'harmony.tritone_sub', 'key.major', 'key.minor', 'key.signatures'],
-    area: 'harmonia', group: 'teoria', mobile: true,
+    group: 'teoria', mobile: true,
     settings: ctx => [{ id: 'temas', label: ctx.t('settings.topics'), type: 'multi', options: [
       { id: 'graus', label: ctx.t('settings.topicDegrees') }, { id: 'modos', label: ctx.t('settings.topicModes') }, { id: 'acordes', label: ctx.t('settings.topicChords') },
       { id: 'campo', label: ctx.t('settings.topicField') }, { id: 'tonalidades', label: ctx.t('settings.topicKeys') }, { id: 'sub5', label: ctx.t('settings.topicSub5') }] }],
@@ -216,7 +216,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'teclado-nota',
     primaryModule: 'theory', skillTags: ['keyboard.note_naming'],
     contentTags: ['pitch.naturals', 'pitch.accidentals', 'instrument.keyboard'],
-    area: 'mapeamento', group: 'teclado', mobile: true,
+    group: 'teclado', mobile: true,
     settings: ctx => [{ id: 'pretas', label: ctx.t('settings.blackKeys'), type: 'toggle' }, { id: 'oitavas', label: ctx.t('settings.octaves'), type: 'single', options: [{ id: '1', label: '1' }, { id: '2', label: '2' }] }],
     defaults: { pretas: true, oitavas: '2' },
     make(s, ctx) {
@@ -234,7 +234,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'teclado-tecla',
     primaryModule: 'theory', skillTags: ['keyboard.note_finding'],
     contentTags: ['pitch.naturals', 'pitch.accidentals', 'instrument.keyboard'],
-    area: 'mapeamento', group: 'teclado', mobile: true,
+    group: 'teclado', mobile: true,
     settings: ctx => [{ id: 'pretas', label: ctx.t('settings.blackKeys'), type: 'toggle' }], defaults: { pretas: true },
     make(s, ctx) {
       let p: number;
@@ -250,7 +250,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'teclado-acorde',
     primaryModule: 'theory', skillTags: ['keyboard.chord_shapes', 'theory.chord_identification'],
     contentTags: ['chord.triads', 'chord.sevenths', 'instrument.keyboard'],
-    area: 'harmonia', group: 'teclado', mobile: true,
+    group: 'teclado', mobile: true,
     settings: ctx => [{ id: 'tipos', label: ctx.t('settings.types'), type: 'multi', options: chordTypes(ctx.t, ['maior', 'menor', 'dim', 'aum', '7M', '7', 'm7', 'm7b5']) }],
     defaults: { tipos: ['maior', 'menor', '7', 'm7'] },
     make(s, ctx) {
@@ -272,7 +272,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'braco-nota',
     primaryModule: 'theory', skillTags: ['fretboard.note_naming'],
     contentTags: ['pitch.naturals', 'pitch.accidentals', 'instrument.guitar', 'instrument.bass'],
-    area: 'mapeamento', group: 'braco', mobile: true,
+    group: 'braco', mobile: true,
     settings: ctx => [INST(ctx), FRETS(ctx)], defaults: { instrumento: 'auto', casas: '0-5' },
     make(s, ctx) {
       const tuning = tuningOf(s, ctx);
@@ -291,7 +291,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'braco-ache',
     primaryModule: 'theory', skillTags: ['fretboard.note_finding'],
     contentTags: ['pitch.naturals', 'pitch.accidentals', 'instrument.guitar', 'instrument.bass'],
-    area: 'mapeamento', group: 'braco', mobile: true,
+    group: 'braco', mobile: true,
     settings: ctx => [INST(ctx), FRETS(ctx)], defaults: { instrumento: 'auto', casas: '0-12' },
     make(s, ctx) {
       const tuning = tuningOf(s, ctx);
@@ -313,7 +313,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'braco-intervalo',
     primaryModule: 'theory', skillTags: ['fretboard.interval_shapes'],
     contentTags: ['interval.simple', 'instrument.guitar', 'instrument.bass'],
-    area: 'mapeamento', group: 'braco', mobile: true,
+    group: 'braco', mobile: true,
     settings: ctx => [INST(ctx)], defaults: { instrumento: 'auto' },
     make(s, ctx) {
       const tuning = tuningOf(s, ctx);
@@ -337,7 +337,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'acorde-visual',
     primaryModule: 'theory', skillTags: ['fretboard.chord_shapes', 'keyboard.chord_shapes', 'theory.chord_identification'],
     contentTags: ['chord.triads', 'chord.sevenths', 'chord.open_shapes', 'chord.barre_shapes', 'instrument.guitar', 'instrument.keyboard'],
-    area: 'mapeamento', group: 'braco', mobile: true,
+    group: 'braco', mobile: true,
     settings: ctx => [{ id: 'onde', label: ctx.t('settings.instrument'), type: 'single', options: [{ id: 'violao', label: ctx.t('settings.guitar') }, { id: 'piano', label: ctx.t('settings.piano') }] },
       { id: 'formas', label: ctx.t('settings.shapes'), type: 'single', options: [{ id: 'abertos', label: ctx.t('settings.openChords') }, { id: 'pestana', label: ctx.t('settings.barreChords') }, { id: 'todos', label: ctx.t('settings.all') }] }],
     defaults: { onde: 'violao', formas: 'abertos' },
@@ -350,7 +350,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'ouvido-tecla',
     primaryModule: 'perception.melodic', skillTags: ['ear.pitch_identification', 'keyboard.note_finding'],
     contentTags: ['pitch.naturals', 'pitch.accidentals'],
-    area: 'ouvido', group: 'ouvido', mobile: true,
+    group: 'ouvido', mobile: true,
     settings: ctx => [{ id: 'referencia', label: ctx.t('settings.reference', { note: noteName(note(0), ctx.naming) }), type: 'toggle' }, { id: 'pretas', label: ctx.t('settings.blackKeys'), type: 'toggle' }],
     defaults: { referencia: true, pretas: false },
     make(s, ctx) {
@@ -368,7 +368,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'ouvido-intervalo',
     primaryModule: 'perception.melodic', skillTags: ['ear.interval_identification'],
     contentTags: ['interval.simple'],
-    area: 'ouvido', group: 'ouvido', mobile: true,
+    group: 'ouvido', mobile: true,
     settings: ctx => [{ id: 'intervalos', label: ctx.t('settings.intervals'), type: 'multi', options: semiOptions(ctx) },
       { id: 'direcao', label: ctx.t('settings.direction'), type: 'single', options: [{ id: 'sobe', label: ctx.t('settings.up') }, { id: 'desce', label: ctx.t('settings.down') }, { id: 'juntas', label: ctx.t('settings.together') }, { id: 'misto', label: ctx.t('settings.mixed') }] }],
     defaults: { intervalos: ['3', '4', '5', '7', '12'], direcao: 'sobe' },
@@ -389,7 +389,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'ouvido-acorde',
     primaryModule: 'perception.harmonic', skillTags: ['ear.chord_quality'],
     contentTags: ['chord.triads', 'chord.sevenths'],
-    area: 'ouvido', group: 'ouvido', mobile: true,
+    group: 'ouvido', mobile: true,
     settings: ctx => [{ id: 'tipos', label: ctx.t('settings.types'), type: 'multi', options: chordTypes(ctx.t, ALL_CHORDS) },
       { id: 'arpejo', label: ctx.t('settings.arpeggiate'), type: 'toggle' }],
     defaults: { tipos: ['maior', 'menor'], arpejo: true },
@@ -409,7 +409,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'ouvido-escala',
     primaryModule: 'perception.melodic', skillTags: ['ear.scale_quality'],
     contentTags: ['scale.major', 'scale.minor', 'scale.modes', 'scale.pentatonic', 'scale.blues'],
-    area: 'ouvido', group: 'ouvido', mobile: true,
+    group: 'ouvido', mobile: true,
     settings: ctx => [{ id: 'tipos', label: ctx.t('settings.scales'), type: 'multi', options: ALL_SCALES.map(k => ({ id: k, label: scaleName(ctx.t, k) })) }],
     defaults: { tipos: ['maior', 'menor', 'menor-harmonica'] },
     make(s, ctx) {
@@ -428,7 +428,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'ouvido-celulas',
     primaryModule: 'perception.melodic', skillTags: ['ear.scale_degrees'],
     contentTags: ['scale.pentatonic'],
-    area: 'ouvido', group: 'ouvido', mobile: true,
+    group: 'ouvido', mobile: true,
     settings: ctx => [{ id: 'escala', label: ctx.t('settings.pentatonic'), type: 'single', options: [{ id: 'maior', label: ctx.t('settings.pentaMajor') }, { id: 'menor', label: ctx.t('settings.pentaMinor') }] },
       { id: 'tamanho', label: ctx.t('settings.cellSize'), type: 'single', options: [{ id: '3', label: '3' }, { id: '4', label: '4' }] }],
     defaults: { escala: 'maior', tamanho: '3' },
@@ -460,7 +460,7 @@ export const EXERCISES: ExerciseDef[] = [
     id: 'ritmo-ouvido',
     primaryModule: 'perception.rhythmic', skillTags: ['ear.rhythm_recognition', 'notation.rhythm_reading'],
     contentTags: ['rhythm.quarter', 'rhythm.eighth', 'rhythm.sixteenth', 'rhythm.rests', 'rhythm.syncopation', 'rhythm.triplets'],
-    area: 'ritmo', group: 'ritmo', mobile: true,
+    group: 'ritmo', mobile: true,
     settings: ctx => [{ id: 'nivel', label: ctx.t('settings.rhythmValues'), type: 'single', options: RHYTHM_PRESETS.map(p => ({ id: p.id, label: ctx.t(`theory.rhythmPresets.${p.id}` as MessageKey) })) }],
     defaults: { nivel: 'duas' },
     make(s, ctx) {

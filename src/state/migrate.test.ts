@@ -1,0 +1,42 @@
+import { describe, expect, it } from 'vitest';
+import { migrateSaved } from './migrate';
+
+// O retorno é um objeto solto de propósito (estado de versões antigas); o teste olha só os campos.
+const migrate = (raw: unknown) => migrateSaved(raw) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+describe('estado salvo por versões anteriores', () => {
+  const old = {
+    v: 1,
+    profile: { name: 'Ana', kind: 'hobby', instrument: 'baixo', goals: ['jazz'], levels: { ouvido: 2 }, onboarded: true },
+    stats: { 'pauta-nota': { attempts: 10, correct: 7, bestStreak: 4, last: 1 } },
+    badges: { sequencia: 123 },
+    plan: { fifths: 2, done: [], startedAt: 1 },
+    history: [
+      { at: 5, id: 'braco-nota', title: 'Nota no braço', area: 'mapeamento', seconds: 60, correct: 4, total: 5 },
+      { at: 6, id: 'ritmo', title: 'Leitura rítmica', area: 'ritmo', seconds: 120 },
+    ],
+  };
+
+  it('tira o que o app não conhece mais', () => {
+    const s = migrate(old);
+    expect(s.badges).toBeUndefined();
+    expect(s.plan).toBeUndefined();
+    expect(s.profile).toEqual({ name: 'Ana', instrument: 'baixo', goals: ['jazz'], onboarded: true });
+    expect(s.stats['pauta-nota']).toEqual({ attempts: 10, correct: 7, last: 1 });
+  });
+
+  it('troca a área do histórico pelo módulo, sem perder o resto', () => {
+    const h = (migrate(old)).history;
+    expect(h[0]).toEqual({ at: 5, id: 'braco-nota', title: 'Nota no braço', module: 'theory', seconds: 60, correct: 4, total: 5 });
+    expect(h[1].module).toBe('perception.rhythmic');
+    expect(h[0].area).toBeUndefined();
+  });
+
+  it('não mexe em estado já migrado e aguenta lixo', () => {
+    const fresh = { v: 1, history: [{ at: 1, id: 'x', title: 'x', module: 'technique', seconds: 9 }] };
+    expect(migrateSaved(fresh)).toEqual(fresh);
+    expect(migrateSaved(null)).toEqual({});
+    expect(migrateSaved('oi')).toEqual({});
+    expect(migrate({ history: [{ area: 'inexistente', at: 1 }, 7] }).history).toEqual([{ at: 1, module: 'theory' }]);
+  });
+});

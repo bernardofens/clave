@@ -2,56 +2,57 @@
 // palavras que disparam cada uma vêm do idioma (mentor.kw* em src/i18n).
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { AreaId } from '../data/areas';
+import type { ModuleId } from '../exercises/taxonomy';
 import { useContent, type Content } from '../data/localized';
-import { areaXP, levelOf } from '../data/session';
 import { EXERCISES } from '../exercises/catalog';
-import { getState, streakDays, useStore } from '../state/store';
+import { getState, minutesByModule, streakDays, useStore } from '../state/store';
 import { Art, Chip, PageHead } from '../components/ui';
 import { itemText, useT, type MessageKey, type Translate } from '../i18n';
 
 interface Msg { from: 'eu' | 'clave'; text: string; links?: { to: string; label: string }[] }
 
-function weakest(): { area: AreaId; ex?: string; acc?: number } {
+function weakest(modules: ModuleId[]): { module: ModuleId; ex?: string; acc?: number } {
   const { stats, history } = getState();
   const tried = EXERCISES.filter(e => (stats[e.id]?.attempts ?? 0) >= 8).map(e => ({ e, acc: stats[e.id].correct / stats[e.id].attempts }));
   if (tried.length) {
     const w = tried.sort((a, b) => a.acc - b.acc)[0];
-    return { area: w.e.area, ex: w.e.id, acc: w.acc };
+    return { module: w.e.primaryModule, ex: w.e.id, acc: w.acc };
   }
-  const xp = areaXP(stats, history);
-  return { area: (Object.keys(xp) as AreaId[]).sort((a, b) => xp[a] - xp[b])[0] };
+  // sem dados suficientes: o módulo em que a pessoa menos treinou no mês
+  const minutes = minutesByModule(history, 30);
+  return { module: [...modules].sort((a, b) => (minutes[a] ?? 0) - (minutes[b] ?? 0))[0] };
 }
 
-function answer(q: string, t: Translate, { AREAS, areaById, MODULES }: Content): Msg {
+function answer(q: string, t: Translate, { LESSONS, MODULES, moduleById }: Content): Msg {
   const s = getState();
   const lower = q.toLowerCase();
   const has = (key: MessageKey) => t(key).split('|').some(w => lower.includes(w));
   if (has('mentor.kwWeak')) {
-    const w = weakest();
+    const w = weakest(MODULES.map(m => m.id));
     if (w.ex) {
       const title = itemText(t, w.ex, 'title');
       return { from: 'clave', text: t('mentor.weakExercise', { title, pct: Math.round((w.acc ?? 0) * 100) }), links: [{ to: `/treinar/${w.ex}`, label: t('mentor.trainExercise', { title }) }] };
     }
-    return { from: 'clave', text: t('mentor.weakArea', { area: areaById[w.area].name }), links: [{ to: '/treinar', label: t('mentor.openTrain') }] };
+    return { from: 'clave', text: t('mentor.weakArea', { module: moduleById[w.module].name }), links: [{ to: '/treinar', label: t('mentor.openTrain') }] };
   }
   if (has('mentor.kwToday')) {
-    const w = weakest();
-    const mod = MODULES.find(m => m.area === w.area && !m.premium);
-    const area = areaById[w.area].name;
-    return { from: 'clave', text: mod ? t('mentor.todayLesson', { area, title: mod.title }) : t('mentor.today', { area }), links: [{ to: '/', label: t('mentor.buildSession') }, ...(mod ? [{ to: `/estudar/${mod.id}`, label: mod.title }] : [])] };
+    const w = weakest(MODULES.map(m => m.id));
+    const mod = LESSONS.find(l => l.primaryModule === w.module && !l.premium);
+    const module = moduleById[w.module].name;
+    return { from: 'clave', text: mod ? t('mentor.todayLesson', { module, title: mod.title }) : t('mentor.today', { module }), links: [{ to: '/', label: t('mentor.buildSession') }, ...(mod ? [{ to: `/estudar/${mod.id}`, label: mod.title }] : [])] };
   }
   if (has('mentor.kwModes')) {
     return { from: 'clave', text: t('mentor.modes'), links: [{ to: '/estudar/modos-gregos', label: t('mentor.modesLesson') }, { to: '/ferramentas/ambiente', label: t('mentor.drone') }] };
   }
   if (has('mentor.kwWeek')) {
     const goals = s.profile.goals.length ? s.profile.goals : ['improvisar'];
-    return { from: 'clave', text: t('mentor.week', { count: goals.length }), links: [{ to: '/progresso#tonalidade', label: t('mentor.tonalityPlan') }] };
+    return { from: 'clave', text: t('mentor.week', { count: goals.length }) };
   }
   if (has('mentor.kwProgress')) {
-    const xp = areaXP(s.stats, s.history);
-    const best = AREAS.map(a => ({ a, lv: levelOf(xp[a.id]).level })).sort((x, y) => y.lv - x.lv)[0];
-    return { from: 'clave', text: t('mentor.progress', { count: streakDays(s.history), area: best.a.name, level: best.lv }), links: [{ to: '/progresso', label: t('common.seeProgress') }] };
+    const minutes = minutesByModule(s.history, 30);
+    const best = [...MODULES].sort((a, b) => (minutes[b.id] ?? 0) - (minutes[a.id] ?? 0))[0];
+    const text = (minutes[best.id] ?? 0) > 0 ? t('mentor.progress', { count: streakDays(s.history), module: best.name }) : t('mentor.progressNoData');
+    return { from: 'clave', text, links: [{ to: '/progresso', label: t('common.seeProgress') }] };
   }
   return { from: 'clave', text: t('mentor.fallback') };
 }

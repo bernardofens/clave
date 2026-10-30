@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Comunidade from './pages/Comunidade';
-import Estudar, { GenrePage, ModulePage } from './pages/Estudar';
+import Estudar, { GenrePage, LessonPage } from './pages/Estudar';
 import Hoje from './pages/Hoje';
 import Mentor from './pages/Mentor';
 import Onboarding from './pages/Onboarding';
@@ -28,7 +28,7 @@ export default function App() {
           <Route path="ferramentas/:id" element={<ToolPage />} />
           <Route path="estudar" element={<Estudar />} />
           <Route path="estudar/genero/:id" element={<GenrePage />} />
-          <Route path="estudar/:id" element={<ModulePage />} />
+          <Route path="estudar/:id" element={<LessonPage />} />
           <Route path="progresso" element={<Progresso />} />
           <Route path="perfil" element={<Perfil />} />
           <Route path="comunidade" element={<Comunidade />} />

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useContent } from '../data/localized';
-import type { Block } from '../data/session';
+import { moduleOf, type Block } from '../data/session';
 import { exerciseById } from '../exercises/catalog';
 import Player from '../exercises/Player';
 import { logActivity } from '../state/store';
@@ -21,7 +21,7 @@ function loadPlan(state: unknown): Block[] {
 export default function Sessao() {
   const location = useLocation();
   const t = useT();
-  const { areaById } = useContent();
+  const { moduleById } = useContent();
   const [plan] = useState(() => loadPlan(location.state));
   const [i, setI] = useState(0);
   const [results, setResults] = useState<{ correct: number; total: number }[]>([]);
@@ -61,7 +61,7 @@ export default function Sessao() {
   const nextBlock = (r?: { correct: number; total: number; seconds: number }) => {
     if (r && block.kind === 'exercise') {
       setResults(x => [...x, r]);
-      logActivity({ id: block.id, title: itemText(t, block.id, 'title'), area: block.area, seconds: r.seconds, correct: r.correct, total: r.total });
+      logActivity({ id: block.id, title: itemText(t, block.id, 'title'), module: moduleOf(block.id), seconds: r.seconds, correct: r.correct, total: r.total });
     }
     setI(n => n + 1);
   };
@@ -73,7 +73,7 @@ export default function Sessao() {
         {plan.map((b, k) => <div key={k} title={b.label ? t(b.label) : itemText(t, b.id, 'title')} style={{ flex: b.minutes, height: 8, transform: 'skewX(-12deg)', background: k < i ? 'var(--mu)' : k === i ? 'var(--cream)' : 'var(--bk-3)' }} />)}
       </div>
       <div className="row" style={{ justifyContent: 'space-between' }}>
-        <span className="eyebrow">{t('session.blockOf', { i: i + 1, n: plan.length })} · {areaById[block.area].name}</span>
+        <span className="eyebrow">{t('session.blockOf', { i: i + 1, n: plan.length })} · {moduleById[moduleOf(block.id)].name}</span>
         <Btn small tone="ghost" onClick={() => nextBlock()}>{t('session.skip')}</Btn>
       </div>
       {block.kind === 'exercise' && exerciseById[block.id] && (

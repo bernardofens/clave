@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import type { GoalId } from '../data/areas';
+import type { GoalId } from '../data/modules';
 import { useContent } from '../data/localized';
 import { resetAll, setLocale, setState, updateProfile, useStore } from '../state/store';
-import { detectLocale, LOCALES, useLocale, useT, type MessageKey } from '../i18n';
+import { detectLocale, LOCALES, useLocale, useT } from '../i18n';
 import { Art, Btn, Chip, PageHead, SecTitle } from '../components/ui';
 import AccountPanel from '../components/AccountPanel';
 
-const LEVELS: MessageKey[] = ['common.levelNone', 'common.levelBasic', 'common.levelIntermediate', 'common.levelAdvanced'];
 
 export default function Perfil() {
   const profile = useStore(s => s.profile);
@@ -14,7 +13,7 @@ export default function Perfil() {
   const sound = useStore(s => s.sound);
   const locale = useStore(s => s.locale);
   const t = useT();
-  const { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } = useContent();
+  const { GOALS, INSTRUMENTS } = useContent();
   const detected = LOCALES.find(l => l.id === detectLocale())!.name;
   const autoNames = useLocale() === 'pt' ? 'Dó Ré Mi' : 'C D E';
   const [confirmReset, setConfirmReset] = useState(false);
@@ -34,25 +33,12 @@ export default function Perfil() {
                 style={{ background: 'var(--bk-3)', border: 0, color: 'var(--cream)', padding: '10px 12px', font: 'inherit', fontSize: 17 }} />
             </label>
             <div className="row"><span className="eyebrow">{t('common.instrument')}</span>{INSTRUMENTS.map(i => <Chip key={i.id} on={profile.instrument === i.id} onClick={() => updateProfile({ instrument: i.id })}>{i.name}</Chip>)}</div>
-            <div className="row"><span className="eyebrow">{t('profile.kind')}</span>{PROFILE_KINDS.map(k => <Chip key={k.id} on={profile.kind === k.id} onClick={() => updateProfile({ kind: k.id })}>{k.name}</Chip>)}</div>
           </div>
         </section>
 
         <section>
           <SecTitle>{t('profile.goals')}</SecTitle>
           <div className="row">{GOALS.map(g => <Chip key={g.id} on={profile.goals.includes(g.id)} onClick={() => toggleGoal(g.id)}>{g.name}</Chip>)}</div>
-        </section>
-
-        <section>
-          <SecTitle>{t('profile.levels')}</SecTitle>
-          <div className="panel" style={{ display: 'grid', gap: 12 }}>
-            {AREAS.map(a => (
-              <div key={a.id} className="row">
-                <span style={{ width: 120, fontWeight: 600 }}>{a.name}</span>
-                {LEVELS.map((l, i) => <Chip key={i} on={profile.levels[a.id] === i} onClick={() => updateProfile({ levels: { ...profile.levels, [a.id]: i } })}>{t(l)}</Chip>)}
-              </div>
-            ))}
-          </div>
         </section>
 
         <section>

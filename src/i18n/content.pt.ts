@@ -1,25 +1,18 @@
-// Conteúdo de estudo em português: áreas, objetivos, aulas, trilhas, gêneros e medalhas.
+// Conteúdo de estudo em português: módulos, objetivos, aulas, trilhas e gêneros.
 // A estrutura (ids, links, exercícios ligados, cores) fica em src/data; aqui só o texto, por id.
 // content.en.ts precisa ter as mesmas chaves e o mesmo número de itens em cada lista.
 const ptContent = {
-  areas: {
-    ouvido: { name: 'Ouvido', short: 'Percepção musical', why: 'Reconhecer intervalos, escalas e acordes de ouvido é o que permite tirar músicas, improvisar e tocar com outras pessoas.' },
-    tecnica: { name: 'Técnica', short: 'Precisão e agilidade', why: 'Digitação certa e mãos soltas tiram o instrumento do caminho, para você pensar na música e não nos dedos. Sempre com metrônomo.' },
-    mapeamento: { name: 'Mapeamento', short: 'Topografia do instrumento', why: 'Saber onde cada nota está e enxergar a geometria dos intervalos no braço ou no teclado dá fluência para tocar o que você ouve.' },
-    harmonia: { name: 'Harmonia', short: 'Teoria e harmonia', why: 'Internalizar as notas das escalas e os acordes de cada campo harmônico é o que transforma decoreba em escolha musical.' },
-    ritmo: { name: 'Ritmo', short: 'Tempo interno', why: 'Precisão rítmica e "time" são o que faz a música soar bem, mesmo com poucas notas.' },
-    leitura: { name: 'Leitura', short: 'Partitura em tempo real', why: 'Ler partitura abre o repertório escrito. Treinamos separado as notas e o ritmo, e depois juntamos.' },
+  modules: {
+    theory: { name: 'Teoria', short: 'Notação, escalas, acordes e o mapa do instrumento' },
+    technique: { name: 'Técnica', short: 'Controle motor e regularidade' },
+    'perception.melodic': { name: 'Percepção melódica', short: 'Alturas, intervalos e escalas' },
+    'perception.harmonic': { name: 'Percepção harmônica', short: 'Acordes e sonoridades' },
+    'perception.rhythmic': { name: 'Percepção rítmica', short: 'Pulso, figuras e células' },
   },
   instruments: {
     piano: 'Piano / teclado',
     violao: 'Violão / guitarra',
     baixo: 'Baixo',
-  },
-  profileKinds: {
-    iniciante: { name: 'Começando agora', desc: 'Quero aprender do zero, com um caminho guiado.' },
-    hobby: { name: 'Toco por prazer', desc: 'Quero evoluir no meu ritmo, sem pressão.' },
-    musico: { name: 'Músico', desc: 'Toco sério e quero lapidar áreas específicas.' },
-    produtor: { name: 'Produtor', desc: 'Faço música no computador e quero mais teoria e ouvido.' },
   },
   goals: {
     improvisar: 'Improvisar com fluidez',
@@ -30,7 +23,7 @@ const ptContent = {
     jazz: 'Tocar jazz',
     repertorio: 'Aprender músicas',
   },
-  modules: {
+  lessons: {
     'ler-partitura': {
       title: 'Como ler partitura',
       why: 'A partitura é a forma mais precisa de guardar e trocar música. Ler bem abre o repertório escrito e acelera o estudo de qualquer peça.',
@@ -180,29 +173,6 @@ const ptContent = {
       sides: { a: 'Lado A · baião' },
       tracks: { mixolidio: 'O mixolídio do baião', levada: 'Levada de baião' },
     },
-  },
-  tonality: {
-    groups: { notas: '1. Posições das notas', acordes: '2. Acordes do campo harmônico', relativo: '3. Relativo menor', repertorio: '4. Leitura e repertório' },
-    steps: {
-      solfejar: 'Solfeje a escala com calma, dizendo o nome e o grau de cada nota.',
-      'graus-quiz': 'Flash quiz: qual nota é o 3º grau? Dó é qual grau?',
-      posicoes: 'Toque todas as posições das notas da escala até a casa 5.',
-      'arpejos-5': 'Toque os arpejos de cada grau, da corda solta até a casa 5, alternando nome e grau.',
-      'arpejos-8': 'Repita na posição seguinte (casas 5 a 8).',
-      'penta-maior': 'Toque a pentatônica maior nessa tonalidade.',
-      relativa: 'Migre para a relativa menor. Quais notas viraram quais graus?',
-      'menor-blues': 'Toque a escala menor, a pentatônica menor e a escala blues.',
-      leitura: 'Use o gerador de leitura nessa tonalidade, com figura constante.',
-      musica: 'Tire uma música nessa tonalidade: solfeje, toque a melodia, depois tônicas e terças com o backing track.',
-    },
-  },
-  badges: {
-    'primeira-sessao': { name: 'Primeira sessão', desc: 'Concluiu a primeira atividade.' },
-    sequencia: { name: '7 dias seguidos', desc: 'Estudou uma semana sem falhar.' },
-    ouvido: { name: 'Ouvido afiado', desc: '50 acertos em exercícios de ouvido.' },
-    leitor: { name: 'Leitor', desc: '100 notas lidas certo na pauta.' },
-    braco: { name: 'Mapa do braço', desc: '100 acertos no braço do instrumento.' },
-    improviso: { name: 'Improvisador', desc: '30 minutos tocando sobre backing tracks.' },
   },
 };
 

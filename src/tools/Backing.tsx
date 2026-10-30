@@ -103,7 +103,7 @@ export default function Backing({ presetId }: { presetId?: string }) {
   const [bar, setBar] = useState(0);
   const [view, setView] = useState<'teclado' | 'braco'>(instrument === 'piano' ? 'teclado' : 'braco');
   const clock = useRef<Clock | null>(null);
-  useToolLog('backing', 'Backing track', 'harmonia', running);
+  useToolLog('backing', 'Backing track', 'perception.harmonic', running);
 
   const tonic = useMemo(() => (mode === 'maior' ? majorTonic(fifths) : transpose(majorTonic(fifths), { num: 6, semis: 9 })), [fifths, mode]);
   const chords = useMemo(() => items.map(i => resolve(i, tonic, mode, tetrads, conv)), [items, tonic, mode, tetrads, conv]);

@@ -55,7 +55,7 @@ export default function Tecnica() {
   const [idx, setIdx] = useState(-1);
   const [round, setRound] = useState(0);
   const clock = useRef<Clock | null>(null);
-  useToolLog('tecnica', 'Rotinas de técnica', 'tecnica', running);
+  useToolLog('tecnica', 'Rotinas de técnica', 'technique', running);
 
   const tuning = instrument === 'baixo' ? TUNINGS.baixo : TUNINGS.violao;
   const seq = useMemo(() => routine.build(tuning.length), [routine, tuning.length]);

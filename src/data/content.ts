@@ -1,78 +1,76 @@
-// Conteúdo de estudo. Cada módulo segue a mesma receita:
+// Conteúdo de estudo. Cada aula segue a mesma receita:
 // por que importa, como encaixar nos estudos, um tutorial curto e os exercícios/ferramentas.
 // Aqui fica a estrutura (ids, ligações, links); os textos estão em src/i18n/content.*.ts e chegam
 // às telas já no idioma da pessoa (useContent, em src/data/localized.ts).
-import type { AreaId } from './areas';
 import type { Classification } from '../exercises/taxonomy';
 
-// Uma aula (no código ainda "Module", nome anterior à taxonomia) também tem módulo principal e
-// etiquetas, para ligar aula e exercício pelo que ensinam e não pelo nome.
-export interface ModuleBase extends Classification {
+// Uma aula também tem módulo principal e etiquetas, para ligar aula e exercício pelo que ensinam
+// e não pelo nome.
+export interface LessonBase extends Classification {
   id: string;
-  area: AreaId;
   exercises: string[];
   tools: string[];
   premium?: boolean;
 }
-export interface Module extends ModuleBase {
+export interface Lesson extends LessonBase {
   title: string;
   why: string;
   how: string;
   steps: string[];
 }
 
-export const MODULES: ModuleBase[] = [
+export const LESSONS: LessonBase[] = [
   {
-    id: 'ler-partitura', area: 'leitura',
+    id: 'ler-partitura',
     primaryModule: 'theory', skillTags: ['notation.pitch_reading', 'notation.pitch_writing', 'notation.key_signature'],
     contentTags: ['clef.treble', 'clef.bass', 'staff.ledger_lines', 'pitch.naturals', 'key.signatures'],
     exercises: ['pauta-nota', 'pauta-construir', 'pauta-armadura'], tools: ['leitura'],
   },
   {
-    id: 'leitura-ritmica', area: 'ritmo',
+    id: 'leitura-ritmica',
     primaryModule: 'perception.rhythmic', skillTags: ['notation.rhythm_reading', 'ear.rhythm_recognition'],
     contentTags: ['rhythm.quarter', 'rhythm.eighth', 'rhythm.sixteenth', 'rhythm.rests'],
     exercises: ['ritmo-ouvido'], tools: ['ritmo', 'leitura', 'metronomo'],
   },
   {
-    id: 'mapear-braco', area: 'mapeamento',
+    id: 'mapear-braco',
     primaryModule: 'theory', skillTags: ['fretboard.note_naming', 'fretboard.note_finding', 'fretboard.interval_shapes'],
     contentTags: ['pitch.naturals', 'pitch.accidentals', 'interval.simple', 'instrument.guitar', 'instrument.bass'],
     exercises: ['braco-nota', 'braco-ache', 'braco-intervalo', 'acorde-visual'], tools: [],
   },
   {
-    id: 'escala-maior', area: 'harmonia',
+    id: 'escala-maior',
     primaryModule: 'theory', skillTags: ['theory.scale_degrees', 'theory.key_relations', 'notation.key_signature'],
     contentTags: ['scale.major', 'key.major', 'key.minor', 'key.signatures'],
-    exercises: ['pauta-escala', 'quiz-teoria', 'ouvido-escala'], tools: ['tonalidade'],
+    exercises: ['pauta-escala', 'quiz-teoria', 'ouvido-escala'], tools: [],
   },
   {
-    id: 'modos-gregos', area: 'harmonia',
+    id: 'modos-gregos',
     primaryModule: 'theory', skillTags: ['theory.modes'],
     contentTags: ['scale.modes'],
     exercises: ['quiz-teoria', 'ouvido-escala'], tools: ['backing', 'ambiente'],
   },
   {
-    id: 'acordes', area: 'harmonia',
+    id: 'acordes',
     primaryModule: 'theory', skillTags: ['theory.chord_construction', 'theory.harmonic_field'],
     contentTags: ['chord.triads', 'chord.sevenths', 'harmony.diatonic_field'],
     exercises: ['pauta-acorde', 'teclado-acorde', 'acorde-visual', 'ouvido-acorde'], tools: ['backing'],
   },
   {
-    id: 'harmonia-funcional', area: 'harmonia',
+    id: 'harmonia-funcional',
     primaryModule: 'theory', skillTags: ['theory.harmonic_field', 'theory.reharmonization', 'theory.key_relations'],
     contentTags: ['harmony.diatonic_field', 'harmony.tritone_sub', 'key.minor'],
     exercises: ['quiz-teoria'], tools: ['backing'],
     premium: true,
   },
   {
-    id: 'ouvido', area: 'ouvido',
+    id: 'ouvido',
     primaryModule: 'perception.melodic', skillTags: ['ear.interval_identification', 'ear.pitch_identification', 'ear.chord_quality', 'ear.scale_quality', 'ear.scale_degrees'],
     contentTags: ['interval.simple', 'chord.triads', 'scale.pentatonic'],
     exercises: ['ouvido-intervalo', 'ouvido-acorde', 'ouvido-escala', 'ouvido-tecla', 'ouvido-celulas'], tools: ['ambiente'],
   },
   {
-    id: 'tecnica', area: 'tecnica',
+    id: 'tecnica',
     primaryModule: 'technique', skillTags: ['technique.fingering', 'technique.finger_independence', 'technique.string_crossing', 'technique.tempo_control'],
     contentTags: ['instrument.guitar', 'instrument.bass'],
     exercises: [], tools: ['tecnica', 'metronomo'],
@@ -83,17 +81,17 @@ export interface RoadmapBase {
   id: string;
   art: string;
   premium: boolean;
-  modules: string[];
+  lessons: string[];
 }
-export interface Roadmap extends Omit<RoadmapBase, 'modules'> {
+export interface Roadmap extends Omit<RoadmapBase, 'lessons'> {
   title: string;
   sub: string;
-  steps: { module: string; note: string }[];
+  steps: { lesson: string; note: string }[];
 }
 export const ROADMAPS: RoadmapBase[] = [
-  { id: 'geral', art: 'haltere', premium: false, modules: ['ler-partitura', 'leitura-ritmica', 'mapear-braco', 'escala-maior', 'ouvido', 'acordes', 'modos-gregos', 'harmonia-funcional'] },
-  { id: 'jazz', art: 'genero-jazz', premium: true, modules: ['acordes', 'modos-gregos', 'harmonia-funcional', 'ouvido'] },
-  { id: 'erudito', art: 'genero-classico', premium: true, modules: ['ler-partitura', 'leitura-ritmica', 'escala-maior', 'tecnica'] },
+  { id: 'geral', art: 'haltere', premium: false, lessons: ['ler-partitura', 'leitura-ritmica', 'mapear-braco', 'escala-maior', 'ouvido', 'acordes', 'modos-gregos', 'harmonia-funcional'] },
+  { id: 'jazz', art: 'genero-jazz', premium: true, lessons: ['acordes', 'modos-gregos', 'harmonia-funcional', 'ouvido'] },
+  { id: 'erudito', art: 'genero-classico', premium: true, lessons: ['ler-partitura', 'leitura-ritmica', 'escala-maior', 'tecnica'] },
 ];
 
 export interface GenreBase {
@@ -140,18 +138,4 @@ export const GENRES: GenreBase[] = [
     id: 'forro', art: 'genero-forro', cat: 'CLV 1506', color: 'var(--ve)',
     sides: [{ side: 'a', tracks: [{ id: 'mixolidio', min: 8, to: '/estudar/modos-gregos' }, { id: 'levada', min: 6, to: '/ferramentas/backing?p=baiao' }] }],
   },
-];
-
-/** Passos do plano "internalizar uma tonalidade". */
-export const TONALITY_STEPS: { id: string; group: string; to?: string }[] = [
-  { id: 'solfejar', group: 'notas', to: '/ferramentas/ambiente' },
-  { id: 'graus-quiz', group: 'notas', to: '/treinar/quiz-teoria' },
-  { id: 'posicoes', group: 'notas' },
-  { id: 'arpejos-5', group: 'acordes', to: '/ferramentas/backing' },
-  { id: 'arpejos-8', group: 'acordes' },
-  { id: 'penta-maior', group: 'acordes' },
-  { id: 'relativa', group: 'relativo' },
-  { id: 'menor-blues', group: 'relativo' },
-  { id: 'leitura', group: 'repertorio', to: '/ferramentas/leitura' },
-  { id: 'musica', group: 'repertorio' },
 ];
