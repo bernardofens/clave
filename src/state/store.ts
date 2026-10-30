@@ -8,6 +8,7 @@ import type { SettingValue } from '../exercises/types';
 import type { StoredParams } from '../exercises/params';
 import type { AgeGroup } from './age';
 import { migrateSaved } from './migrate';
+import { attemptLog } from './attemptLog';
 import type { Locale } from '../i18n';
 
 export interface Profile {
@@ -113,6 +114,8 @@ export function useStore<T>(select: (s: State) => T): T {
 }
 export function resetAll() {
   setState(() => DEFAULT_STATE);
+  // "apagar meu progresso" apaga também o registro de tentativas deste aparelho
+  attemptLog().clear().catch(err => console.error('Não deu para apagar as tentativas', err));
 }
 
 // ---------------- ações ----------------
