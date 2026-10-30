@@ -189,13 +189,14 @@ export function minutesByArea(history: Activity[], sinceDays = 30) {
 }
 
 // ---------------- medalhas ----------------
+// Nome e descrição de cada medalha ficam em src/i18n/content.*.ts (badges.<id>).
 export const BADGES = [
-  { id: 'primeira-sessao', name: 'Primeira sessão', desc: 'Concluiu a primeira atividade.', art: 'medalha-primeira-sessao' },
-  { id: 'sequencia', name: '7 dias seguidos', desc: 'Estudou uma semana sem falhar.', art: 'medalha-sequencia' },
-  { id: 'ouvido', name: 'Ouvido afiado', desc: '50 acertos em exercícios de ouvido.', art: 'medalha-ouvido' },
-  { id: 'leitor', name: 'Leitor', desc: '100 notas lidas certo na pauta.', art: 'medalha-leitor' },
-  { id: 'braco', name: 'Mapa do braço', desc: '100 acertos no braço do instrumento.', art: 'medalha-braco' },
-  { id: 'improviso', name: 'Improvisador', desc: '30 minutos tocando sobre backing tracks.', art: 'medalha-improviso' },
+  { id: 'primeira-sessao', art: 'medalha-primeira-sessao' },
+  { id: 'sequencia', art: 'medalha-sequencia' },
+  { id: 'ouvido', art: 'medalha-ouvido' },
+  { id: 'leitor', art: 'medalha-leitor' },
+  { id: 'braco', art: 'medalha-braco' },
+  { id: 'improviso', art: 'medalha-improviso' },
 ] as const;
 
 function checkBadges() {

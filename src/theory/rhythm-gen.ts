@@ -56,6 +56,7 @@ export interface Exercise {
   bars: Bar[];
 }
 
+/** Erro de configuração (mensagem = SettingsProblem) ou de geração (exercício inválido, um defeito). */
 export class GenerationError extends Error {}
 
 /** Gerador pseudoaleatório com semente (mulberry32), para exercícios reproduzíveis e testáveis. */
@@ -107,14 +108,14 @@ function completable(pool: Cell[], m: Meter): boolean[] {
   return ok;
 }
 
-/** Devolve a explicação do problema, ou null se as configurações geram compassos. */
-export function checkSettings(s: RhythmSettings): string | null {
+/** Problema que impede gerar compassos com essas configurações; a tela explica cada um no idioma. */
+export type SettingsProblem = 'noFigures' | 'cantFill';
+/** Devolve o problema, ou null se as configurações geram compassos. */
+export function checkSettings(s: RhythmSettings): SettingsProblem | null {
   const m = METERS[s.meter];
   const pool = poolFor(s);
-  if (!pool.some(c => c.events.some(e => !e.rest))) return 'Nenhuma figura sobrou com essas escolhas. Ative pelo menos uma figura do nível.';
-  if (!completable(pool, m)[0]) {
-    return `Com essas figuras não dá para completar um compasso de ${m.id}. Ative a semínima${m.compound ? ' e a colcheia' : ''} ou volte ao padrão do nível.`;
-  }
+  if (!pool.some(c => c.events.some(e => !e.rest))) return 'noFigures';
+  if (!completable(pool, m)[0]) return 'cantFill';
   return null;
 }
 

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { detectLocale, MESSAGES, translate, type Locale } from './index';
+import enContent from './content.en';
+import ptContent from './content.pt';
 
 /** Todas as folhas de um objeto de textos, como pares "chave.pontuada" → texto. */
 function leaves(node: unknown, prefix = ''): [string, string][] {
@@ -27,6 +29,19 @@ describe('traduções', () => {
       .filter(([k, v]) => placeholders(v).join() !== placeholders(pt.get(k) ?? '').join())
       .map(([k]) => k);
     expect(diff).toEqual([]);
+  });
+});
+
+describe('conteúdo traduzido', () => {
+  it('inglês tem as mesmas chaves e o mesmo número de passos em cada lista', () => {
+    expect(leaves(enContent).map(([k]) => k).sort()).toEqual(leaves(ptContent).map(([k]) => k).sort());
+  });
+  it('nenhum texto vazio', () => {
+    expect([...leaves(ptContent), ...leaves(enContent)].filter(([, v]) => !v.trim()).map(([k]) => k)).toEqual([]);
+  });
+  it('inglês sem letras acentuadas do português, fora nomes próprios de gêneros', () => {
+    const proper = /Forró|Baião|baião/g;
+    expect(leaves(enContent).filter(([, v]) => /[ãõçáéíóúâêô]/i.test(v.replace(proper, ''))).map(([k]) => k)).toEqual([]);
   });
 });
 

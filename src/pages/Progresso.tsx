@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { AREAS } from '../data/areas';
-import { TONALITY_STEPS } from '../data/content';
+import { useContent } from '../data/localized';
 import { areaXP, levelOf } from '../data/session';
-import { BADGES, minutesByArea, setPlan, streakDays, useStore } from '../state/store';
+import { minutesByArea, setPlan, streakDays, useStore } from '../state/store';
 import { buildScale, harmonicField, majorTonic, noteName, relativeMinor } from '../theory/core';
 import { Art, Btn, Chip, fmtMin, PageHead, SecTitle } from '../components/ui';
 import { itemText, localeTag, useLocale, useNaming, useT } from '../i18n';
@@ -18,6 +17,7 @@ export default function Progresso() {
   const naming = useNaming();
   const { hash } = useLocation();
   const t = useT();
+  const { AREAS, BADGES } = useContent();
   const lang = localeTag(useLocale());
   useEffect(() => { if (hash) document.getElementById(hash.slice(1))?.scrollIntoView(); }, [hash]);
 
@@ -117,6 +117,7 @@ function TonalityPlan() {
   const plan = useStore(s => s.plan)!;
   const naming = useNaming();
   const t = useT();
+  const { TONALITY_STEPS } = useContent();
   const conv = useLocale();
   const tonic = majorTonic(plan.fifths);
   const rel = relativeMinor(plan.fifths);

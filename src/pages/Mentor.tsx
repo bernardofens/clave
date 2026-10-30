@@ -2,8 +2,8 @@
 // palavras que disparam cada uma vêm do idioma (mentor.kw* em src/i18n).
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AREAS, areaById, type AreaId } from '../data/areas';
-import { MODULES } from '../data/content';
+import type { AreaId } from '../data/areas';
+import { useContent, type Content } from '../data/localized';
 import { areaXP, levelOf } from '../data/session';
 import { EXERCISES } from '../exercises/catalog';
 import { getState, streakDays, useStore } from '../state/store';
@@ -23,7 +23,7 @@ function weakest(): { area: AreaId; ex?: string; acc?: number } {
   return { area: (Object.keys(xp) as AreaId[]).sort((a, b) => xp[a] - xp[b])[0] };
 }
 
-function answer(q: string, t: Translate): Msg {
+function answer(q: string, t: Translate, { AREAS, areaById, MODULES }: Content): Msg {
   const s = getState();
   const lower = q.toLowerCase();
   const has = (key: MessageKey) => t(key).split('|').some(w => lower.includes(w));
@@ -61,9 +61,10 @@ const PROMPTS: MessageKey[] = ['mentor.prompt1', 'mentor.prompt2', 'mentor.promp
 export default function Mentor() {
   const name = useStore(s => s.profile.name);
   const t = useT();
+  const content = useContent();
   const [msgs, setMsgs] = useState<Msg[]>(() => [{ from: 'clave', text: name ? t('mentor.helloNamed', { name }) : t('mentor.hello') }]);
   const [text, setText] = useState('');
-  const ask = (q: string) => { if (!q.trim()) return; setMsgs(m => [...m, { from: 'eu', text: q }, answer(q, t)]); setText(''); };
+  const ask = (q: string) => { if (!q.trim()) return; setMsgs(m => [...m, { from: 'eu', text: q }, answer(q, t, content)]); setText(''); };
 
   return (
     <div>

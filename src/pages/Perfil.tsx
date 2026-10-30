@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } from '../data/areas';
+import type { GoalId } from '../data/areas';
+import { useContent } from '../data/localized';
 import { resetAll, setLocale, setState, updateProfile, useStore } from '../state/store';
 import { detectLocale, LOCALES, useLocale, useT, type MessageKey } from '../i18n';
 import { Art, Btn, Chip, PageHead, SecTitle } from '../components/ui';
@@ -13,10 +14,11 @@ export default function Perfil() {
   const sound = useStore(s => s.sound);
   const locale = useStore(s => s.locale);
   const t = useT();
+  const { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } = useContent();
   const detected = LOCALES.find(l => l.id === detectLocale())!.name;
   const autoNames = useLocale() === 'pt' ? 'Dó Ré Mi' : 'C D E';
   const [confirmReset, setConfirmReset] = useState(false);
-  const toggleGoal = (id: (typeof GOALS)[number]['id']) => updateProfile({ goals: profile.goals.includes(id) ? profile.goals.filter(g => g !== id) : [...profile.goals, id] });
+  const toggleGoal = (id: GoalId) => updateProfile({ goals: profile.goals.includes(id) ? profile.goals.filter(g => g !== id) : [...profile.goals, id] });
 
   return (
     <div>

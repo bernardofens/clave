@@ -1,7 +1,7 @@
 // Jogador de exercício: mostra a pergunta, toca o som, confere a resposta e guarda o progresso.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { atTime, drum, now, playGroups } from '../audio/engine';
-import { areaById } from '../data/areas';
+import { useContent } from '../data/localized';
 import { getState, logActivity, recordAnswer, saveSettings, useStore } from '../state/store';
 import { fromStep, mod, noteName, step as stepOf, type Note } from '../theory/core';
 import Fretboard from '../components/music/Fretboard';
@@ -48,6 +48,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
   const instrument = useStore(s => s.profile.instrument);
   const soundOn = useStore(s => s.sound);
   const t = useT();
+  const { areaById } = useContent();
   const saved = useStore(s => s.settings[def.id]);
   const settings = useMemo(() => ({ ...def.defaults, ...(initialSettings ?? saved ?? {}) }), [def, saved, initialSettings]);
   const locale = useLocale();

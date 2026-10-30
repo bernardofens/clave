@@ -1,7 +1,7 @@
 // Sessão guiada: passa pelos blocos sugeridos, um de cada vez.
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { areaById } from '../data/areas';
+import { useContent } from '../data/localized';
 import type { Block } from '../data/session';
 import { exerciseById } from '../exercises/catalog';
 import Player from '../exercises/Player';
@@ -21,6 +21,7 @@ function loadPlan(state: unknown): Block[] {
 export default function Sessao() {
   const location = useLocation();
   const t = useT();
+  const { areaById } = useContent();
   const [plan] = useState(() => loadPlan(location.state));
   const [i, setI] = useState(0);
   const [results, setResults] = useState<{ correct: number; total: number }[]>([]);

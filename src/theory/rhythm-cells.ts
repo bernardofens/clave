@@ -21,17 +21,9 @@ export type RestKind = 'h' | 'q' | '8' | '16';
 export type Trait = 'pontuada' | 'sincope' | 'ligadura' | 'quialtera';
 export type Level = 1 | 2 | 3 | 4 | 5;
 
-export const FIGURE_NAMES: Record<Figure, string> = { w: 'Semibreve', h: 'Mínima', q: 'Semínima', '8': 'Colcheia', '16': 'Semicolcheia' };
-export const REST_NAMES: Record<RestKind, string> = { h: 'de mínima', q: 'de semínima', '8': 'de colcheia', '16': 'de semicolcheia' };
-export const TRAIT_NAMES: Record<Trait, string> = { pontuada: 'Pontuadas', sincope: 'Síncopes', ligadura: 'Ligaduras', quialtera: 'Quiálteras' };
+// Nomes de figuras, pausas, recursos e níveis ficam nos textos de cada idioma (rhythm.* em src/i18n).
 
-export const LEVELS: { level: Level; name: string; desc: string }[] = [
-  { level: 1, name: 'Fundamentos', desc: 'Semínimas, mínimas e suas pausas, com o pulso sempre claro.' },
-  { level: 2, name: 'Colcheias', desc: 'Pares de colcheias, contratempo e combinações com semínimas.' },
-  { level: 3, name: 'Semicolcheias', desc: 'Grupos de quatro, colcheia com semis e pausas dentro do tempo.' },
-  { level: 4, name: 'Síncopes e pontuadas', desc: 'Pontuadas, síncopes, ligaduras entre tempos e pausas fora do lugar óbvio.' },
-  { level: 5, name: 'Quiálteras', desc: 'Tercinas, sextinas e duínas misturadas às subdivisões binárias.' },
-];
+export const LEVELS: { level: Level }[] = [{ level: 1 }, { level: 2 }, { level: 3 }, { level: 4 }, { level: 5 }];
 
 // ---------- fórmulas de compasso ----------
 
