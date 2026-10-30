@@ -5,6 +5,7 @@ import type { GoalId, Instrument } from '../data/modules';
 import type { ModuleId } from '../exercises/taxonomy';
 import type { Naming } from '../theory/core';
 import type { SettingValue } from '../exercises/types';
+import type { StoredParams } from '../exercises/params';
 import type { AgeGroup } from './age';
 import { migrateSaved } from './migrate';
 import type { Locale } from '../i18n';
@@ -46,6 +47,8 @@ export interface State {
   history: Activity[];
   arsenal: string[];
   settings: Record<string, Record<string, SettingValue>>;
+  /** Parâmetros globais escolhidos pela pessoa (ver src/exercises/params.ts). */
+  params: StoredParams;
   account: Account | null;
   // Guardado para não perguntar a data de nascimento de novo; a data em si nunca fica aqui
   // (fica só no servidor, e só para quem tem conta — ver src/state/age.ts).
@@ -68,6 +71,7 @@ export const DEFAULT_STATE: State = {
   history: [],
   arsenal: ['pauta-nota', 'ouvido-intervalo', 'braco-nota', 'quiz-teoria'],
   settings: {},
+  params: {},
   account: null,
   ageGroup: null,
 };

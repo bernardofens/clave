@@ -502,6 +502,7 @@ const en: Shape<typeof pt> = {
     together: 'Together',
     mixed: 'Mixed',
     arpeggiate: 'Arpeggiate first',
+    chordDuration: 'Chord length',
     pentatonic: 'Pentatonic',
     pentaMajor: 'Major (1 2 3 5 6)',
     pentaMinor: 'Minor (1 ♭3 4 5 ♭7)',
