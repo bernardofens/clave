@@ -1,6 +1,6 @@
 // Jogador de exercício: mostra a pergunta, toca o som, confere a resposta e guarda o progresso.
-// Só conhece o modelo da C1 (superfície, esperado, conteúdo sonoro); perguntas no formato antigo
-// passam pelo adaptador de legacy.ts. A conferência é de validate.ts e o som, de presentation.ts.
+// Só conhece o modelo da C1 (superfície, esperado, conteúdo sonoro). A conferência é de
+// validate.ts e o som, de presentation.ts.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { atTime, now } from '../audio/engine';
 import { playContent, resolvePresentation, type Presentation } from '../audio/presentation';
@@ -12,7 +12,6 @@ import Keyboard from '../components/music/Keyboard';
 import RhythmLine from '../components/music/RhythmLine';
 import Staff from '../components/music/Staff';
 import { Btn, Chip, PlayIcon, Tag } from '../components/ui';
-import { prepare, type Prepared } from './legacy';
 import { globalPresentation, useGlobalParams } from './params';
 import { optionResponse, validate } from './validate';
 import type { Ctx, ExerciseDef, Question, Response, SettingValue } from './types';
@@ -47,13 +46,12 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
   const settings = useMemo(() => ({ ...def.defaults, ...(initialSettings ?? saved ?? {}) }), [def, saved, initialSettings]);
   const locale = useLocale();
   const ctx: Ctx = useMemo(() => ({ naming, conv: locale, t, params }), [naming, locale, t, params]);
-  const make = useCallback(() => prepare(def.make(settings, ctx)), [def, settings, ctx]);
+  const make = useCallback(() => def.make(settings, ctx), [def, settings, ctx]);
   // o que as configurações da pessoa mudam no som (ex.: arpejar, duração do acorde)
   const settingsPresentation = useMemo(() => def.settings(ctx).reduce<Partial<Presentation>>(
     (acc, s) => (s.present && settings[s.id] !== undefined ? { ...acc, ...s.present(settings[s.id]) } : acc), {}), [def, ctx, settings]);
 
-  const [prepared, setPrepared] = useState<Prepared>(make);
-  const q = prepared.question;
+  const [q, setQ] = useState<Question>(make);
   const [phase, setPhase] = useState<Phase>('ask');
   const [picked, setPicked] = useState<string | null>(null);
   const [acc, setAcc] = useState(0);
@@ -75,11 +73,11 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     };
   }, [def, target, t]);
 
-  const play = useCallback((p: Prepared) => {
-    const content = p.question.sound;
+  const play = useCallback((question: Question) => {
+    const content = question.sound;
     if (!content || !getState().sound) return;
-    // camadas: global (timbre do instrumento, volume) < exercício < som antigo < configurações da pessoa
-    const presentation = resolvePresentation([globalPresentation(params, content.instrument), def.presentation, p.legacyPresentation, settingsPresentation]);
+    // camadas: global (timbre do instrumento, volume) < exercício < configurações da pessoa
+    const presentation = resolvePresentation([globalPresentation(params, content.instrument), def.presentation, settingsPresentation]);
     const dur = playContent(content, presentation);
     setPlaying(true);
     setHeard(true);
@@ -87,16 +85,16 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
   }, [params, def.presentation, settingsPresentation]);
 
   const next = useCallback(() => {
-    const np = make();
-    setPrepared(np);
+    const nq = make();
+    setQ(nq);
     setPhase('ask');
     setPicked(null);
     setAcc(0);
-    if (np.question.autoplay && heard) window.setTimeout(() => play(np), 250);
+    if (nq.autoplay && heard) window.setTimeout(() => play(nq), 250);
   }, [make, heard, play]);
 
   // configurações mudaram: recomeça
-  useEffect(() => { setPrepared(make()); setPhase('ask'); setPicked(null); }, [make]);
+  useEffect(() => { setQ(make()); setPhase('ask'); setPicked(null); }, [make]);
 
   const submit: Submit = useCallback((response, pickedId) => {
     if (phase !== 'ask') return;
@@ -107,20 +105,20 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     setPicked(pickedId);
     setPhase(ok ? 'right' : 'wrong');
     recordAnswer(def.id, ok);
-    if (!q.autoplay && soundOn) play(prepared);
+    if (!q.autoplay && soundOn) play(q);
     if (target && ns.total >= target) {
       window.setTimeout(() => onDone?.({ correct: ns.correct, total: ns.total, seconds: Math.round((Date.now() - started.current) / 1000) }), ok ? 900 : 1800);
       return;
     }
     if (ok) window.setTimeout(next, 850);
-  }, [phase, score, def.id, q, prepared, soundOn, play, target, onDone, next]);
+  }, [phase, score, def.id, q, soundOn, play, target, onDone, next]);
 
   // atalhos de teclado: 1-9 para opções, Enter para seguir, espaço para ouvir de novo
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
       if (e.key === 'Enter' && phase === 'wrong') { e.preventDefault(); next(); }
-      if (e.key === ' ' && q.sound && q.autoplay) { e.preventDefault(); play(prepared); }
+      if (e.key === ' ' && q.sound && q.autoplay) { e.preventDefault(); play(q); }
       const n = Number(e.key);
       if (q.surface.kind === 'choices' && n >= 1 && n <= q.surface.options.length && phase === 'ask') {
         const o = q.surface.options[n - 1];
@@ -129,7 +127,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phase, q, prepared, next, play, submit]);
+  }, [phase, q, next, play, submit]);
 
   const area = moduleById[def.primaryModule];
   const pct = score.total ? Math.round((score.correct / score.total) * 100) : 0;
@@ -155,7 +153,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
       </div>
       {target && <div className="progressbar" aria-label={t('player.progressOf', { done: score.total, total: target })}><i style={{ width: `${(score.total / target) * 100}%` }} /></div>}
 
-      <Stage q={q} phase={phase} playing={playing} heard={heard} onPlay={() => play(prepared)} naming={naming} picked={picked} acc={acc} onAnswer={submit} />
+      <Stage q={q} phase={phase} playing={playing} heard={heard} onPlay={() => play(q)} naming={naming} picked={picked} acc={acc} onAnswer={submit} />
 
       <AnswerArea q={q} phase={phase} picked={picked} acc={acc} setAcc={setAcc} onAnswer={submit} naming={naming} />
 

@@ -52,6 +52,7 @@ export function validate(expected: Expected, r: Response): boolean {
     case 'option':
       return r.kind === 'option' && r.id === expected.id;
     case 'pitchClass':
+      if (r.kind === 'pitchClass') return r.pc === expected.pc;
       if (r.kind === 'pitch') return mod(r.midi, 12) === expected.pc;
       if (r.kind === 'spelled') return pcOf(r.letter, r.acc) === expected.pc;
       return false;
