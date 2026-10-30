@@ -24,15 +24,3 @@ export const INSTRUMENTS: { id: Instrument; art: string }[] = [
   { id: 'violao', art: 'violao' },
   { id: 'baixo', art: 'baixo' },
 ];
-
-export type GoalId = 'improvisar' | 'harmonia' | 'tirar-de-ouvido' | 'ler-partitura' | 'agilidade' | 'jazz' | 'repertorio';
-// Os módulos de cada objetivo só servem ao gerador de sessão; a porta por objetivo (D1) os substitui.
-export const GOALS: { id: GoalId; modules: ModuleId[] }[] = [
-  { id: 'improvisar', modules: ['perception.melodic', 'perception.harmonic', 'theory'] },
-  { id: 'harmonia', modules: ['theory', 'perception.harmonic'] },
-  { id: 'tirar-de-ouvido', modules: ['perception.melodic', 'perception.harmonic', 'theory'] },
-  { id: 'ler-partitura', modules: ['theory', 'perception.rhythmic'] },
-  { id: 'agilidade', modules: ['technique', 'perception.rhythmic'] },
-  { id: 'jazz', modules: ['theory', 'perception.harmonic', 'perception.melodic', 'perception.rhythmic'] },
-  { id: 'repertorio', modules: ['theory', 'perception.rhythmic'] },
-];

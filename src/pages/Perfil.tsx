@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { GoalId } from '../data/modules';
+import type { GoalId } from '../data/goals';
 import { useContent } from '../data/localized';
 import { resetAll, setLocale, setState, updateProfile, useStore } from '../state/store';
 import { detectLocale, LOCALES, useLocale, useT } from '../i18n';

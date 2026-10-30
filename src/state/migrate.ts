@@ -1,6 +1,7 @@
 // Leitura de estado salvo por versões anteriores. A F1-01b trocou as áreas pelos módulos e tirou
 // perfil (kind), níveis, medalhas, maior sequência e plano de tonalidade; quem já tinha dados no
 // navegador não pode quebrar nem carregar campo que o app não conhece mais.
+import { GOAL_MIGRATION, GOALS } from '../data/goals';
 import type { ModuleId } from '../exercises/taxonomy';
 
 /** Módulo mais próximo de cada área antiga. É aproximado (ex.: "ouvido" inclui acordes, que hoje
@@ -27,7 +28,7 @@ export function migrateSaved(raw: unknown): Obj {
   if (isObj(out.profile)) {
     const { kind: _kind, levels: _levels, ...profile } = out.profile;
     void _kind; void _levels;
-    out.profile = profile;
+    out.profile = Array.isArray(profile.goals) ? { ...profile, goals: migrateGoals(profile.goals) } : profile;
   }
   if (isObj(out.stats)) {
     out.stats = Object.fromEntries(Object.entries(out.stats).map(([id, st]) => {
@@ -42,6 +43,17 @@ export function migrateSaved(raw: unknown): Obj {
       const module = typeof h.module === 'string' && MODULE_IDS.includes(h.module) ? h.module : AREA_TO_MODULE[String(area)] ?? 'theory';
       return { ...h, module };
     });
+  }
+  return out;
+}
+
+/** Objetivos de versões anteriores: os que mudaram viram os novos, os que acabaram somem, sem repetir. */
+export function migrateGoals(goals: unknown[]): string[] {
+  const known = new Set<string>(GOALS.map(g => g.id));
+  const out: string[] = [];
+  for (const g of goals) {
+    if (typeof g !== 'string') continue;
+    for (const id of known.has(g) ? [g] : GOAL_MIGRATION[g] ?? []) if (!out.includes(id)) out.push(id);
   }
   return out;
 }

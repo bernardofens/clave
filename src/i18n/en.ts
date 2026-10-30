@@ -98,6 +98,8 @@ const en: Shape<typeof pt> = {
     tag: 'Gym',
     title: 'Train',
     sub: 'Each module is a muscle group. Pick an exercise, customize it and repeat until it becomes a reflex. The star adds the exercise to your arsenal.',
+    goalsTitle: 'What do you want to achieve?',
+    yourGoal: 'Your goal',
     countItems: { one: '{count} activity', other: '{count} activities' },
     countLessons: { one: '{count} lesson', other: '{count} lessons' },
     lessons: 'Lessons',
@@ -119,6 +121,12 @@ const en: Shape<typeof pt> = {
       teoria: 'Theory',
       ritmo: 'Rhythm',
     },
+  },
+  goal: {
+    tag: 'Goal',
+    instrument: 'Your instrument',
+    exercises: 'Exercises',
+    tools: 'Tools',
   },
   progress: {
     tag: 'Progress',

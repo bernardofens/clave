@@ -98,6 +98,8 @@ const pt = {
     tag: 'Academia',
     title: 'Treinar',
     sub: 'Cada módulo é um grupo muscular. Escolha um exercício, personalize e repita até virar reflexo. A estrela coloca o exercício no seu arsenal.',
+    goalsTitle: 'O que você quer conseguir?',
+    yourGoal: 'Seu objetivo',
     countItems: { one: '{count} atividade', other: '{count} atividades' },
     countLessons: { one: '{count} aula', other: '{count} aulas' },
     lessons: 'Aulas',
@@ -119,6 +121,12 @@ const pt = {
       teoria: 'Teoria',
       ritmo: 'Ritmo',
     },
+  },
+  goal: {
+    tag: 'Objetivo',
+    instrument: 'Seu instrumento',
+    exercises: 'Exercícios',
+    tools: 'Ferramentas',
   },
   progress: {
     tag: 'Progresso',

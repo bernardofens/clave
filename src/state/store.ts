@@ -1,7 +1,8 @@
 // Estado do usuário, salvo no navegador (localStorage). Sem login por enquanto:
 // a forma dos dados já pensa em subir isso para um servidor depois.
 import { useSyncExternalStore } from 'react';
-import type { GoalId, Instrument } from '../data/modules';
+import type { GoalId } from '../data/goals';
+import type { Instrument } from '../data/modules';
 import type { ModuleId } from '../exercises/taxonomy';
 import type { Naming } from '../theory/core';
 import type { SettingValue } from '../exercises/types';

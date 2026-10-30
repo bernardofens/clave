@@ -5,16 +5,16 @@ import { exerciseById } from '../exercises/catalog';
 import { catalogByModule } from '../exercises/catalogView';
 import Player, { decodeSettings } from '../exercises/Player';
 import { toolById } from '../exercises/tools';
-import { toggleArsenal, useStore } from '../state/store';
 import Ambiente from '../tools/Ambiente';
 import Backing from '../tools/Backing';
 import { Metronome } from '../tools/common';
 import Leitura from '../tools/Leitura';
 import Tecnica from '../tools/Tecnica';
-import { Art, PageHead, Tag } from '../components/ui';
+import { Art, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
-import { lessonProgress } from './Estudar';
+import { ExerciseCard, LessonCard, ToolCard } from '../components/cards';
 import { itemText, useT } from '../i18n';
+import { useStore } from '../state/store';
 
 // A leitura rítmica traz a VexFlow; só baixa quando a ferramenta abre.
 const Ritmo = lazy(() => import('../tools/Ritmo'));
@@ -41,9 +41,9 @@ function loadOpen(): string[] {
 
 export default function Treinar() {
   const t = useT();
-  const { MODULES, moduleById, lessonById } = useContent();
-  const stats = useStore(s => s.stats);
-  const arsenal = useStore(s => s.arsenal);
+  const { GOALS, goalLabel, MODULES, moduleById } = useContent();
+  const instrument = useStore(s => s.profile.instrument);
+  const chosen = useStore(s => s.profile.goals);
   const { hash } = useLocation();
   const [mobileOnly, setMobileOnly] = useState(false);
   const [open, setOpen] = useState<string[]>(loadOpen);
@@ -60,7 +60,25 @@ export default function Treinar() {
   return (
     <div>
       <PageHead tag={t('train.tag')} title={t('train.title')} sub={t('train.sub')} />
-      <div className="row" style={{ marginBottom: 8, justifyContent: 'flex-end' }}>
+
+      {/* a porta por objetivo: o que a pessoa quer conseguir, sem precisar conhecer os módulos */}
+      <section style={{ marginTop: 8 }}>
+        <SecTitle>{t('train.goalsTitle')}</SecTitle>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
+          {[...GOALS].sort((a, b) => Number(chosen.includes(b.id)) - Number(chosen.includes(a.id))).map(g => (
+            <Link key={g.id} to={`/treinar/objetivo/${g.id}`} className="ex-card">
+              <span className="acc" style={{ background: 'var(--mu)' }} />
+              <div style={{ minWidth: 0 }}>
+                <h3>{goalLabel(g.id, instrument)}</h3>
+                <p>{g.hint}</p>
+                {chosen.includes(g.id) && <div className="meta"><span className="mini-tag">{t('train.yourGoal')}</span></div>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <div className="row" style={{ marginTop: 32, marginBottom: 8, justifyContent: 'flex-end' }}>
         <label className="switch"><input type="checkbox" id="mobile-only" checked={mobileOnly} onChange={e => setMobileOnly(e.target.checked)} />{t('train.mobileOnly')}</label>
       </div>
 
@@ -86,15 +104,7 @@ export default function Treinar() {
                   <div>
                     <div className="eyebrow" style={{ marginBottom: 8 }}>{t('train.lessons')}</div>
                     <div className="mod-lessons">
-                      {entry.lessons.map(id => (
-                        <Link key={id} to={`/estudar/${id}`} className="ex-card">
-                          <span className="acc" style={{ background: m.color }} />
-                          <div style={{ minWidth: 0 }}>
-                            <h3>{lessonById[id].title}</h3>
-                            <div className="progressbar" style={{ marginTop: 10 }}><i style={{ width: `${lessonProgress(id, stats) * 100}%` }} /></div>
-                          </div>
-                        </Link>
-                      ))}
+                      {entry.lessons.map(id => <LessonCard key={id} id={id} color={m.color} />)}
                     </div>
                   </div>
                 )}
@@ -102,40 +112,8 @@ export default function Treinar() {
                   <div>
                     {entry.lessons.length > 0 && <div className="eyebrow" style={{ marginBottom: 8 }}>{t('train.items')}</div>}
                     <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
-                      {entry.exercises.map(id => {
-                        const e = exerciseById[id];
-                        const st = stats[id];
-                        const pinned = arsenal.includes(id);
-                        return (
-                          <div key={id} style={{ position: 'relative' }}>
-                            <Link to={`/treinar/${id}`} className="ex-card">
-                              <span className="acc" style={{ background: m.color }} />
-                              <div style={{ minWidth: 0, paddingRight: 26 }}>
-                                <h3>{itemText(t, id, 'title')}</h3>
-                                <p>{itemText(t, id, 'desc')}</p>
-                                <div className="meta"><span className="mini-tag">{t(`train.groups.${e.group}`)}</span>{st && <span className="mini-tag">{t('train.done', { count: st.attempts })}</span>}</div>
-                              </div>
-                              {st && <span className="pct num">{Math.round((st.correct / st.attempts) * 100)}%</span>}
-                            </Link>
-                            <button type="button" onClick={() => toggleArsenal(id)} aria-pressed={pinned} aria-label={t(pinned ? 'train.unpin' : 'train.pin')}
-                              style={{ position: 'absolute', right: 10, top: 10, border: 0, background: 'none', cursor: 'pointer', fontSize: 20, color: pinned ? 'var(--mu)' : 'var(--muted)' }}>{pinned ? '★' : '☆'}</button>
-                          </div>
-                        );
-                      })}
-                      {entry.tools.map(id => {
-                        const tool = toolById[id];
-                        return (
-                          <Link key={id} to={tool.path} className="ex-card">
-                            <span className="acc" style={{ background: m.color }} />
-                            <Art name={tool.art} style={{ width: 48, height: 48, objectFit: 'contain', flex: 'none' }} />
-                            <div style={{ minWidth: 0 }}>
-                              <h3>{itemText(t, id, 'title')}</h3>
-                              <p>{itemText(t, id, 'desc')}</p>
-                              <div className="meta"><span className="mini-tag">{t('train.toolTag')}</span><span className="mini-tag">{t(tool.mobile ? 'common.mobile' : 'common.withInstrument')}</span></div>
-                            </div>
-                          </Link>
-                        );
-                      })}
+                      {entry.exercises.map(id => <ExerciseCard key={id} id={id} color={m.color} />)}
+                      {entry.tools.map(id => <ToolCard key={id} id={id} color={m.color} />)}
                     </div>
                   </div>
                 )}

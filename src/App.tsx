@@ -13,6 +13,7 @@ import { ROUTINES_READY } from './components/nav';
 import Sessao from './pages/Sessao';
 import Treinar, { ExercisePage, ToolPage } from './pages/Treinar';
 import NotFound from './pages/NotFound';
+import Objetivo from './pages/Objetivo';
 import { localeTag, useLocale } from './i18n';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
           <Route index element={<Hoje />} />
           <Route path="sessao" element={<Sessao />} />
           <Route path="treinar" element={<Treinar />} />
+          <Route path="treinar/objetivo/:id" element={<Objetivo />} />
           <Route path="treinar/:id" element={<ExercisePage />} />
           <Route path="ferramentas/:id" element={<ToolPage />} />
           <Route path="estudar" element={<Estudar />} />

@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { LESSONS as LESSON_BASE } from '../data/content';
+import { lessonProgress } from '../data/progress';
 import { useContent } from '../data/localized';
 import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
@@ -7,12 +7,6 @@ import { useStore } from '../state/store';
 import { Art, Btn, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
 import { itemText, useT } from '../i18n';
-
-export function lessonProgress(id: string, stats: Record<string, { correct: number }>) {
-  const m = LESSON_BASE.find(x => x.id === id)!;
-  if (!m.exercises.length) return 0;
-  return m.exercises.reduce((a, e) => a + Math.min(1, (stats[e]?.correct ?? 0) / 20), 0) / m.exercises.length;
-}
 
 export default function Estudar() {
   const stats = useStore(s => s.stats);
