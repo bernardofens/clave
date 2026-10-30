@@ -81,8 +81,15 @@ export interface AttemptFeedback {
   confidence: 'guess' | 'unsure' | 'sure';
 }
 
-export const newId = (): string =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+/** Id no formato uuid v4: é o tipo da chave no Supabase (attempts.id). */
+export const newId = (): string => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  // navegadores sem randomUUID: mesmo formato, com Math.random
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.floor(Math.random() * 16);
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+};
 
 // ---------------- classificação do erro ----------------
 const NATURAL = [0, 2, 4, 5, 7, 9, 11];
@@ -222,4 +229,61 @@ export function coverage(list: Attempt[]): { skills: Partial<Record<SkillTag, Co
     a.content_tags.forEach(t => add(contents, t, a));
   }
   return { skills, contents };
+}
+
+// ---------------- confiança declarada ----------------
+/** A pergunta de confiança só pode aparecer ao fechar uma série deste tamanho... */
+export const CONFIDENCE_SERIES = 10;
+/** ...e mesmo assim só às vezes, para nunca virar rotina (uma em cada três séries). */
+export const CONFIDENCE_CHANCE = 1 / 3;
+
+/** Ao fechar uma série de respostas, decide se pergunta a confiança. Nunca a cada tentativa. */
+export function shouldAskConfidence(answersInSeries: number, random: () => number = Math.random): boolean {
+  return answersInSeries >= CONFIDENCE_SERIES && random() < CONFIDENCE_CHANCE;
+}
+
+export function buildFeedback(sessionId: string, attemptIds: string[], confidence: AttemptFeedback['confidence'], at = Date.now()): AttemptFeedback {
+  return { schema: ATTEMPT_SCHEMA, id: newId(), at, session_id: sessionId, attempt_ids: [...attemptIds], confidence };
+}
+
+// ---------------- contadores derivados ----------------
+/** Totais por exercício, como as telas usam (acertos, tentativas, última vez). */
+export interface Totals {
+  attempts: number;
+  correct: number;
+  last: number;
+}
+
+/** Totais a partir das tentativas. Só entram as conferidas automaticamente: autoavaliação não é acerto. */
+export function aggregateStats(list: Attempt[]): Record<string, Totals> {
+  const out: Record<string, Totals> = {};
+  for (const a of list) {
+    if (a.validation_type !== 'deterministic') continue;
+    const s = (out[a.exercise_id] ??= { attempts: 0, correct: 0, last: 0 });
+    s.attempts++;
+    if (a.outcome === 'correct') s.correct++;
+    s.last = Math.max(s.last, a.at);
+  }
+  return out;
+}
+
+export function mergeStats(a: Record<string, Totals>, b: Record<string, Totals>): Record<string, Totals> {
+  const out: Record<string, Totals> = { ...a };
+  for (const [id, s] of Object.entries(b)) {
+    const p = out[id];
+    out[id] = p ? { attempts: p.attempts + s.attempts, correct: p.correct + s.correct, last: Math.max(p.last, s.last) } : { ...s };
+  }
+  return out;
+}
+
+/** O que sobra de `total` tirando `part` (nunca negativo). Serve para separar a base anterior à C2. */
+export function subtractStats(total: Record<string, Totals>, part: Record<string, Totals>): Record<string, Totals> {
+  const out: Record<string, Totals> = {};
+  for (const [id, s] of Object.entries(total)) {
+    const p = part[id];
+    const attempts = Math.max(0, s.attempts - (p?.attempts ?? 0));
+    const correct = Math.min(attempts, Math.max(0, s.correct - (p?.correct ?? 0)));
+    if (attempts > 0) out[id] = { attempts, correct, last: s.last };
+  }
+  return out;
 }

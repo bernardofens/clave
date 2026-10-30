@@ -279,6 +279,9 @@ const en: Shape<typeof pt> = {
     option: 'Option {n}',
     accidental: 'Accidental',
     resetDefaults: 'Back to defaults',
+    confidenceQuestion: 'How did those last answers feel?',
+    confidence: { guess: 'I guessed', unsure: 'I was unsure', sure: 'I was sure' },
+    confidenceSkip: 'Skip',
   },
   metronome: {
     meter: 'Time signature',
