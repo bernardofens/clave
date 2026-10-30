@@ -1,6 +1,7 @@
 import type { AreaId, Instrument } from '../data/areas';
 import type { Clef, Convention, Naming, Note } from '../theory/core';
 import type { Translate } from '../i18n';
+import type { Classification } from './taxonomy';
 import type { CellId } from '../theory/rhythm';
 import type { FretMark } from '../components/music/Fretboard';
 
@@ -59,7 +60,9 @@ export interface Ctx {
 export type GroupId = 'pauta' | 'teclado' | 'braco' | 'ouvido' | 'teoria' | 'ritmo';
 
 // Título e descrição ficam nos textos de cada idioma (exercises.<id> em src/i18n; ver itemText).
-export interface ExerciseDef {
+// O id é o exercise_id estável: rotinas, tentativas e configurações salvas apontam para ele, então
+// nunca muda (catalog.test.ts trava a lista). Módulo e etiquetas: ver src/exercises/taxonomy.ts.
+export interface ExerciseDef extends Classification {
   id: string;
   area: AreaId;
   group: GroupId;

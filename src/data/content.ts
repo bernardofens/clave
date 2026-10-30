@@ -3,8 +3,11 @@
 // Aqui fica a estrutura (ids, ligações, links); os textos estão em src/i18n/content.*.ts e chegam
 // às telas já no idioma da pessoa (useContent, em src/data/localized.ts).
 import type { AreaId } from './areas';
+import type { Classification } from '../exercises/taxonomy';
 
-export interface ModuleBase {
+// Uma aula (no código ainda "Module", nome anterior à taxonomia) também tem módulo principal e
+// etiquetas, para ligar aula e exercício pelo que ensinam e não pelo nome.
+export interface ModuleBase extends Classification {
   id: string;
   area: AreaId;
   exercises: string[];
@@ -19,15 +22,61 @@ export interface Module extends ModuleBase {
 }
 
 export const MODULES: ModuleBase[] = [
-  { id: 'ler-partitura', area: 'leitura', exercises: ['pauta-nota', 'pauta-construir', 'pauta-armadura'], tools: ['leitura'], },
-  { id: 'leitura-ritmica', area: 'ritmo', exercises: ['ritmo-ouvido'], tools: ['ritmo', 'leitura', 'metronomo'], },
-  { id: 'mapear-braco', area: 'mapeamento', exercises: ['braco-nota', 'braco-ache', 'braco-intervalo', 'acorde-visual'], tools: [], },
-  { id: 'escala-maior', area: 'harmonia', exercises: ['pauta-escala', 'quiz-teoria', 'ouvido-escala'], tools: ['tonalidade'], },
-  { id: 'modos-gregos', area: 'harmonia', exercises: ['quiz-teoria', 'ouvido-escala'], tools: ['backing', 'ambiente'], },
-  { id: 'acordes', area: 'harmonia', exercises: ['pauta-acorde', 'teclado-acorde', 'acorde-visual', 'ouvido-acorde'], tools: ['backing'], },
-  { id: 'harmonia-funcional', area: 'harmonia', premium: true, exercises: ['quiz-teoria'], tools: ['backing'], },
-  { id: 'ouvido', area: 'ouvido', exercises: ['ouvido-intervalo', 'ouvido-acorde', 'ouvido-escala', 'ouvido-tecla', 'ouvido-celulas'], tools: ['ambiente'], },
-  { id: 'tecnica', area: 'tecnica', exercises: [], tools: ['tecnica', 'metronomo'], },
+  {
+    id: 'ler-partitura', area: 'leitura',
+    primaryModule: 'theory', skillTags: ['notation.pitch_reading', 'notation.pitch_writing', 'notation.key_signature'],
+    contentTags: ['clef.treble', 'clef.bass', 'staff.ledger_lines', 'pitch.naturals', 'key.signatures'],
+    exercises: ['pauta-nota', 'pauta-construir', 'pauta-armadura'], tools: ['leitura'],
+  },
+  {
+    id: 'leitura-ritmica', area: 'ritmo',
+    primaryModule: 'perception.rhythmic', skillTags: ['notation.rhythm_reading', 'ear.rhythm_recognition'],
+    contentTags: ['rhythm.quarter', 'rhythm.eighth', 'rhythm.sixteenth', 'rhythm.rests'],
+    exercises: ['ritmo-ouvido'], tools: ['ritmo', 'leitura', 'metronomo'],
+  },
+  {
+    id: 'mapear-braco', area: 'mapeamento',
+    primaryModule: 'theory', skillTags: ['fretboard.note_naming', 'fretboard.note_finding', 'fretboard.interval_shapes'],
+    contentTags: ['pitch.naturals', 'pitch.accidentals', 'interval.simple', 'instrument.guitar', 'instrument.bass'],
+    exercises: ['braco-nota', 'braco-ache', 'braco-intervalo', 'acorde-visual'], tools: [],
+  },
+  {
+    id: 'escala-maior', area: 'harmonia',
+    primaryModule: 'theory', skillTags: ['theory.scale_degrees', 'theory.key_relations', 'notation.key_signature'],
+    contentTags: ['scale.major', 'key.major', 'key.minor', 'key.signatures'],
+    exercises: ['pauta-escala', 'quiz-teoria', 'ouvido-escala'], tools: ['tonalidade'],
+  },
+  {
+    id: 'modos-gregos', area: 'harmonia',
+    primaryModule: 'theory', skillTags: ['theory.modes'],
+    contentTags: ['scale.modes'],
+    exercises: ['quiz-teoria', 'ouvido-escala'], tools: ['backing', 'ambiente'],
+  },
+  {
+    id: 'acordes', area: 'harmonia',
+    primaryModule: 'theory', skillTags: ['theory.chord_construction', 'theory.harmonic_field'],
+    contentTags: ['chord.triads', 'chord.sevenths', 'harmony.diatonic_field'],
+    exercises: ['pauta-acorde', 'teclado-acorde', 'acorde-visual', 'ouvido-acorde'], tools: ['backing'],
+  },
+  {
+    id: 'harmonia-funcional', area: 'harmonia',
+    primaryModule: 'theory', skillTags: ['theory.harmonic_field', 'theory.reharmonization', 'theory.key_relations'],
+    contentTags: ['harmony.diatonic_field', 'harmony.tritone_sub', 'key.minor'],
+    exercises: ['quiz-teoria'], tools: ['backing'],
+    premium: true,
+  },
+  {
+    id: 'ouvido', area: 'ouvido',
+    primaryModule: 'perception.melodic', skillTags: ['ear.interval_identification', 'ear.pitch_identification', 'ear.chord_quality', 'ear.scale_quality', 'ear.scale_degrees'],
+    contentTags: ['interval.simple', 'chord.triads', 'scale.pentatonic'],
+    exercises: ['ouvido-intervalo', 'ouvido-acorde', 'ouvido-escala', 'ouvido-tecla', 'ouvido-celulas'], tools: ['ambiente'],
+  },
+  {
+    id: 'tecnica', area: 'tecnica',
+    primaryModule: 'technique', skillTags: ['technique.fingering', 'technique.finger_independence', 'technique.string_crossing', 'technique.tempo_control'],
+    contentTags: ['instrument.guitar', 'instrument.bass'],
+    exercises: [], tools: ['tecnica', 'metronomo'],
+  },
 ];
 
 export interface RoadmapBase {
