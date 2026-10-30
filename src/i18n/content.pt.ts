@@ -15,13 +15,18 @@ const ptContent = {
     baixo: 'Baixo',
   },
   goals: {
-    improvisar: 'Improvisar com fluidez',
-    harmonia: 'Criar progressões bonitas',
-    'tirar-de-ouvido': 'Tirar músicas de ouvido',
-    'ler-partitura': 'Ler partitura',
-    agilidade: 'Ganhar agilidade',
-    jazz: 'Tocar jazz',
-    repertorio: 'Aprender músicas',
+    'notas-instrumento': { name: 'Conhecer as notas no instrumento', hint: 'Saber onde cada nota está e enxergar os intervalos.' },
+    'tirar-de-ouvido': { name: 'Tirar músicas de ouvido', hint: 'Reconhecer notas, intervalos e escalas pelo som.' },
+    acordes: { name: 'Reconhecer acordes', hint: 'Ouvir, ler e desenhar os acordes.' },
+    improvisar: { name: 'Improvisar com fluidez', hint: 'Frases, escalas e a cor de cada modo.' },
+    'ler-partitura': { name: 'Ler partitura', hint: 'Notas na pauta, claves e armaduras.' },
+    ritmo: { name: 'Entender o ritmo', hint: 'Pulso, figuras e leitura rítmica.' },
+    harmonia: { name: 'Entender a harmonia', hint: 'Escalas, tonalidades e o campo harmônico.' },
+    agilidade: { name: 'Ganhar agilidade', hint: 'Mãos soltas e tempo firme, com metrônomo.' },
+  },
+  // o primeiro objetivo diz onde as notas estão conforme o instrumento da pessoa
+  goalVariants: {
+    'notas-instrumento': { violao: 'Conhecer as notas no braço do violão', baixo: 'Conhecer as notas no braço do baixo', piano: 'Conhecer as notas no teclado' },
   },
   lessons: {
     'ler-partitura': {

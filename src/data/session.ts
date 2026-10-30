@@ -2,7 +2,9 @@
 // Pesa os módulos pelos objetivos e alivia o que já foi muito treinado nos últimos dias.
 import { EXERCISES, exerciseById } from '../exercises/catalog';
 import { TOOLS, toolById } from '../exercises/tools';
-import { GOALS, MODULE_LIST } from './modules';
+import { LESSONS } from './content';
+import { GOALS, goalItems, type GoalBase } from './goals';
+import { MODULE_LIST } from './modules';
 import type { ModuleId } from '../exercises/taxonomy';
 import type { Activity, Profile } from '../state/store';
 import type { MessageKey } from '../i18n';
@@ -16,9 +18,21 @@ export interface Block {
   target?: number; // perguntas, para exercícios
 }
 
+/** Os módulos em que moram os exercícios, ferramentas e aulas do objetivo (para qualquer instrumento). */
+export function goalModules(g: GoalBase): ModuleId[] {
+  const out = new Set<ModuleId>();
+  for (const instrument of ['piano', 'violao', 'baixo'] as const) {
+    const { exercises, tools, lessons } = goalItems(g, instrument);
+    exercises.forEach(id => out.add(exerciseById[id].primaryModule));
+    tools.forEach(id => out.add(toolById[id].primaryModule));
+    lessons.forEach(id => out.add(LESSONS.find(l => l.id === id)!.primaryModule));
+  }
+  return [...out];
+}
+
 export function moduleWeights(profile: Profile, history: Activity[]): Record<ModuleId, number> {
   const w = Object.fromEntries(MODULE_LIST.map(m => [m.id, 1])) as Record<ModuleId, number>;
-  profile.goals.forEach(g => GOALS.find(x => x.id === g)?.modules.forEach(m => (w[m] += 1.2)));
+  profile.goals.forEach(g => { const goal = GOALS.find(x => x.id === g); if (goal) goalModules(goal).forEach(m => (w[m] += 1.2)); });
   const since = Date.now() - 3 * 864e5;
   history.filter(h => h.at > since).forEach(h => (w[h.module] = Math.max(0.3, w[h.module] - h.seconds / 1200)));
   return w;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { migrateSaved } from './migrate';
+import { migrateGoals, migrateSaved } from './migrate';
 
 // O retorno é um objeto solto de propósito (estado de versões antigas); o teste olha só os campos.
 const migrate = (raw: unknown) => migrateSaved(raw) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -21,7 +21,7 @@ describe('estado salvo por versões anteriores', () => {
     const s = migrate(old);
     expect(s.badges).toBeUndefined();
     expect(s.plan).toBeUndefined();
-    expect(s.profile).toEqual({ name: 'Ana', instrument: 'baixo', goals: ['jazz'], onboarded: true });
+    expect(s.profile).toEqual({ name: 'Ana', instrument: 'baixo', goals: ['improvisar', 'harmonia'], onboarded: true }); // jazz virou improviso e harmonia
     expect(s.stats['pauta-nota']).toEqual({ attempts: 10, correct: 7, last: 1 });
   });
 
@@ -38,5 +38,19 @@ describe('estado salvo por versões anteriores', () => {
     expect(migrateSaved(null)).toEqual({});
     expect(migrateSaved('oi')).toEqual({});
     expect(migrate({ history: [{ area: 'inexistente', at: 1 }, 7] }).history).toEqual([{ at: 1, module: 'theory' }]);
+  });
+});
+
+describe('objetivos de versões anteriores', () => {
+  it('os que continuam ficam como estão', () => {
+    expect(migrateGoals(['improvisar', 'harmonia', 'tirar-de-ouvido', 'ler-partitura', 'agilidade'])).toEqual(['improvisar', 'harmonia', 'tirar-de-ouvido', 'ler-partitura', 'agilidade']);
+  });
+  it('"tocar jazz" e "aprender músicas" viram os objetivos novos que pediam, sem repetir', () => {
+    expect(migrateGoals(['jazz'])).toEqual(['improvisar', 'harmonia']);
+    expect(migrateGoals(['repertorio'])).toEqual(['notas-instrumento', 'ler-partitura']);
+    expect(migrateGoals(['improvisar', 'jazz', 'repertorio', 'ler-partitura'])).toEqual(['improvisar', 'harmonia', 'notas-instrumento', 'ler-partitura']);
+  });
+  it('o que não existe mais e nem tem equivalente some', () => {
+    expect(migrateGoals(['nada', 42, null])).toEqual([]);
   });
 });

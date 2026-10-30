@@ -5,7 +5,8 @@ import enContent from '../i18n/content.en';
 import ptContent from '../i18n/content.pt';
 import type { ModuleId } from '../exercises/taxonomy';
 import { GENRES, LESSONS, ROADMAPS, type Genre, type Lesson, type Roadmap } from './content';
-import { GOALS, INSTRUMENTS, MODULE_LIST, type ModuleBase } from './modules';
+import { GOALS, type GoalId } from './goals';
+import { INSTRUMENTS, MODULE_LIST, type Instrument, type ModuleBase } from './modules';
 
 /** Módulo de habilidade já com nome e resumo no idioma. */
 export interface Module extends ModuleBase {
@@ -37,7 +38,12 @@ function build(locale: Locale) {
     MODULES: modules,
     moduleById: Object.fromEntries(modules.map(m => [m.id, m])) as Record<ModuleId, Module>,
     INSTRUMENTS: INSTRUMENTS.map(i => ({ ...i, name: tx.instruments[i.id] })),
-    GOALS: GOALS.map(g => ({ ...g, name: tx.goals[g.id] })),
+    GOALS: GOALS.map(g => ({ ...g, ...tx.goals[g.id] })),
+    /** Nome do objetivo para quem toca este instrumento (ex.: "no braço do baixo"); sem variante, o nome comum. */
+    goalLabel: (id: GoalId, instrument: Instrument): string => {
+      const variants = tx.goalVariants as Partial<Record<GoalId, Partial<Record<Instrument, string>>>>;
+      return variants[id]?.[instrument] ?? tx.goals[id].name;
+    },
     LESSONS: lessons,
     lessonById: Object.fromEntries(lessons.map(l => [l.id, l])) as Record<string, Lesson>,
     ROADMAPS: roadmaps,

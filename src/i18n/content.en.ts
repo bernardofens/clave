@@ -15,13 +15,18 @@ const enContent: Shape<typeof ptContent> = {
     baixo: 'Bass',
   },
   goals: {
-    improvisar: 'Improvise fluently',
-    harmonia: 'Write beautiful progressions',
-    'tirar-de-ouvido': 'Learn songs by ear',
-    'ler-partitura': 'Read sheet music',
-    agilidade: 'Build agility',
-    jazz: 'Play jazz',
-    repertorio: 'Learn songs',
+    'notas-instrumento': { name: 'Learn the notes on your instrument', hint: 'Know where every note is and see the intervals.' },
+    'tirar-de-ouvido': { name: 'Learn songs by ear', hint: 'Recognize notes, intervals and scales by sound.' },
+    acordes: { name: 'Recognize chords', hint: 'Hear, read and draw chords.' },
+    improvisar: { name: 'Improvise fluently', hint: 'Phrases, scales and the color of each mode.' },
+    'ler-partitura': { name: 'Read sheet music', hint: 'Notes on the staff, clefs and key signatures.' },
+    ritmo: { name: 'Understand rhythm', hint: 'Pulse, note values and rhythm reading.' },
+    harmonia: { name: 'Understand harmony', hint: 'Scales, keys and the harmonic field.' },
+    agilidade: { name: 'Build agility', hint: 'Relaxed hands and steady time, with a metronome.' },
+  },
+  // the first goal says where the notes are, depending on the person's instrument
+  goalVariants: {
+    'notas-instrumento': { violao: 'Learn the notes on the guitar neck', baixo: 'Learn the notes on the bass neck', piano: 'Learn the notes on the keyboard' },
   },
   lessons: {
     'ler-partitura': {
