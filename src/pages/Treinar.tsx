@@ -13,7 +13,7 @@ import Leitura from '../tools/Leitura';
 import Tecnica from '../tools/Tecnica';
 import { Art, Chip, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
-import { useT } from '../i18n';
+import { itemText, useT } from '../i18n';
 
 // A leitura rítmica traz a VexFlow; só baixa quando a ferramenta abre.
 const Ritmo = lazy(() => import('../tools/Ritmo'));
@@ -59,8 +59,8 @@ export default function Treinar() {
                 <span className="acc" style={{ background: areaById[tool.area].color }} />
                 <Art name={tool.art} style={{ width: 56, height: 56, objectFit: 'contain', flex: 'none' }} />
                 <div style={{ minWidth: 0 }}>
-                  <h3>{tool.title}</h3>
-                  <p>{tool.desc}</p>
+                  <h3>{itemText(t, tool.id, 'title')}</h3>
+                  <p>{itemText(t, tool.id, 'desc')}</p>
                   <div className="meta"><span className="mini-tag">{areaById[tool.area].name}</span><span className="mini-tag">{t(tool.mobile ? 'common.mobile' : 'common.withInstrument')}</span></div>
                 </div>
               </Link>
@@ -87,8 +87,8 @@ export default function Treinar() {
                     <Link to={`/treinar/${e.id}`} className="ex-card">
                       <span className="acc" style={{ background: a.color }} />
                       <div style={{ minWidth: 0, paddingRight: 26 }}>
-                        <h3>{e.title}</h3>
-                        <p>{e.desc}</p>
+                        <h3>{itemText(t, e.id, 'title')}</h3>
+                        <p>{itemText(t, e.id, 'desc')}</p>
                         <div className="meta"><span className="mini-tag">{t(`train.groups.${e.group}`)}</span>{st && <span className="mini-tag">{t('train.done', { count: st.attempts })}</span>}</div>
                       </div>
                       {st && <span className="pct num">{Math.round((st.correct / st.attempts) * 100)}%</span>}
@@ -136,7 +136,7 @@ export function ToolPage() {
     <div style={{ display: 'grid', gap: 20 }}>
       <Link to="/treinar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('train.back')}</Link>
       <header className="page-head" style={{ marginBottom: 0 }}>
-        <div><div className="row"><Tag>{areaById[tool.area].name}</Tag>{tool.mobile ? <Tag tone="dark">{t('common.mobile')}</Tag> : <Tag tone="co">{t('common.withInstrument')}</Tag>}</div><h1>{tool.title}</h1><p>{tool.desc}</p></div>
+        <div><div className="row"><Tag>{areaById[tool.area].name}</Tag>{tool.mobile ? <Tag tone="dark">{t('common.mobile')}</Tag> : <Tag tone="co">{t('common.withInstrument')}</Tag>}</div><h1>{itemText(t, tool.id, 'title')}</h1><p>{itemText(t, tool.id, 'desc')}</p></div>
         <Art name={tool.art} style={{ width: 110 }} />
       </header>
       <Comp />

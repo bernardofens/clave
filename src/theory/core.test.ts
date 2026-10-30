@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildChord, buildScale, chordSymbol, fromMidi, harmonicField, intervalBetween, intervalName, keyAccidentals,
+  buildChord, buildScale, chordSymbol, fromMidi, harmonicField, intervalBetween, keyAccidentals,
   majorTonic, midi, note, noteName, quality, relativeMinor, transpose,
 } from './core';
 
@@ -26,7 +26,6 @@ describe('intervalos', () => {
     expect(quality(intervalBetween(note(0), note(2)))).toBe('M'); // Dó-Mi
     expect(quality(intervalBetween(note(2), note(0, 0, 5)))).toBe('m'); // Mi-Dó: 6ª menor
     expect(quality(intervalBetween(note(3), note(6)))).toBe('A'); // Fá-Si: trítono como 4ª aum
-    expect(intervalName(intervalBetween(note(6), note(3, 0, 5)))).toBe('5ª diminuta');
   });
   it('transpõe com grafia correta', () => {
     expect(noteName(transpose(note(2), { num: 3, semis: 4 }), 'en')).toBe('G♯'); // terça maior de Mi
@@ -45,6 +44,14 @@ describe('escalas e acordes', () => {
     expect(names(buildChord(note(2), 'menor'))).toBe('E G B');
     expect(names(buildChord(note(6), 'm7b5'))).toBe('B D F A');
     expect(chordSymbol(note(5), 'm7')).toBe('Am7');
+  });
+  it('escreve a cifra na convenção de cada idioma', () => {
+    expect(chordSymbol(note(0), '7M', 'pt')).toBe('C7M');
+    expect(chordSymbol(note(0), '7M', 'en')).toBe('Cmaj7');
+    expect(chordSymbol(note(6), 'm7b5', 'pt')).toBe('Bm7(♭5)');
+    expect(chordSymbol(note(6), 'm7b5', 'en')).toBe('Bm7♭5');
+    expect(chordSymbol(note(6), 'dim', 'pt')).toBe('B°');
+    expect(chordSymbol(note(6), 'dim', 'en')).toBe('Bdim');
     expect(names(buildChord(note(0), 'maior', 1))).toBe('E G C');
   });
 });
@@ -60,5 +67,8 @@ describe('tonalidades', () => {
     const f = harmonicField(note(4), 'maior', true);
     expect(f.map(d => d.symbol).join(' ')).toBe('G7M Am7 Bm7 C7M D7 Em7 F♯m7(♭5)');
     expect(harmonicField(note(5), 'menor').map(d => d.roman).join(' ')).toBe('i ii° ♭III iv v ♭VI ♭VII');
+    const en = harmonicField(note(4), 'maior', true, 'en');
+    expect(en.map(d => d.symbol).join(' ')).toBe('Gmaj7 Am7 Bm7 Cmaj7 D7 Em7 F♯m7♭5');
+    expect(en[0].roman).toBe('Imaj7');
   });
 });

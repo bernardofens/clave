@@ -10,7 +10,7 @@ import { TOOL_COMPONENTS } from './Treinar';
 import { Art, Btn, Tag } from '../components/ui';
 import { fmtClock } from '../tools/common';
 import { PLAN_KEY } from './Hoje';
-import { useT } from '../i18n';
+import { itemText, useT } from '../i18n';
 
 function loadPlan(state: unknown): Block[] {
   const fromState = (state as { plan?: Block[] } | null)?.plan;
@@ -60,7 +60,7 @@ export default function Sessao() {
   const nextBlock = (r?: { correct: number; total: number; seconds: number }) => {
     if (r && block.kind === 'exercise') {
       setResults(x => [...x, r]);
-      logActivity({ id: block.id, title: block.title, area: block.area, seconds: r.seconds, correct: r.correct, total: r.total });
+      logActivity({ id: block.id, title: itemText(t, block.id, 'title'), area: block.area, seconds: r.seconds, correct: r.correct, total: r.total });
     }
     setI(n => n + 1);
   };
@@ -69,7 +69,7 @@ export default function Sessao() {
   return (
     <div style={{ display: 'grid', gap: 18 }}>
       <div style={{ display: 'flex', gap: 6 }} aria-label={t('session.blockOf', { i: i + 1, n: plan.length })}>
-        {plan.map((b, k) => <div key={k} title={b.title} style={{ flex: b.minutes, height: 8, transform: 'skewX(-12deg)', background: k < i ? 'var(--mu)' : k === i ? 'var(--cream)' : 'var(--bk-3)' }} />)}
+        {plan.map((b, k) => <div key={k} title={b.label ? t(b.label) : itemText(t, b.id, 'title')} style={{ flex: b.minutes, height: 8, transform: 'skewX(-12deg)', background: k < i ? 'var(--mu)' : k === i ? 'var(--cream)' : 'var(--bk-3)' }} />)}
       </div>
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <span className="eyebrow">{t('session.blockOf', { i: i + 1, n: plan.length })} · {areaById[block.area].name}</span>
@@ -81,7 +81,7 @@ export default function Sessao() {
       {Tool && (
         <>
           <div className="row" style={{ justifyContent: 'space-between' }}>
-            <h1 style={{ fontSize: 'clamp(38px, 6vw, 70px)' }}>{block.title}</h1>
+            <h1 style={{ fontSize: 'clamp(38px, 6vw, 70px)' }}>{block.label ? t(block.label) : itemText(t, block.id, 'title')}</h1>
             <div style={{ textAlign: 'right' }}>
               <div className="num" style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 48, lineHeight: 0.9, color: left === 0 ? 'var(--mu)' : 'var(--cream)' }}>{fmtClock(left)}</div>
               <span className="eyebrow">{t(left === 0 ? 'session.timeUp' : 'session.remaining')}</span>

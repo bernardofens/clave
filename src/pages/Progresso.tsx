@@ -6,14 +6,16 @@ import { areaXP, levelOf } from '../data/session';
 import { BADGES, minutesByArea, setPlan, streakDays, useStore } from '../state/store';
 import { buildScale, harmonicField, majorTonic, noteName, relativeMinor } from '../theory/core';
 import { Art, Btn, Chip, fmtMin, PageHead, SecTitle } from '../components/ui';
-import { localeTag, useLocale, useT } from '../i18n';
+import { itemText, localeTag, useLocale, useNaming, useT } from '../i18n';
+import { exerciseById } from '../exercises/catalog';
+import { toolById } from '../exercises/tools';
 
 export default function Progresso() {
   const stats = useStore(s => s.stats);
   const history = useStore(s => s.history);
   const badges = useStore(s => s.badges);
   const plan = useStore(s => s.plan);
-  const naming = useStore(s => s.naming);
+  const naming = useNaming();
   const { hash } = useLocation();
   const t = useT();
   const lang = localeTag(useLocale());
@@ -99,7 +101,7 @@ export default function Progresso() {
           <div className="panel" style={{ padding: 0 }}>
             {history.slice(0, 40).map((h, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 14, padding: '10px 16px', borderBottom: '1px solid var(--line)', alignItems: 'baseline' }}>
-                <div style={{ minWidth: 0 }}><b>{h.title}</b> <span className="muted" style={{ fontSize: 13 }}>· {AREAS.find(a => a.id === h.area)?.name}</span></div>
+                <div style={{ minWidth: 0 }}><b>{exerciseById[h.id] || toolById[h.id] ? itemText(t, h.id, 'title') : h.title}</b> <span className="muted" style={{ fontSize: 13 }}>· {AREAS.find(a => a.id === h.area)?.name}</span></div>
                 <span className="num muted" style={{ fontSize: 14 }}>{h.total ? `${h.correct}/${h.total}` : fmtMin(h.seconds)}</span>
                 <span className="num muted" style={{ fontSize: 13 }}>{new Date(h.at).toLocaleString(lang, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
               </div>
@@ -113,12 +115,13 @@ export default function Progresso() {
 
 function TonalityPlan() {
   const plan = useStore(s => s.plan)!;
-  const naming = useStore(s => s.naming);
+  const naming = useNaming();
   const t = useT();
+  const conv = useLocale();
   const tonic = majorTonic(plan.fifths);
   const rel = relativeMinor(plan.fifths);
   const scale = buildScale(tonic, 'maior');
-  const field = harmonicField(tonic, 'maior', true);
+  const field = harmonicField(tonic, 'maior', true, conv);
   const groups = [...new Set(TONALITY_STEPS.map(s => s.group))];
   const toggle = (id: string) => setPlan({ ...plan, done: plan.done.includes(id) ? plan.done.filter(x => x !== id) : [...plan.done, id] });
   const pct = plan.done.length / TONALITY_STEPS.length;

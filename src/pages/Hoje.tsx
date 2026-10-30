@@ -6,7 +6,7 @@ import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
 import { minutesByArea, streakDays, toggleArsenal, useStore } from '../state/store';
 import { Art, Btn, Chip, fmtMin, SecTitle, Tag } from '../components/ui';
-import { useT, type MessageKey } from '../i18n';
+import { itemText, useT, type MessageKey } from '../i18n';
 
 export const PLAN_KEY = 'clave:plano-sessao';
 
@@ -87,7 +87,7 @@ export default function Hoje() {
             <li key={i} style={{ display: 'flex', gap: 14, alignItems: 'center', background: 'rgba(0,0,0,.25)', padding: '10px 14px' }}>
               <span style={{ fontFamily: 'var(--display)', fontWeight: 900, fontSize: 26, width: 24, color: 'var(--mu)' }}>{i + 1}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600 }}>{b.title}</div>
+                <div style={{ fontWeight: 600 }}>{b.label ? t(b.label) : itemText(t, b.id, 'title')}</div>
                 <div style={{ fontSize: 13, opacity: 0.85 }}>{areaById[b.area].name} · {b.kind === 'exercise' ? t('home.questions', { count: b.target ?? 0 }) : t('home.tool')}</div>
               </div>
               <span className="num" style={{ fontWeight: 600 }}>{t('common.minutes', { n: b.minutes })}</span>
@@ -105,17 +105,18 @@ export default function Hoje() {
             const tool = toolById[id];
             const item = e ?? tool;
             if (!item) return null;
+            const title = itemText(t, id, 'title');
             const st = stats[id];
             return (
               <div key={id} style={{ position: 'relative' }}>
                 <Link to={e ? `/treinar/${id}` : tool.path} className="ex-card">
                   <span className="acc" style={{ background: areaById[item.area].color }} />
                   <div style={{ minWidth: 0 }}>
-                    <h3>{item.title}</h3>
+                    <h3>{title}</h3>
                     <p>{areaById[item.area].name}{st ? ` · ${t('home.accuracy', { pct: Math.round((st.correct / st.attempts) * 100) })}` : ''}</p>
                   </div>
                 </Link>
-                <button type="button" onClick={() => toggleArsenal(id)} aria-label={t('home.removeFromArsenal', { title: item.title })} style={{ position: 'absolute', right: 8, top: 8, border: 0, background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18 }}>×</button>
+                <button type="button" onClick={() => toggleArsenal(id)} aria-label={t('home.removeFromArsenal', { title })} style={{ position: 'absolute', right: 8, top: 8, border: 0, background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18 }}>×</button>
               </div>
             );
           })}

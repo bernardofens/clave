@@ -4,14 +4,14 @@ import { useSearchParams } from 'react-router-dom';
 import { atTime, Clock, drum, tone, type Drum, type Voice } from '../audio/engine';
 import { useStore } from '../state/store';
 import {
-  buildScale, chordSymbol, CHORDS, harmonicField, majorTonic, mod, note, noteName, pc, SCALES, transpose,
-  type ChordId, type Note, type ScaleId,
+  buildScale, chordSymbol, CHORDS, harmonicField, majorTonic, mod, note, noteName, pc, transpose,
+  type ChordId, type Convention, type Note, type ScaleId,
 } from '../theory/core';
 import Fretboard, { TUNINGS } from '../components/music/Fretboard';
 import Keyboard from '../components/music/Keyboard';
 import { Btn, Chip } from '../components/ui';
 import { useToolLog } from './common';
-import { useT, type MessageKey } from '../i18n';
+import { useLocale, useNaming, useT, type MessageKey } from '../i18n';
 
 interface Item { deg: number; type?: ChordId; flat?: boolean }
 type Style = 'rock' | 'balada' | 'bossa' | 'samba' | 'swing' | 'shuffle' | 'baiao' | 'nenhum';
@@ -50,19 +50,19 @@ const VOICES: [Voice, MessageKey][] = [['piano', 'backing.voicePiano'], ['pad', 
 // ---------------- harmonia ----------------
 interface Resolved { root: Note; type: ChordId; symbol: string; roman: string; scales: { id: ScaleId; root: Note; why: MessageKey }[] }
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-function romanFor(deg: number, type: ChordId, flat: boolean) {
+function romanFor(deg: number, type: ChordId, flat: boolean, conv: Convention) {
   const minor = ['menor', 'm7', 'dim', 'm7b5', 'dim7'].includes(type);
   const r = (flat ? '♭' : '') + (minor ? ROMAN[deg - 1].toLowerCase() : ROMAN[deg - 1]);
-  const suf: Partial<Record<ChordId, string>> = { '7': '7', '7M': '7M', m7: '7', m7b5: 'ø', dim: '°', dim7: '°7', aum: '+' };
+  const suf: Partial<Record<ChordId, string>> = { '7': '7', '7M': conv === 'pt' ? '7M' : 'maj7', m7: '7', m7b5: 'ø', dim: '°', dim7: '°7', aum: '+' };
   return r + (suf[type] ?? '');
 }
-function resolve(item: Item, tonic: Note, mode: 'maior' | 'menor', tetrads: boolean): Resolved {
-  const field = harmonicField(tonic, mode, tetrads);
+function resolve(item: Item, tonic: Note, mode: 'maior' | 'menor', tetrads: boolean, conv: Convention): Resolved {
+  const field = harmonicField(tonic, mode, tetrads, conv);
   const f = field[item.deg - 1];
   const root = item.flat ? { ...f.root, acc: f.root.acc - 1 } : f.root;
   const type = item.type ?? f.chord;
-  const roman = !item.type && !item.flat ? f.roman : romanFor(item.deg, type, !!item.flat || (mode === 'menor' && [3, 6, 7].includes(item.deg)));
-  return { root, type, symbol: chordSymbol(root, type), roman, scales: suggestScales(root, type, item.deg, mode, !!item.type || !!item.flat) };
+  const roman = !item.type && !item.flat ? f.roman : romanFor(item.deg, type, !!item.flat || (mode === 'menor' && [3, 6, 7].includes(item.deg)), conv);
+  return { root, type, symbol: chordSymbol(root, type, conv), roman, scales: suggestScales(root, type, item.deg, mode, !!item.type || !!item.flat) };
 }
 function suggestScales(root: Note, type: ChordId, deg: number, mode: 'maior' | 'menor', borrowed: boolean): Resolved['scales'] {
   const s = (id: ScaleId, why: MessageKey) => ({ id, root, why });
@@ -86,7 +86,8 @@ const voice = (root: Note, type: ChordId) => {
 
 export default function Backing({ presetId }: { presetId?: string }) {
   const [params] = useSearchParams();
-  const naming = useStore(s => s.naming);
+  const naming = useNaming();
+  const conv = useLocale();
   const t = useT();
   const instrument = useStore(s => s.profile.instrument);
   const initial = PRESETS.find(p => p.id === (presetId ?? params.get('p'))) ?? PRESETS[0];
@@ -105,8 +106,8 @@ export default function Backing({ presetId }: { presetId?: string }) {
   useToolLog('backing', 'Backing track', 'harmonia', running);
 
   const tonic = useMemo(() => (mode === 'maior' ? majorTonic(fifths) : transpose(majorTonic(fifths), { num: 6, semis: 9 })), [fifths, mode]);
-  const chords = useMemo(() => items.map(i => resolve(i, tonic, mode, tetrads)), [items, tonic, mode, tetrads]);
-  const field = useMemo(() => harmonicField(tonic, mode, tetrads), [tonic, mode, tetrads]);
+  const chords = useMemo(() => items.map(i => resolve(i, tonic, mode, tetrads, conv)), [items, tonic, mode, tetrads, conv]);
+  const field = useMemo(() => harmonicField(tonic, mode, tetrads, conv), [tonic, mode, tetrads, conv]);
   const live = useRef({ chords, style, bassOn, compVoice });
   live.current = { chords, style, bassOn, compVoice };
 
@@ -221,7 +222,7 @@ export default function Backing({ presetId }: { presetId?: string }) {
             <div>
               <div className="eyebrow">{t('backing.overChord', { chord: cur.symbol, roman: cur.roman })}</div>
               <div className="row" style={{ marginTop: 8 }}>
-                {cur.scales.map((s, i) => <Chip key={s.id} on={i === Math.min(scaleIdx, cur.scales.length - 1)} onClick={() => setScaleIdx(i)}>{noteName(s.root, naming)} {SCALES[s.id].name} ({t(s.why)})</Chip>)}
+                {cur.scales.map((s, i) => <Chip key={s.id} on={i === Math.min(scaleIdx, cur.scales.length - 1)} onClick={() => setScaleIdx(i)}>{noteName(s.root, naming)} {t(`theory.scales.${s.id}` as MessageKey)} ({t(s.why)})</Chip>)}
               </div>
             </div>
             <div className="row">

@@ -5,12 +5,10 @@ import { Link } from 'react-router-dom';
 import { AREAS, areaById, type AreaId } from '../data/areas';
 import { MODULES } from '../data/content';
 import { areaXP, levelOf } from '../data/session';
-import { EXERCISES, exerciseById } from '../exercises/catalog';
+import { EXERCISES } from '../exercises/catalog';
 import { getState, streakDays, useStore } from '../state/store';
 import { Art, Chip, PageHead } from '../components/ui';
-import { useT, type MessageKey, type Vars } from '../i18n';
-
-type T = (key: MessageKey, vars?: Vars) => string;
+import { itemText, useT, type MessageKey, type Translate } from '../i18n';
 
 interface Msg { from: 'eu' | 'clave'; text: string; links?: { to: string; label: string }[] }
 
@@ -25,14 +23,14 @@ function weakest(): { area: AreaId; ex?: string; acc?: number } {
   return { area: (Object.keys(xp) as AreaId[]).sort((a, b) => xp[a] - xp[b])[0] };
 }
 
-function answer(q: string, t: T): Msg {
+function answer(q: string, t: Translate): Msg {
   const s = getState();
   const lower = q.toLowerCase();
   const has = (key: MessageKey) => t(key).split('|').some(w => lower.includes(w));
   if (has('mentor.kwWeak')) {
     const w = weakest();
     if (w.ex) {
-      const title = exerciseById[w.ex].title;
+      const title = itemText(t, w.ex, 'title');
       return { from: 'clave', text: t('mentor.weakExercise', { title, pct: Math.round((w.acc ?? 0) * 100) }), links: [{ to: `/treinar/${w.ex}`, label: t('mentor.trainExercise', { title }) }] };
     }
     return { from: 'clave', text: t('mentor.weakArea', { area: areaById[w.area].name }), links: [{ to: '/treinar', label: t('mentor.openTrain') }] };

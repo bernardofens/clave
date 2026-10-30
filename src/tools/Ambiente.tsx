@@ -1,11 +1,10 @@
 // Solfejar e tocar: uma sala silenciosa com drone, metrônomo e cronômetro com meta.
 import { useEffect, useRef, useState } from 'react';
 import { drone, playGroups } from '../audio/engine';
-import { useStore } from '../state/store';
 import { pcName } from '../theory/core';
 import { Art, Btn, Chip } from '../components/ui';
 import { fmtClock, Metronome, useToolLog } from './common';
-import { useT, type MessageKey } from '../i18n';
+import { useNaming, useT, type MessageKey } from '../i18n';
 
 const DRONES: { id: string; label: MessageKey; semis: number[] }[] = [
   { id: 'nota', label: 'ambient.droneTonic', semis: [0, 12] },
@@ -15,7 +14,7 @@ const DRONES: { id: string; label: MessageKey; semis: number[] }[] = [
 ];
 
 export default function Ambiente({ goalMinutes }: { goalMinutes?: number }) {
-  const naming = useStore(s => s.naming);
+  const naming = useNaming();
   const t = useT();
   const [tonic, setTonic] = useState(0);
   const [kind, setKind] = useState('quinta');
