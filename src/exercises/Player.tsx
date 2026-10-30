@@ -6,6 +6,8 @@ import { atTime, now } from '../audio/engine';
 import { playContent, resolvePresentation, type Presentation } from '../audio/presentation';
 import { useContent } from '../data/localized';
 import { getState, logActivity, recordAnswer, saveSettings, useStore } from '../state/store';
+import { buildAttempt, newId } from '../state/attempts';
+import { saveAttempt } from '../state/attemptLog';
 import { fromStep, mod, noteName, type Note } from '../theory/core';
 import Fretboard from '../components/music/Fretboard';
 import Keyboard from '../components/music/Keyboard';
@@ -34,9 +36,11 @@ interface Props {
   target?: number;
   onDone?: (r: { correct: number; total: number; seconds: number }) => void;
   initialSettings?: Record<string, SettingValue> | null;
+  /** Sessão de prática a que as tentativas pertencem (a sessão guiada passa a dela). */
+  sessionId?: string;
 }
 
-export default function Player({ def, target, onDone, initialSettings }: Props) {
+export default function Player({ def, target, onDone, initialSettings, sessionId }: Props) {
   const naming = useNaming();
   const soundOn = useStore(s => s.sound);
   const t = useT();
@@ -63,6 +67,12 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
   const started = useRef(Date.now());
   const scoreRef = useRef(score);
   scoreRef.current = score;
+  // registro da tentativa (C2): sessão, quando dava para responder e quantas vezes ouviu
+  const session = useRef(sessionId ?? newId());
+  const askedAt = useRef(Date.now());
+  const earReadyAt = useRef<number | null>(null);
+  const listens = useRef(0);
+  useEffect(() => { askedAt.current = Date.now(); earReadyAt.current = null; listens.current = 0; }, [q]);
 
   // ao sair, registra a atividade no histórico
   useEffect(() => {
@@ -73,16 +83,24 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     };
   }, [def, target, t]);
 
-  const play = useCallback((question: Question) => {
+  // camadas: global (timbre do instrumento, volume) < exercício < configurações da pessoa
+  const presentationFor = useCallback((question: Question) =>
+    resolvePresentation([globalPresentation(params, question.sound?.instrument), def.presentation, settingsPresentation]), [params, def.presentation, settingsPresentation]);
+
+  /** Toca o som da pergunta. `listening` = a pessoa está ouvindo para responder (conta como escuta). */
+  const play = useCallback((question: Question, listening = false) => {
     const content = question.sound;
     if (!content || !getState().sound) return;
-    // camadas: global (timbre do instrumento, volume) < exercício < configurações da pessoa
-    const presentation = resolvePresentation([globalPresentation(params, content.instrument), def.presentation, settingsPresentation]);
-    const dur = playContent(content, presentation);
+    const dur = playContent(content, presentationFor(question));
+    if (listening) {
+      listens.current++;
+      // nos de ouvido, o tempo de resposta conta do fim do primeiro som
+      if (earReadyAt.current === null) earReadyAt.current = Date.now() + dur * 1000;
+    }
     setPlaying(true);
     setHeard(true);
     atTime(now() + dur, () => setPlaying(false));
-  }, [params, def.presentation, settingsPresentation]);
+  }, [presentationFor]);
 
   const next = useCallback(() => {
     const nq = make();
@@ -90,7 +108,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     setPhase('ask');
     setPicked(null);
     setAcc(0);
-    if (nq.autoplay && heard) window.setTimeout(() => play(nq), 250);
+    if (nq.autoplay && heard) window.setTimeout(() => play(nq, true), 250);
   }, [make, heard, play]);
 
   // configurações mudaram: recomeça
@@ -105,20 +123,26 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     setPicked(pickedId);
     setPhase(ok ? 'right' : 'wrong');
     recordAnswer(def.id, ok);
+    const readyAt = q.visual.kind === 'ear' ? earReadyAt.current ?? askedAt.current : askedAt.current;
+    saveAttempt(buildAttempt({
+      exercise: def, question: q, response, correct: ok, sessionId: session.current, locale, settings, params,
+      presentation: q.sound ? presentationFor(q) : undefined,
+      responseTimeMs: Date.now() - readyAt, repetitions: Math.max(0, listens.current - 1),
+    }));
     if (!q.autoplay && soundOn) play(q);
     if (target && ns.total >= target) {
       window.setTimeout(() => onDone?.({ correct: ns.correct, total: ns.total, seconds: Math.round((Date.now() - started.current) / 1000) }), ok ? 900 : 1800);
       return;
     }
     if (ok) window.setTimeout(next, 850);
-  }, [phase, score, def.id, q, soundOn, play, target, onDone, next]);
+  }, [phase, score, def, q, soundOn, play, presentationFor, locale, settings, params, target, onDone, next]);
 
   // atalhos de teclado: 1-9 para opções, Enter para seguir, espaço para ouvir de novo
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
       if (e.key === 'Enter' && phase === 'wrong') { e.preventDefault(); next(); }
-      if (e.key === ' ' && q.sound && q.autoplay) { e.preventDefault(); play(q); }
+      if (e.key === ' ' && q.sound && q.autoplay) { e.preventDefault(); play(q, true); }
       const n = Number(e.key);
       if (q.surface.kind === 'choices' && n >= 1 && n <= q.surface.options.length && phase === 'ask') {
         const o = q.surface.options[n - 1];
@@ -153,7 +177,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
       </div>
       {target && <div className="progressbar" aria-label={t('player.progressOf', { done: score.total, total: target })}><i style={{ width: `${(score.total / target) * 100}%` }} /></div>}
 
-      <Stage q={q} phase={phase} playing={playing} heard={heard} onPlay={() => play(q)} naming={naming} picked={picked} acc={acc} onAnswer={submit} />
+      <Stage q={q} phase={phase} playing={playing} heard={heard} onPlay={() => play(q, true)} naming={naming} picked={picked} acc={acc} onAnswer={submit} />
 
       <AnswerArea q={q} phase={phase} picked={picked} acc={acc} setAcc={setAcc} onAnswer={submit} naming={naming} />
 

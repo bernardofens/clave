@@ -6,6 +6,7 @@ import { moduleOf, type Block } from '../data/session';
 import { exerciseById } from '../exercises/catalog';
 import Player from '../exercises/Player';
 import { logActivity } from '../state/store';
+import { newId } from '../state/attempts';
 import { TOOL_COMPONENTS } from './Treinar';
 import { Art, Btn, Tag } from '../components/ui';
 import { fmtClock } from '../tools/common';
@@ -23,6 +24,8 @@ export default function Sessao() {
   const t = useT();
   const { moduleById } = useContent();
   const [plan] = useState(() => loadPlan(location.state));
+  // uma sessão guiada é uma sessão de prática só, para as tentativas de todos os blocos
+  const [sessionId] = useState(newId);
   const [i, setI] = useState(0);
   const [results, setResults] = useState<{ correct: number; total: number }[]>([]);
   const [left, setLeft] = useState(0);
@@ -77,7 +80,7 @@ export default function Sessao() {
         <Btn small tone="ghost" onClick={() => nextBlock()}>{t('session.skip')}</Btn>
       </div>
       {block.kind === 'exercise' && exerciseById[block.id] && (
-        <Player key={i} def={exerciseById[block.id]} target={block.target} onDone={nextBlock} />
+        <Player key={i} def={exerciseById[block.id]} target={block.target} onDone={nextBlock} sessionId={sessionId} />
       )}
       {Tool && (
         <>
