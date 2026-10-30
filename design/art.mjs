@@ -405,14 +405,48 @@ assets['clave-mentor'] = {
     F('M80,44 L160,44 L170,58 L70,58 Z', BK, `stroke="${MU}" stroke-width="2"`) + F('M74,58 L166,58 L160,66 L80,66 Z', MU) + bowTie(120, 160),
 };
 
-// emblemas das 6 áreas: azulejo colorido com um ícone recortado
+// emblemas: azulejo colorido com um ícone recortado
 const tile = (bgc, inner) => F('M8,14 L150,6 L152,146 L6,152 Z', bgc) + inner;
-assets['area-ouvido'] = { vb: '0 0 160 160', body: tile(CO, S('M46,98 L46,62 L66,40 L94,40 L114,62 L114,98', CR, 9, 'stroke-linejoin="miter"') + F('M34,84 L54,80 L56,120 L36,116 Z', VE) + F('M126,84 L106,80 L104,120 L124,116 Z', VE)) };
-assets['area-tecnica'] = { vb: '0 0 160 160', body: tile(VE, bar('M30,80 L130,80', CR, 7) + C(40, 80, 24, BK) + C(40, 80, 9, MU) + C(120, 80, 24, BK) + C(120, 80, 9, MU) + S('M68,58 L72,46 M80,56 L80,42 M92,58 L88,46', CR, 3)) };
-assets['area-mapeamento'] = { vb: '0 0 160 160', body: tile(MU, rect(26, 46, 108, 70, BK) + S([58, 70, 82, 94, 104].map(y => `M26,${y} L134,${y}`).join(' '), CR, 1.2) + S('M52,46 L52,116 M80,46 L80,116 M108,46 L108,116', WH, 2.4) + C(66, 70, 7, VE) + C(94, 94, 7, CO) + C(122, 58, 7, CR)) };
-assets['area-harmonia'] = { vb: '0 0 160 160', body: tile(BK, S('M20,52 L140,52 M20,66 L140,66 M20,80 L140,80 M20,94 L140,94 M20,108 L140,108', CR, 1.3) + E(80, 101, 11, 7.5, MU, 'transform="rotate(-25 80 101)"') + E(80, 87, 11, 7.5, VE, 'transform="rotate(-25 80 87)"') + E(80, 73, 11, 7.5, CO, 'transform="rotate(-25 80 73)"') + rect(89, 36, 3.5, 64, CR)) };
-assets['area-ritmo'] = { vb: '0 0 160 160', body: tile(CR, F('M52,132 L108,132 L94,30 L66,30 Z', VE) + F('M64,118 L96,118 L88,48 L72,48 Z', CR) + S('M80,116 L100,56', BK, 4) + F('M90,78 L102,80 L99,92 L87,90 Z', MU) + rect(44, 128, 72, 10, BK)) };
-assets['area-leitura'] = { vb: '0 0 160 160', body: tile(VE, S('M18,56 L142,56 M18,70 L142,70 M18,84 L142,84 M18,98 L142,98 M18,112 L142,112', CR, 1.4) + g('translate(30,32) scale(0.46)', S(CLEF, BK, 9, 'stroke-linecap="round"')) + note4(100, 92, 1.1, CR) + note4(124, 78, 1.1, MU)) };
+
+// emblemas dos 5 módulos (F1-01b), cada um com a ideia central do módulo
+// teoria: a escrita (pauta e clave) e a harmonia (acorde empilhado) na mesma imagem
+assets['modulo-teoria'] = {
+  vb: '0 0 160 160',
+  body: tile(MU, S('M18,56 L142,56 M18,70 L142,70 M18,84 L142,84 M18,98 L142,98 M18,112 L142,112', BK, 1.6) +
+    g('translate(26,32) scale(0.46)', S(CLEF, BK, 9, 'stroke-linecap="round"')) +
+    E(104, 98, 8.4, 5.6, VE, 'transform="rotate(-25 104 98)"') + E(104, 84, 8.4, 5.6, CR, 'transform="rotate(-25 104 84)"') + E(104, 70, 8.4, 5.6, CO, 'transform="rotate(-25 104 70)"') +
+    rect(110.4, 30, 3.2, 67, BK) + F('M110.4,30 L127,48 L125,56 L113.6,44 Z', BK)),
+};
+// técnica: a mão grande do estilo pisando as cordas
+assets['modulo-tecnica'] = {
+  vb: '0 0 160 160',
+  body: tile(VE, rect(16, 76, 128, 52, BK) + S('M16,86 L144,86 M16,98 L144,98 M16,110 L144,110 M16,120 L144,120', CR, 1.3) +
+    S('M46,76 L46,128 M78,76 L78,128 M110,76 L110,128', WH, 2.4) +
+    hand(74, 50, 84, 1.3, SK1) + S('M34,40 L24,30 M36,54 L22,52 M40,26 L36,14', CR, 3)),
+};
+// percepção melódica: a orelha e as alturas subindo uma depois da outra
+assets['modulo-percepcao-melodica'] = {
+  vb: '0 0 160 160',
+  body: tile(CO, S('M30,66 C30,38 70,30 76,60 C80,80 60,84 60,102 C60,118 46,124 38,114', CR, 10, 'stroke-linecap="round"') +
+    S('M44,66 C46,52 62,52 62,66', CR, 5, 'stroke-linecap="round"') +
+    S('M86,126 L110,104 L134,82', CR, 2.4, 'stroke-dasharray="4 4"') +
+    note4(86, 126, 1, MU) + note4(110, 104, 1, CR) + note4(134, 82, 1, VE)),
+};
+// percepção harmônica: três notas soando juntas e o som se espalhando
+assets['modulo-percepcao-harmonica'] = {
+  vb: '0 0 160 160',
+  // o azulejo preto ganha borda creme para não sumir nas telas escuras do app
+  body: F('M8,14 L150,6 L152,146 L6,152 Z', BK, `stroke="${CR}" stroke-width="3"`) + (C(56, 64, 26, CO, 'opacity=".9"') + C(78, 64, 26, VE, 'opacity=".9"') + C(67, 86, 26, MU, 'opacity=".9"') +
+    S('M108,54 Q118,75 108,96 M118,44 Q133,75 118,106 M128,36 Q146,75 128,114', CR, 2.6, 'stroke-linecap="round"')),
+};
+// percepção rítmica: figuras (colcheias com colchete e semínima) sobre a linha do pulso
+assets['modulo-percepcao-ritmica'] = {
+  vb: '0 0 160 160',
+  body: tile(CR, E(42, 92, 10, 7, BK, 'transform="rotate(-25 42 92)"') + E(74, 92, 10, 7, BK, 'transform="rotate(-25 74 92)"') +
+    rect(49, 38, 3.4, 54, BK) + rect(81, 38, 3.4, 54, BK) + F('M49,38 L84.4,38 L84.4,48 L49,48 Z', BK) +
+    E(118, 92, 10, 7, VE, 'transform="rotate(-25 118 92)"') + rect(125, 38, 3.4, 54, VE) +
+    rect(22, 122, 116, 3, BK) + C(30, 123.5, 9, VE) + C(66, 123.5, 6, BK) + C(98, 123.5, 6, BK) + C(130, 123.5, 6, BK)),
+};
 
 // medalhas
 const medal = (c1, c2, inner) => {

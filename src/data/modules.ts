@@ -7,15 +7,15 @@ import type { ModuleId } from '../exercises/taxonomy';
 export interface ModuleBase {
   id: ModuleId;
   color: string; // token CSS
-  /** Ilustração provisória: reaproveita a da área antiga mais próxima até o redesenho em design/art.mjs. */
+  /** Emblema do módulo (design/art.mjs → public/art). */
   art: string;
 }
 export const MODULE_LIST: ModuleBase[] = [
-  { id: 'theory', color: 'var(--mu)', art: 'area-leitura' },
-  { id: 'technique', color: 'var(--ve)', art: 'area-tecnica' },
-  { id: 'perception.melodic', color: 'var(--co)', art: 'area-ouvido' },
-  { id: 'perception.harmonic', color: 'var(--cream)', art: 'area-harmonia' },
-  { id: 'perception.rhythmic', color: 'var(--mu)', art: 'area-ritmo' },
+  { id: 'theory', color: 'var(--mu)', art: 'modulo-teoria' },
+  { id: 'technique', color: 'var(--ve)', art: 'modulo-tecnica' },
+  { id: 'perception.melodic', color: 'var(--co)', art: 'modulo-percepcao-melodica' },
+  { id: 'perception.harmonic', color: 'var(--cream)', art: 'modulo-percepcao-harmonica' },
+  { id: 'perception.rhythmic', color: 'var(--mu)', art: 'modulo-percepcao-ritmica' },
 ];
 
 export type Instrument = 'piano' | 'violao' | 'baixo';
