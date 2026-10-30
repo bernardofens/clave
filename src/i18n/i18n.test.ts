@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'vitest';
+import { detectLocale, MESSAGES, translate, type Locale } from './index';
+
+/** Todas as folhas de um objeto de textos, como pares "chave.pontuada" → texto. */
+function leaves(node: unknown, prefix = ''): [string, string][] {
+  if (typeof node === 'string') return [[prefix, node]];
+  return Object.entries(node as Record<string, unknown>).flatMap(([k, v]) => leaves(v, prefix ? `${prefix}.${k}` : k));
+}
+const placeholders = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
+
+describe('traduções', () => {
+  const pt = new Map(leaves(MESSAGES.pt));
+  const others = (Object.keys(MESSAGES) as Locale[]).filter(l => l !== 'pt');
+
+  it.each(others)('%s tem exatamente as mesmas chaves que pt', locale => {
+    const keys = leaves(MESSAGES[locale]).map(([k]) => k).sort();
+    expect(keys).toEqual([...pt.keys()].sort());
+  });
+
+  it.each(Object.keys(MESSAGES) as Locale[])('%s não tem texto vazio', locale => {
+    const empty = leaves(MESSAGES[locale]).filter(([, v]) => !v.trim()).map(([k]) => k);
+    expect(empty).toEqual([]);
+  });
+
+  it.each(others)('%s usa os mesmos {valores} que pt em cada texto', locale => {
+    const diff = leaves(MESSAGES[locale])
+      .filter(([k, v]) => placeholders(v).join() !== placeholders(pt.get(k) ?? '').join())
+      .map(([k]) => k);
+    expect(diff).toEqual([]);
+  });
+});
+
+describe('translate', () => {
+  it('insere valores', () => {
+    expect(translate('pt', 'profile.languageAuto', { language: 'Português' })).toBe('Automático (Português)');
+  });
+  it('escolhe a forma pela quantidade', () => {
+    expect(translate('pt', 'nav.streakUnit', { count: 1 })).toBe('dia');
+    expect(translate('pt', 'nav.streakUnit', { count: 0 })).toBe('dias');
+    expect(translate('en', 'nav.streakUnit', { count: 1 })).toBe('day');
+    expect(translate('en', 'nav.streakUnit', { count: 2 })).toBe('days');
+  });
+});
+
+describe('detecção do idioma', () => {
+  it('reconhece português de qualquer região', () => {
+    expect(detectLocale(['pt-BR'])).toBe('pt');
+    expect(detectLocale(['fr-FR', 'pt-PT'])).toBe('pt');
+  });
+  it('cai em inglês para o resto', () => {
+    expect(detectLocale(['es-AR', 'en-US'])).toBe('en');
+    expect(detectLocale([])).toBe('en');
+  });
+});

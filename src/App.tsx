@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Comunidade from './pages/Comunidade';
@@ -10,8 +11,11 @@ import Progresso from './pages/Progresso';
 import Sessao from './pages/Sessao';
 import Treinar, { ExercisePage, ToolPage } from './pages/Treinar';
 import NotFound from './pages/NotFound';
+import { useLocale } from './i18n';
 
 export default function App() {
+  const locale = useLocale();
+  useEffect(() => { document.documentElement.lang = locale === 'pt' ? 'pt-BR' : 'en'; }, [locale]);
   return (
     <BrowserRouter>
       <Routes>

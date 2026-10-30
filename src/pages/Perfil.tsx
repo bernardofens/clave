@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } from '../data/areas';
-import { resetAll, setState, updateProfile, useStore } from '../state/store';
+import { resetAll, setLocale, setState, updateProfile, useStore } from '../state/store';
+import { detectLocale, LOCALES, useT } from '../i18n';
 import { Art, Btn, Chip, PageHead, SecTitle } from '../components/ui';
 import AccountPanel from '../components/AccountPanel';
 
@@ -10,6 +11,9 @@ export default function Perfil() {
   const profile = useStore(s => s.profile);
   const naming = useStore(s => s.naming);
   const sound = useStore(s => s.sound);
+  const locale = useStore(s => s.locale);
+  const t = useT();
+  const detected = LOCALES.find(l => l.id === detectLocale())!.name;
   const [confirmReset, setConfirmReset] = useState(false);
   const toggleGoal = (id: (typeof GOALS)[number]['id']) => updateProfile({ goals: profile.goals.includes(id) ? profile.goals.filter(g => g !== id) : [...profile.goals, id] });
 
@@ -51,6 +55,10 @@ export default function Perfil() {
         <section>
           <SecTitle>Preferências</SecTitle>
           <div className="panel" style={{ display: 'grid', gap: 14 }}>
+            <div className="row"><span className="eyebrow">{t('profile.language')}</span>
+              <Chip on={locale === null} onClick={() => setLocale(null)}>{t('profile.languageAuto', { language: detected })}</Chip>
+              {LOCALES.map(l => <Chip key={l.id} on={locale === l.id} onClick={() => setLocale(l.id)}><span lang={l.id}>{l.name}</span></Chip>)}
+            </div>
             <div className="row"><span className="eyebrow">Nome das notas</span>
               <Chip on={naming === 'pt'} onClick={() => setState(s => ({ ...s, naming: 'pt' }))}>Dó Ré Mi</Chip>
               <Chip on={naming === 'en'} onClick={() => setState(s => ({ ...s, naming: 'en' }))}>C D E</Chip>
