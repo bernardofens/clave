@@ -1,7 +1,7 @@
 // Primeira vez: quatro perguntas rápidas para o Clave entender quem você é.
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } from '../data/areas';
+import { useContent } from '../data/localized';
 import { updateProfile, useStore } from '../state/store';
 import { Art, Btn, Chip, Tag } from '../components/ui';
 import { useT, type MessageKey } from '../i18n';
@@ -13,6 +13,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const nav = useNavigate();
   const t = useT();
+  const { AREAS, GOALS, INSTRUMENTS, PROFILE_KINDS } = useContent();
   const finish = () => { updateProfile({ onboarded: true }); nav('/'); };
   const steps = [
     {

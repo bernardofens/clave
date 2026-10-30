@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AREAS, areaById } from '../data/areas';
+import { useContent } from '../data/localized';
 import { suggestSession, type Block } from '../data/session';
 import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
@@ -30,6 +30,7 @@ export default function Hoje() {
   const [seed, setSeed] = useState(0);
   const nav = useNavigate();
   const t = useT();
+  const { AREAS, areaById } = useContent();
   const scene = sceneForNow();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const plan = useMemo(() => suggestSession(minutes, withInst, profile, history), [minutes, withInst, profile, seed]);

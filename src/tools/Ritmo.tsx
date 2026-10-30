@@ -5,7 +5,7 @@ import { atTime, Clock, drum } from '../audio/engine';
 import RhythmScore from '../components/music/RhythmScore';
 import { Btn, Chip } from '../components/ui';
 import {
-  FIGURE_NAMES, LEVELS, METER_IDS, METERS, REST_NAMES, TRAIT_NAMES,
+  LEVELS, METER_IDS, METERS,
   type Figure, type Level, type MeterId, type RestKind, type Trait,
 } from '../theory/rhythm-cells';
 import {
@@ -49,7 +49,6 @@ function make(s: RhythmSettings, prev?: Exercise): { ex?: Exercise; error?: stri
 const FIGURES: Figure[] = ['w', 'h', 'q', '8', '16'];
 const RESTS: RestKind[] = ['h', 'q', '8', '16'];
 const TRAITS: Trait[] = ['pontuada', 'sincope', 'ligadura', 'quialtera'];
-const levelOf = (l: Level) => LEVELS.find(x => x.level === l)!;
 
 export default function Ritmo() {
   const t = useT();
@@ -167,6 +166,11 @@ export default function Ritmo() {
     (offered.rests.size > 0 && (!settings.rests || RESTS.some(r => offered.rests.has(r) && !settings.restKinds[r])));
   const resetFilters = () => update({ figures: DEFAULT_SETTINGS.figures, rests: true, restKinds: DEFAULT_SETTINGS.restKinds, traits: DEFAULT_SETTINGS.traits });
   const fromLevel = (has: boolean) => (has ? undefined : t('rhythm.higherLevels'));
+  // Problemas de configuração vêm do gerador como código; qualquer outro erro é um defeito.
+  const errorText = (code: string) =>
+    code === 'noFigures' ? t('rhythm.errorNoFigures')
+      : code === 'cantFill' ? t(METERS[settings.meter].compound ? 'rhythm.errorCantFillCompound' : 'rhythm.errorCantFill', { meter: settings.meter })
+        : t('rhythm.generateError');
 
   return (
     <div className="ritmo">
@@ -186,20 +190,20 @@ export default function Ritmo() {
         <label className="ritmo-field">
           <span>{t('rhythm.level')}</span>
           <select className="sel" id="rt-level" value={settings.level} onChange={e => update({ level: Number(e.target.value) as Level })}>
-            {LEVELS.map(l => <option key={l.level} value={l.level}>{l.level} · {l.name}</option>)}
+            {LEVELS.map(l => <option key={l.level} value={l.level}>{l.level} · {t(`rhythm.levels.l${l.level}.name`)}</option>)}
           </select>
         </label>
       </div>
 
       <section className="ritmo-stage" aria-live="polite">
         <div className="ritmo-status">
-          <span>{t('rhythm.status', { level: ex.level, name: levelOf(ex.level).name, meter: ex.meter, bars: ex.bars.length })}{restricted && ` · ${t('rhythm.restricted')}`}</span>
+          <span>{t('rhythm.status', { level: ex.level, name: t(`rhythm.levels.l${ex.level}.name`), meter: ex.meter, bars: ex.bars.length })}{restricted && ` · ${t('rhythm.restricted')}`}</span>
           {count !== null && <b className="ritmo-count">{count}</b>}
         </div>
         <RhythmScore exercise={ex} active={active} />
         {error !== null && (
           <div className="ritmo-warn" role="alert">
-            <span>{error || t('rhythm.generateError')}</span>
+            <span>{errorText(error)}</span>
             <Btn small tone="ghost" onClick={resetFilters}>{t('rhythm.restoreFigures')}</Btn>
           </div>
         )}
@@ -231,13 +235,13 @@ export default function Ritmo() {
       </button>
       {advanced && (
         <div className="settings ritmo-adv">
-          <p className="muted">{levelOf(settings.level).desc} {t('rhythm.turnOff')}</p>
+          <p className="muted">{t(`rhythm.levels.l${settings.level}.desc`)} {t('rhythm.turnOff')}</p>
           <div className="field">
             <span>{t('rhythm.figures')}</span>
             <div className="row">
               {FIGURES.map(f => (
                 <Chip key={f} on={settings.figures[f] && offered.figures.has(f)} disabled={!offered.figures.has(f)} title={fromLevel(offered.figures.has(f))}
-                  onClick={() => update({ figures: { ...settings.figures, [f]: !settings.figures[f] } })}>{FIGURE_NAMES[f]}</Chip>
+                  onClick={() => update({ figures: { ...settings.figures, [f]: !settings.figures[f] } })}>{t(`rhythm.figureNames.${f}`)}</Chip>
               ))}
             </div>
           </div>
@@ -247,16 +251,16 @@ export default function Ritmo() {
               <label className="switch"><input type="checkbox" id="rt-rests" checked={settings.rests} onChange={e => update({ rests: e.target.checked })} />{t('rhythm.withRests')}</label>
               {RESTS.map(r => (
                 <Chip key={r} on={settings.rests && settings.restKinds[r] && offered.rests.has(r)} disabled={!settings.rests || !offered.rests.has(r)} title={fromLevel(offered.rests.has(r))}
-                  onClick={() => update({ restKinds: { ...settings.restKinds, [r]: !settings.restKinds[r] } })}>{REST_NAMES[r]}</Chip>
+                  onClick={() => update({ restKinds: { ...settings.restKinds, [r]: !settings.restKinds[r] } })}>{t(`rhythm.restNames.${r}`)}</Chip>
               ))}
             </div>
           </div>
           <div className="field">
             <span>{t('rhythm.traits')}</span>
             <div className="row">
-              {TRAITS.map(t => (
-                <Chip key={t} on={settings.traits[t] && offered.traits.has(t)} disabled={!offered.traits.has(t)} title={fromLevel(offered.traits.has(t))}
-                  onClick={() => update({ traits: { ...settings.traits, [t]: !settings.traits[t] } })}>{TRAIT_NAMES[t]}</Chip>
+              {TRAITS.map(tr => (
+                <Chip key={tr} on={settings.traits[tr] && offered.traits.has(tr)} disabled={!offered.traits.has(tr)} title={fromLevel(offered.traits.has(tr))}
+                  onClick={() => update({ traits: { ...settings.traits, [tr]: !settings.traits[tr] } })}>{t(`rhythm.traitNames.${tr}`)}</Chip>
               ))}
             </div>
           </div>

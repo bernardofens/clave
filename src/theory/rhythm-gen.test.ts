@@ -184,7 +184,7 @@ describe('configurações', () => {
   });
   it('avisa quando não sobra figura nenhuma', () => {
     const s = settings({ figures: { w: false, h: false, q: false, '8': false, '16': false } });
-    expect(checkSettings(s)).toMatch(/Nenhuma figura/);
+    expect(checkSettings(s)).toBe('noFigures');
     expect(() => generateExercise(s)).toThrow();
   });
   it('qualquer combinação de opções gera exercício válido ou explica o motivo', () => {

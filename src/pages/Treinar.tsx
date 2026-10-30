@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { AREAS, areaById, type AreaId } from '../data/areas';
-import { MODULES } from '../data/content';
+import type { AreaId } from '../data/areas';
+import { useContent } from '../data/localized';
 import { EXERCISES, exerciseById } from '../exercises/catalog';
 import Player, { decodeSettings } from '../exercises/Player';
 import { toolById, TOOLS } from '../exercises/tools';
@@ -34,6 +34,7 @@ function LoadingScore() {
 
 export default function Treinar() {
   const t = useT();
+  const { AREAS, areaById } = useContent();
   const stats = useStore(s => s.stats);
   const arsenal = useStore(s => s.arsenal);
   const [mobileOnly, setMobileOnly] = useState(false);
@@ -110,6 +111,7 @@ export function ExercisePage() {
   const { id = '' } = useParams();
   const [params] = useSearchParams();
   const t = useT();
+  const { MODULES } = useContent();
   const def = exerciseById[id];
   if (!def) return <NotFound />;
   const shared = decodeSettings(params.get('c'));
@@ -129,6 +131,7 @@ export function ExercisePage() {
 export function ToolPage() {
   const { id = '' } = useParams();
   const t = useT();
+  const { areaById } = useContent();
   const tool = toolById[id];
   const Comp = TOOL_COMPONENTS[id];
   if (!tool || !Comp) return <NotFound />;

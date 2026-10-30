@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
-import { AREAS, areaById } from '../data/areas';
-import { GENRES, genreById, moduleById, MODULES, ROADMAPS } from '../data/content';
+import { MODULES as MODULE_BASE } from '../data/content';
+import { useContent } from '../data/localized';
 import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
 import { useStore } from '../state/store';
@@ -9,7 +9,7 @@ import NotFound from './NotFound';
 import { itemText, useT } from '../i18n';
 
 export function moduleProgress(id: string, stats: Record<string, { correct: number }>) {
-  const m = moduleById[id];
+  const m = MODULE_BASE.find(x => x.id === id)!;
   if (!m.exercises.length) return 0;
   return m.exercises.reduce((a, e) => a + Math.min(1, (stats[e]?.correct ?? 0) / 20), 0) / m.exercises.length;
 }
@@ -17,6 +17,7 @@ export function moduleProgress(id: string, stats: Record<string, { correct: numb
 export default function Estudar() {
   const stats = useStore(s => s.stats);
   const t = useT();
+  const { AREAS, GENRES, MODULES, moduleById, ROADMAPS } = useContent();
   return (
     <div>
       <PageHead tag={t('study.tag')} title={t('study.title')} sub={t('study.sub')} />
@@ -85,6 +86,7 @@ export default function Estudar() {
 export function ModulePage() {
   const { id = '' } = useParams();
   const t = useT();
+  const { areaById, moduleById } = useContent();
   const m = moduleById[id];
   if (!m) return <NotFound />;
   const a = areaById[m.area];
@@ -128,6 +130,7 @@ export function ModulePage() {
 export function GenrePage() {
   const { id = '' } = useParams();
   const t = useT();
+  const { genreById } = useContent();
   const g = genreById[id];
   if (!g) return <NotFound />;
   return (
