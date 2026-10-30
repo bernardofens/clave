@@ -8,6 +8,8 @@ import Mentor from './pages/Mentor';
 import Onboarding from './pages/Onboarding';
 import Perfil from './pages/Perfil';
 import Progresso from './pages/Progresso';
+import Rotinas from './pages/Rotinas';
+import { ROUTINES_READY } from './components/nav';
 import Sessao from './pages/Sessao';
 import Treinar, { ExercisePage, ToolPage } from './pages/Treinar';
 import NotFound from './pages/NotFound';
@@ -30,6 +32,7 @@ export default function App() {
           <Route path="estudar/genero/:id" element={<GenrePage />} />
           <Route path="estudar/:id" element={<LessonPage />} />
           <Route path="progresso" element={<Progresso />} />
+          {ROUTINES_READY && <Route path="rotinas" element={<Rotinas />} />}
           <Route path="perfil" element={<Perfil />} />
           <Route path="comunidade" element={<Comunidade />} />
           <Route path="mentor" element={<Mentor />} />

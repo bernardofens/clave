@@ -238,3 +238,18 @@ select.sel { background: var(--bk-3); color: var(--cream); border: 0; padding: 7
   .ritmo-wide { display: none; }
   .ritmo-stage { margin-inline: calc(-1 * var(--pad) + 6px); padding-inline: 10px; }
 }
+
+/* Treinar: módulos que abrem e fecham */
+.mod { margin-top: 28px; }
+.mod-h { margin: 0; }
+.mod-head { display: flex; width: 100%; gap: 16px; align-items: center; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 0 0 12px; cursor: pointer; color: inherit; font: inherit; }
+.mod-head .name { display: block; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(30px, 4.4vw, 46px); line-height: 1; }
+.mod-head .sub { display: block; color: var(--muted); font-size: 14px; font-weight: 400; text-transform: none; margin-top: 4px; }
+.mod-head .count { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+.mod-head .chev { font-family: var(--display); font-weight: 900; font-size: 32px; width: 28px; text-align: center; color: var(--mu); }
+.mod-head:hover .name { color: var(--mu); }
+.mod-head:focus-visible { outline: 2px solid var(--mu); outline-offset: 4px; }
+.mod-body { display: grid; grid-template-columns: minmax(230px, 1fr) minmax(0, 3fr); gap: 24px; margin-top: 16px; align-items: start; }
+.mod-body.solo { grid-template-columns: minmax(0, 1fr); }
+.mod-lessons { display: grid; gap: 8px; }
+@media (max-width: 820px) { .mod-body { grid-template-columns: minmax(0, 1fr); } .mod-head .count { display: none; } }

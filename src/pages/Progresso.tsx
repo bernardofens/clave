@@ -1,6 +1,6 @@
 import { useContent } from '../data/localized';
 import { minutesByModule, streakDays, useStore } from '../state/store';
-import { Art, fmtMin, PageHead, SecTitle } from '../components/ui';
+import { Art, Btn, fmtMin, PageHead, SecTitle } from '../components/ui';
 import { itemText, localeTag, useLocale, useT } from '../i18n';
 import { exerciseById } from '../exercises/catalog';
 import { toolById } from '../exercises/tools';
@@ -46,6 +46,15 @@ export default function Progresso() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="sec">
+        <SecTitle>{t('progress.mentorTitle')}</SecTitle>
+        <div className="panel" style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Art name="clave-mentor" style={{ width: 96, flex: 'none' }} />
+          <p style={{ flex: 1, minWidth: 220 }}>{t('progress.mentorText')}</p>
+          <Btn to="/mentor" tone="ghost">{t('progress.mentorOpen')}</Btn>
         </div>
       </section>
 

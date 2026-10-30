@@ -92,7 +92,7 @@ export function LessonPage() {
   const a = moduleById[m.primaryModule];
   return (
     <div style={{ display: 'grid', gap: 28 }}>
-      <Link to="/estudar" className="eyebrow" style={{ textDecoration: 'none' }}>{t('study.back')}</Link>
+      <Link to={`/treinar#${m.primaryModule}`} className="eyebrow" style={{ textDecoration: 'none' }}>{t('study.backToModule', { module: a.name })}</Link>
       <header className="page-head" style={{ marginBottom: 0 }}>
         <div><Tag>{a.name}</Tag><h1>{m.title}</h1></div>
         <Art name={a.art} style={{ width: 120 }} />
