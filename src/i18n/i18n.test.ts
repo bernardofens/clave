@@ -50,10 +50,10 @@ describe('translate', () => {
     expect(translate('pt', 'profile.languageAuto', { language: 'Português' })).toBe('Automático (Português)');
   });
   it('escolhe a forma pela quantidade', () => {
-    expect(translate('pt', 'nav.streakUnit', { count: 1 })).toBe('dia');
-    expect(translate('pt', 'nav.streakUnit', { count: 0 })).toBe('dias');
-    expect(translate('en', 'nav.streakUnit', { count: 1 })).toBe('day');
-    expect(translate('en', 'nav.streakUnit', { count: 2 })).toBe('days');
+    expect(translate('pt', 'home.questions', { count: 1 })).toBe('1 pergunta');
+    expect(translate('pt', 'home.questions', { count: 0 })).toBe('0 perguntas'); // no Brasil, zero é plural
+    expect(translate('en', 'home.questions', { count: 1 })).toBe('1 question');
+    expect(translate('en', 'home.questions', { count: 2 })).toBe('2 questions');
   });
 });
 
