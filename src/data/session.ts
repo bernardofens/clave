@@ -4,11 +4,13 @@ import { EXERCISES } from '../exercises/catalog';
 import { TOOLS } from '../exercises/tools';
 import { AREAS, GOALS, type AreaId } from './areas';
 import type { Activity, Profile } from '../state/store';
+import type { MessageKey } from '../i18n';
 
 export interface Block {
   kind: 'exercise' | 'tool';
   id: string;
-  title: string;
+  /** Rótulo próprio do bloco (ex.: aquecimento); sem ele, vale o título do exercício ou da ferramenta. */
+  label?: MessageKey;
   area: AreaId;
   minutes: number;
   target?: number; // perguntas, para exercícios
@@ -42,7 +44,7 @@ export function suggestSession(minutes: number, withInstrument: boolean, profile
   // com instrumento e tempo: aquecimento técnico no começo
   if (withInstrument && minutes >= 15) {
     const warm = profile.instrument === 'piano' ? TOOLS.find(t => t.id === 'metronomo')! : TOOLS.find(t => t.id === 'tecnica')!;
-    blocks.push({ kind: 'tool', id: warm.id, title: warm.id === 'tecnica' ? 'Aquecimento técnico' : 'Aquecimento com metrônomo', area: 'tecnica', minutes: 5 });
+    blocks.push({ kind: 'tool', id: warm.id, label: warm.id === 'tecnica' ? 'tools.warmupTechnique' : 'tools.warmupMetronome', area: 'tecnica', minutes: 5 });
     left -= 5;
   }
   const finale = withInstrument && minutes >= 20 ? TOOLS.find(t => t.id === 'backing')! : null;
@@ -54,16 +56,16 @@ export function suggestSession(minutes: number, withInstrument: boolean, profile
     const useTool = withInstrument && left >= 6 && Math.random() < 0.25;
     if (useTool) {
       const t = weightedPick(tools.filter(x => !used.has(x.id) && x.id !== 'backing' && x.id !== 'tecnica'), x => w[x.area]);
-      if (t) { used.add(t.id); blocks.push({ kind: 'tool', id: t.id, title: t.title, area: t.area, minutes: 6 }); left -= 6; continue; }
+      if (t) { used.add(t.id); blocks.push({ kind: 'tool', id: t.id, area: t.area, minutes: 6 }); left -= 6; continue; }
     }
     if (!pool.length) break;
     const e = weightedPick(pool, x => w[x.area]);
     used.add(e.id);
     const m = left >= 8 ? 4 : 3;
-    blocks.push({ kind: 'exercise', id: e.id, title: e.title, area: e.area, minutes: m, target: m * 3 });
+    blocks.push({ kind: 'exercise', id: e.id, area: e.area, minutes: m, target: m * 3 });
     left -= m;
   }
-  if (finale) blocks.push({ kind: 'tool', id: 'backing', title: 'Improviso sobre backing track', area: 'harmonia', minutes: 8 });
+  if (finale) blocks.push({ kind: 'tool', id: 'backing', label: 'tools.improvise', area: 'harmonia', minutes: 8 });
   return blocks;
 }
 

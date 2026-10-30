@@ -1,5 +1,6 @@
 import type { AreaId, Instrument } from '../data/areas';
-import type { Clef, Naming, Note } from '../theory/core';
+import type { Clef, Convention, Naming, Note } from '../theory/core';
+import type { Translate } from '../i18n';
 import type { CellId } from '../theory/rhythm';
 import type { FretMark } from '../components/music/Fretboard';
 
@@ -47,30 +48,30 @@ export interface Setting {
   type: 'single' | 'multi' | 'toggle';
   options?: { id: string; label: string }[];
 }
+/** O que um exercício precisa saber para montar a pergunta no idioma da pessoa. */
 export interface Ctx {
   naming: Naming;
   instrument: Instrument;
+  conv: Convention;
+  t: Translate;
 }
 
 export type GroupId = 'pauta' | 'teclado' | 'braco' | 'ouvido' | 'teoria' | 'ritmo';
 
+// Título e descrição ficam nos textos de cada idioma (exercises.<id> em src/i18n; ver itemText).
 export interface ExerciseDef {
   id: string;
-  title: string;
-  desc: string;
   area: AreaId;
   group: GroupId;
   /** Dá para fazer sem o instrumento (no ônibus, por exemplo). */
   mobile: boolean;
-  settings: Setting[];
+  settings: (ctx: Ctx) => Setting[];
   defaults: Record<string, SettingValue>;
   make: (s: Record<string, SettingValue>, ctx: Ctx) => Question;
 }
 
 export interface ToolDef {
   id: string;
-  title: string;
-  desc: string;
   area: AreaId;
   mobile: boolean;
   path: string;

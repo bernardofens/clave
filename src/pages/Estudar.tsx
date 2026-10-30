@@ -6,7 +6,7 @@ import { toolById } from '../exercises/tools';
 import { useStore } from '../state/store';
 import { Art, Btn, PageHead, SecTitle, Tag } from '../components/ui';
 import NotFound from './NotFound';
-import { useT } from '../i18n';
+import { itemText, useT } from '../i18n';
 
 export function moduleProgress(id: string, stats: Record<string, { correct: number }>) {
   const m = moduleById[id];
@@ -114,10 +114,10 @@ export function ModulePage() {
         <SecTitle>{t('study.practice')}</SecTitle>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
           {m.exercises.map(e => exerciseById[e] && (
-            <Link key={e} to={`/treinar/${e}`} className="ex-card"><span className="acc" style={{ background: areaById[exerciseById[e].area].color }} /><div><h3>{exerciseById[e].title}</h3><p>{exerciseById[e].desc}</p></div></Link>
+            <Link key={e} to={`/treinar/${e}`} className="ex-card"><span className="acc" style={{ background: areaById[exerciseById[e].area].color }} /><div><h3>{itemText(t, e, 'title')}</h3><p>{itemText(t, e, 'desc')}</p></div></Link>
           ))}
           {m.tools.map(id => toolById[id] && (
-            <Link key={id} to={toolById[id].path} className="ex-card"><span className="acc" style={{ background: 'var(--co)' }} /><Art name={toolById[id].art} style={{ width: 48, flex: 'none' }} /><div><h3>{toolById[id].title}</h3><p>{toolById[id].desc}</p></div></Link>
+            <Link key={id} to={toolById[id].path} className="ex-card"><span className="acc" style={{ background: 'var(--co)' }} /><Art name={toolById[id].art} style={{ width: 48, flex: 'none' }} /><div><h3>{itemText(t, id, 'title')}</h3><p>{itemText(t, id, 'desc')}</p></div></Link>
           ))}
         </div>
       </section>

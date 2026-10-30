@@ -2,6 +2,7 @@
 // que só aceita chaves que existem em pt.ts.
 import { useCallback } from 'react';
 import { useStore } from '../state/store';
+import type { Naming } from '../theory/core';
 import en from './en';
 import pt from './pt';
 
@@ -21,6 +22,7 @@ type Path<T, P extends string = ''> = {
 }[keyof T & string];
 export type MessageKey = Path<typeof pt>;
 export type Vars = Record<string, string | number>;
+export type Translate = (key: MessageKey, vars?: Vars) => string;
 
 export const MESSAGES: Record<Locale, Shape<typeof pt>> = { pt, en };
 
@@ -35,7 +37,8 @@ export function resolveLocale(choice: Locale | null): Locale {
 
 export function translate(locale: Locale, key: MessageKey, vars: Vars = {}): string {
   let node: unknown = MESSAGES[locale];
-  for (const part of key.split('.')) node = (node as Record<string, unknown>)[part];
+  for (const part of key.split('.')) node = (node as Record<string, unknown> | undefined)?.[part];
+  if (node === undefined) return key; // só acontece com chave montada em tempo de execução (ex.: por id)
   const msg = node as Leaf;
   // Singular só para exatamente 1, nos dois idiomas. Intl.PluralRules não serve: para 'pt' ele
   // trata 0 como singular ("0 dia"), e no Brasil se diz "0 dias".
@@ -48,10 +51,22 @@ export function localeTag(locale: Locale) {
   return locale === 'pt' ? 'pt-BR' : 'en';
 }
 
+/** Título ou descrição de um exercício ou ferramenta, pelo id (textos em exercises.* e tools.*). */
+export function itemText(t: Translate, id: string, field: 'title' | 'desc') {
+  const ns = id in MESSAGES.pt.exercises ? 'exercises' : 'tools';
+  return t(`${ns}.${id}.${field}` as MessageKey);
+}
+
 export function useLocale(): Locale {
   return resolveLocale(useStore(s => s.locale));
 }
-export function useT() {
+/** Nome das notas: o escolhido no perfil, ou o do idioma (Dó Ré Mi em português, C D E em inglês). */
+export function useNaming(): Naming {
+  const naming = useStore(s => s.naming);
+  const locale = useLocale();
+  return naming ?? locale;
+}
+export function useT(): Translate {
   const locale = useLocale();
   return useCallback((key: MessageKey, vars?: Vars) => translate(locale, key, vars), [locale]);
 }

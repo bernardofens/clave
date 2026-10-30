@@ -45,7 +45,8 @@ export interface State {
   profile: Profile;
   /** Idioma escolhido no perfil; null = automático, segue o navegador. */
   locale: Locale | null;
-  naming: Naming;
+  /** Nome das notas escolhido no perfil; null = segue o idioma. */
+  naming: Naming | null;
   sound: boolean;
   stats: Record<string, Stat>;
   history: Activity[];
@@ -71,7 +72,7 @@ export const DEFAULT_STATE: State = {
     onboarded: false,
   },
   locale: null,
-  naming: 'pt',
+  naming: null,
   sound: true,
   stats: {},
   history: [],

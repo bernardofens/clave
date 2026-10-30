@@ -3,14 +3,13 @@
 // Modo ritmo: uma linha só, para focar só nas figuras.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { atTime, Clock, drum, tone } from '../audio/engine';
-import { useStore } from '../state/store';
 import { applyKey, clefBottom, midi, noteName, type Clef, type Note } from '../theory/core';
 import { CELLS, RHYTHM_PRESETS, randomBars, type CellId } from '../theory/rhythm';
 import RhythmLine from '../components/music/RhythmLine';
 import Staff from '../components/music/Staff';
 import { Btn, Chip } from '../components/ui';
 import { useToolLog } from './common';
-import { useT, type MessageKey } from '../i18n';
+import { useNaming, useT, type MessageKey } from '../i18n';
 
 interface NotePreset { id: string; name: MessageKey; clef: Clef; fifths: number; steps: number[] }
 const S4 = 28; // Dó4
@@ -37,7 +36,7 @@ function melody(steps: number[], n = 16): number[] {
 }
 
 export default function Leitura() {
-  const naming = useStore(s => s.naming);
+  const naming = useNaming();
   const t = useT();
   const [mode, setMode] = useState<'notas' | 'ritmo'>('notas');
   const [preset, setPreset] = useState(NOTE_PRESETS[0]);

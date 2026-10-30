@@ -9,8 +9,8 @@ import Keyboard from '../components/music/Keyboard';
 import RhythmLine from '../components/music/RhythmLine';
 import Staff from '../components/music/Staff';
 import { Btn, Chip, PlayIcon, Tag } from '../components/ui';
-import type { Answer, ExerciseDef, Question, SettingValue, Sound } from './types';
-import { useT } from '../i18n';
+import type { Answer, Ctx, ExerciseDef, Question, SettingValue, Sound } from './types';
+import { itemText, useLocale, useNaming, useT } from '../i18n';
 
 type Phase = 'ask' | 'right' | 'wrong';
 
@@ -44,13 +44,15 @@ interface Props {
 }
 
 export default function Player({ def, target, onDone, initialSettings }: Props) {
-  const naming = useStore(s => s.naming);
+  const naming = useNaming();
   const instrument = useStore(s => s.profile.instrument);
   const soundOn = useStore(s => s.sound);
   const t = useT();
   const saved = useStore(s => s.settings[def.id]);
   const settings = useMemo(() => ({ ...def.defaults, ...(initialSettings ?? saved ?? {}) }), [def, saved, initialSettings]);
-  const make = useCallback(() => def.make(settings, { naming, instrument }), [def, settings, naming, instrument]);
+  const locale = useLocale();
+  const ctx = useMemo(() => ({ naming, instrument, conv: locale, t }), [naming, instrument, locale, t]);
+  const make = useCallback(() => def.make(settings, ctx), [def, settings, ctx]);
 
   const [q, setQ] = useState<Question>(make);
   const [phase, setPhase] = useState<Phase>('ask');
@@ -70,9 +72,9 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
     const t0 = started.current;
     return () => {
       const s = scoreRef.current;
-      if (s.total > 0 && !target) logActivity({ id: def.id, title: def.title, area: def.area, seconds: Math.round((Date.now() - t0) / 1000), correct: s.correct, total: s.total });
+      if (s.total > 0 && !target) logActivity({ id: def.id, title: itemText(t, def.id, 'title'), area: def.area, seconds: Math.round((Date.now() - t0) / 1000), correct: s.correct, total: s.total });
     };
-  }, [def, target]);
+  }, [def, target, t]);
 
   const play = useCallback((sound?: Sound) => {
     if (!sound || !getState().sound) return;
@@ -140,7 +142,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
       <div className="player-head">
         <div>
           <div className="row"><Tag>{area.name}</Tag>{def.mobile && <Tag tone="dark">{t('common.mobile')}</Tag>}</div>
-          <h1>{def.title}</h1>
+          <h1>{itemText(t, def.id, 'title')}</h1>
         </div>
         <div className="score">
           <div><b className="num">{score.correct}/{score.total}</b><span>{t('player.hits')}</span></div>
@@ -158,7 +160,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
         <div className="reveal" aria-live="polite">
           {phase === 'wrong' && <>{t('player.answer')} <b>{q.reveal}</b></>}
           {phase === 'right' && <span className="muted">{t('player.right')} {score.streak >= 5 ? t('player.inARow', { n: score.streak }) : ''}</span>}
-          {phase === 'ask' && <span className="muted">{def.desc}</span>}
+          {phase === 'ask' && <span className="muted">{itemText(t, def.id, 'desc')}</span>}
         </div>
         <div className="row">
           {phase === 'wrong' && <Btn onClick={next} tone="mu">{t('player.next')}</Btn>}
@@ -167,7 +169,7 @@ export default function Player({ def, target, onDone, initialSettings }: Props) 
         </div>
       </div>
 
-      {showSettings && <SettingsPanel def={def} values={settings} onChange={v => saveSettings(def.id, v)} />}
+      {showSettings && <SettingsPanel def={def} ctx={ctx} values={settings} onChange={v => saveSettings(def.id, v)} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
@@ -299,11 +301,11 @@ function AnswerArea({ q, phase, picked, acc, setAcc, onAnswer, naming }: {
 }
 
 // ---------------- personalizar ----------------
-function SettingsPanel({ def, values, onChange }: { def: ExerciseDef; values: Record<string, SettingValue>; onChange: (v: Record<string, SettingValue>) => void }) {
+function SettingsPanel({ def, ctx, values, onChange }: { def: ExerciseDef; ctx: Ctx; values: Record<string, SettingValue>; onChange: (v: Record<string, SettingValue>) => void }) {
   const t = useT();
   return (
     <div className="settings">
-      {def.settings.map(s => (
+      {def.settings(ctx).map(s => (
         <div className="field" key={s.id}>
           <span>{s.label}</span>
           {s.type === 'toggle' && (

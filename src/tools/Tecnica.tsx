@@ -7,7 +7,7 @@ import Keyboard from '../components/music/Keyboard';
 import { TUNINGS } from '../components/music/Fretboard';
 import { Btn, Chip } from '../components/ui';
 import { useToolLog } from './common';
-import { useT, type MessageKey } from '../i18n';
+import { useNaming, useT, type MessageKey } from '../i18n';
 
 interface Pos { s: number; f: number; finger?: number }
 interface Routine { id: string; name: MessageKey; desc: MessageKey; for: ('violao' | 'baixo' | 'piano')[]; build: (strings: number) => Pos[] }
@@ -43,7 +43,7 @@ const ROUTINES: Routine[] = [
 
 export default function Tecnica() {
   const instrument = useStore(s => s.profile.instrument);
-  const naming = useStore(s => s.naming);
+  const naming = useNaming();
   const t = useT();
   const available = ROUTINES.filter(r => r.for.includes(instrument));
   const [routine, setRoutine] = useState(available[0] ?? ROUTINES[0]);

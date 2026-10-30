@@ -9,6 +9,8 @@ export interface Note {
   oct: number; // oitava científica: Dó central = Dó4
 }
 export type Naming = 'pt' | 'en';
+/** Convenção de cifra de cada idioma: C7M e Cm7(♭5) em português; Cmaj7 e Cm7♭5 em inglês. */
+export type Convention = 'pt' | 'en';
 
 const NATURAL = [0, 2, 4, 5, 7, 9, 11];
 const PT = ['Dó', 'Ré', 'Mi', 'Fá', 'Sol', 'Lá', 'Si'];
@@ -95,17 +97,6 @@ export function transpose(n: Note, iv: Interval, dir: 1 | -1 = 1): Note {
   return { ...target, acc: want - midi(target) };
 }
 
-const ORD = ['', 'uníssono', '2ª', '3ª', '4ª', '5ª', '6ª', '7ª', 'oitava'];
-const QWORD: Record<Quality, [string, string]> = {
-  J: ['justo', 'justa'], M: ['maior', 'maior'], m: ['menor', 'menor'], A: ['aumentado', 'aumentada'], d: ['diminuto', 'diminuta'],
-};
-export function intervalName(iv: Interval) {
-  const q = quality(iv);
-  if (!q) return `${iv.num}ª (${iv.semis} semitons)`;
-  if (iv.num === 1) return `uníssono ${QWORD[q][0]}`;
-  const label = iv.num <= 8 ? ORD[iv.num] : `${iv.num}ª`;
-  return `${label} ${QWORD[q][1]}`;
-}
 export function intervalShort(iv: Interval) {
   const q = quality(iv) ?? '?';
   return `${q}${iv.num}`;
@@ -114,18 +105,18 @@ export function intervalShort(iv: Interval) {
 // ---------------- escalas ----------------
 type Deg = [num: number, semis: number];
 export const SCALES = {
-  maior: { name: 'Maior (jônio)', degs: [[1, 0], [2, 2], [3, 4], [4, 5], [5, 7], [6, 9], [7, 11]] as Deg[] },
-  menor: { name: 'Menor natural (eólio)', degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 8], [7, 10]] as Deg[] },
-  'menor-harmonica': { name: 'Menor harmônica', degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 8], [7, 11]] as Deg[] },
-  'menor-melodica': { name: 'Menor melódica', degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 9], [7, 11]] as Deg[] },
-  dorico: { name: 'Dórico', degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 9], [7, 10]] as Deg[] },
-  frigio: { name: 'Frígio', degs: [[1, 0], [2, 1], [3, 3], [4, 5], [5, 7], [6, 8], [7, 10]] as Deg[] },
-  lidio: { name: 'Lídio', degs: [[1, 0], [2, 2], [3, 4], [4, 6], [5, 7], [6, 9], [7, 11]] as Deg[] },
-  mixolidio: { name: 'Mixolídio', degs: [[1, 0], [2, 2], [3, 4], [4, 5], [5, 7], [6, 9], [7, 10]] as Deg[] },
-  locrio: { name: 'Lócrio', degs: [[1, 0], [2, 1], [3, 3], [4, 5], [5, 6], [6, 8], [7, 10]] as Deg[] },
-  'penta-maior': { name: 'Pentatônica maior', degs: [[1, 0], [2, 2], [3, 4], [5, 7], [6, 9]] as Deg[] },
-  'penta-menor': { name: 'Pentatônica menor', degs: [[1, 0], [3, 3], [4, 5], [5, 7], [7, 10]] as Deg[] },
-  blues: { name: 'Blues', degs: [[1, 0], [3, 3], [4, 5], [5, 6], [5, 7], [7, 10]] as Deg[] },
+  maior: { degs: [[1, 0], [2, 2], [3, 4], [4, 5], [5, 7], [6, 9], [7, 11]] as Deg[] },
+  menor: { degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 8], [7, 10]] as Deg[] },
+  'menor-harmonica': { degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 8], [7, 11]] as Deg[] },
+  'menor-melodica': { degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 9], [7, 11]] as Deg[] },
+  dorico: { degs: [[1, 0], [2, 2], [3, 3], [4, 5], [5, 7], [6, 9], [7, 10]] as Deg[] },
+  frigio: { degs: [[1, 0], [2, 1], [3, 3], [4, 5], [5, 7], [6, 8], [7, 10]] as Deg[] },
+  lidio: { degs: [[1, 0], [2, 2], [3, 4], [4, 6], [5, 7], [6, 9], [7, 11]] as Deg[] },
+  mixolidio: { degs: [[1, 0], [2, 2], [3, 4], [4, 5], [5, 7], [6, 9], [7, 10]] as Deg[] },
+  locrio: { degs: [[1, 0], [2, 1], [3, 3], [4, 5], [5, 6], [6, 8], [7, 10]] as Deg[] },
+  'penta-maior': { degs: [[1, 0], [2, 2], [3, 4], [5, 7], [6, 9]] as Deg[] },
+  'penta-menor': { degs: [[1, 0], [3, 3], [4, 5], [5, 7], [7, 10]] as Deg[] },
+  blues: { degs: [[1, 0], [3, 3], [4, 5], [5, 6], [5, 7], [7, 10]] as Deg[] },
 } as const;
 export type ScaleId = keyof typeof SCALES;
 
@@ -134,18 +125,19 @@ export function buildScale(tonic: Note, id: ScaleId): Note[] {
 }
 
 // ---------------- acordes ----------------
+// Os nomes por extenso de escalas e acordes ficam nos textos de cada idioma (theory.* em src/i18n).
 export const CHORDS = {
-  maior: { name: 'Maior', suffix: '', degs: [[1, 0], [3, 4], [5, 7]] as Deg[] },
-  menor: { name: 'Menor', suffix: 'm', degs: [[1, 0], [3, 3], [5, 7]] as Deg[] },
-  aum: { name: 'Aumentado', suffix: '(♯5)', degs: [[1, 0], [3, 4], [5, 8]] as Deg[] },
-  dim: { name: 'Diminuto', suffix: '°', degs: [[1, 0], [3, 3], [5, 6]] as Deg[] },
-  sus4: { name: 'Suspenso (4ª)', suffix: 'sus4', degs: [[1, 0], [4, 5], [5, 7]] as Deg[] },
-  '7M': { name: 'Com sétima maior', suffix: '7M', degs: [[1, 0], [3, 4], [5, 7], [7, 11]] as Deg[] },
-  '7': { name: 'Dominante (com sétima)', suffix: '7', degs: [[1, 0], [3, 4], [5, 7], [7, 10]] as Deg[] },
-  m7: { name: 'Menor com sétima', suffix: 'm7', degs: [[1, 0], [3, 3], [5, 7], [7, 10]] as Deg[] },
-  m7b5: { name: 'Meio-diminuto', suffix: 'm7(♭5)', degs: [[1, 0], [3, 3], [5, 6], [7, 10]] as Deg[] },
-  dim7: { name: 'Diminuto com sétima', suffix: '°7', degs: [[1, 0], [3, 3], [5, 6], [7, 9]] as Deg[] },
-} as const;
+  maior: { suffix: { pt: '', en: '' }, degs: [[1, 0], [3, 4], [5, 7]] as Deg[] },
+  menor: { suffix: { pt: 'm', en: 'm' }, degs: [[1, 0], [3, 3], [5, 7]] as Deg[] },
+  aum: { suffix: { pt: '(♯5)', en: '+' }, degs: [[1, 0], [3, 4], [5, 8]] as Deg[] },
+  dim: { suffix: { pt: '°', en: 'dim' }, degs: [[1, 0], [3, 3], [5, 6]] as Deg[] },
+  sus4: { suffix: { pt: 'sus4', en: 'sus4' }, degs: [[1, 0], [4, 5], [5, 7]] as Deg[] },
+  '7M': { suffix: { pt: '7M', en: 'maj7' }, degs: [[1, 0], [3, 4], [5, 7], [7, 11]] as Deg[] },
+  '7': { suffix: { pt: '7', en: '7' }, degs: [[1, 0], [3, 4], [5, 7], [7, 10]] as Deg[] },
+  m7: { suffix: { pt: 'm7', en: 'm7' }, degs: [[1, 0], [3, 3], [5, 7], [7, 10]] as Deg[] },
+  m7b5: { suffix: { pt: 'm7(♭5)', en: 'm7♭5' }, degs: [[1, 0], [3, 3], [5, 6], [7, 10]] as Deg[] },
+  dim7: { suffix: { pt: '°7', en: 'dim7' }, degs: [[1, 0], [3, 3], [5, 6], [7, 9]] as Deg[] },
+} as const satisfies Record<string, { suffix: Record<Convention, string>; degs: Deg[] }>;
 export type ChordId = keyof typeof CHORDS;
 export const TRIADS: ChordId[] = ['maior', 'menor', 'aum', 'dim'];
 export const SEVENTHS: ChordId[] = ['7M', '7', 'm7', 'm7b5', 'dim7'];
@@ -158,9 +150,10 @@ export function buildChord(root: Note, id: ChordId, inversion = 0): Note[] {
   }
   return notes;
 }
-/** Cifra: no Brasil a cifra usa letras (C, Am7) mesmo quando as notas são ditas em Dó-Ré-Mi. */
-export function chordSymbol(root: Pick<Note, 'letter' | 'acc'>, id: ChordId) {
-  return noteName(root, 'en') + CHORDS[id].suffix;
+/** Cifra: no Brasil a cifra usa letras (C, Am7) mesmo quando as notas são ditas em Dó-Ré-Mi.
+ *  O que muda entre os idiomas é o sufixo (C7M/Cmaj7, Cm7(♭5)/Cm7♭5, C°/Cdim). */
+export function chordSymbol(root: Pick<Note, 'letter' | 'acc'>, id: ChordId, conv: Convention = 'pt') {
+  return noteName(root, 'en') + CHORDS[id].suffix[conv];
 }
 
 // ---------------- tonalidades ----------------
@@ -214,7 +207,7 @@ export interface Degree {
   roman: string;
   symbol: string;
 }
-export function harmonicField(tonic: Note, mode: 'maior' | 'menor', tetrads = false): Degree[] {
+export function harmonicField(tonic: Note, mode: 'maior' | 'menor', tetrads = false, conv: Convention = 'pt'): Degree[] {
   const scale = buildScale(tonic, mode);
   const types: ChordId[] = mode === 'maior'
     ? (tetrads ? ['7M', 'm7', 'm7', '7M', '7', 'm7', 'm7b5'] : ['maior', 'menor', 'menor', 'maior', 'maior', 'menor', 'dim'])
@@ -225,8 +218,8 @@ export function harmonicField(tonic: Note, mode: 'maior' | 'menor', tetrads = fa
     let roman = ROMAN[i];
     if (minorish) roman = roman.toLowerCase();
     if (mode === 'menor' && [2, 5, 6].includes(i)) roman = '♭' + roman;
-    const suffix = chord === 'dim' ? '°' : chord === 'm7b5' ? 'ø' : chord === '7M' ? '7M' : chord === '7' ? '7' : chord === 'm7' ? '7' : '';
-    return { degree: i + 1, root, chord, roman: roman + suffix, symbol: chordSymbol(root, chord) };
+    const suffix = chord === 'dim' ? '°' : chord === 'm7b5' ? 'ø' : chord === '7M' ? (conv === 'pt' ? '7M' : 'maj7') : chord === '7' ? '7' : chord === 'm7' ? '7' : '';
+    return { degree: i + 1, root, chord, roman: roman + suffix, symbol: chordSymbol(root, chord, conv) };
   });
 }
 
